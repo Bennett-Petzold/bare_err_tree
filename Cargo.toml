@@ -1,3 +1,13 @@
 [workspace]
 resolver = "2"
 members = ["bare_err_tree", "proc", "testing"]
+
+[workspace.package]
+authors = ["Bennett Petzold <dansecob.dev@gmail.com>"]
+edition = "2021"
+rust-version = "1.81"
+description = "Display errors as a formatted tree"
+repository = "https://github.com/Bennett-Petzold/bare_err_tree"
+license = "MPL-2.0"
+categories = ["no-std", "development-tools::debugging", "rust-patterns"]
+keywords = ["error", "tree", "printing"]
