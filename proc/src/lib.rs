@@ -1,13 +1,11 @@
 extern crate proc_macro;
 use core::panic;
-use std::iter;
 
 use proc_macro::{Span, TokenStream};
-use quote::{quote, quote_spanned, ToTokens};
+use quote::{quote, ToTokens};
 use syn::{
-    parse::Parser, parse_macro_input, punctuated::Punctuated, spanned::Spanned, token::Comma,
-    Attribute, Data, DataEnum, DataStruct, DeriveInput, Error, Field, Fields, Generics, Ident,
-    Meta, Visibility,
+    parse::Parser, parse_macro_input, punctuated::Punctuated, Attribute, Data, DataStruct,
+    DeriveInput, Error, Field, Fields, Generics, Ident, Meta, Visibility,
 };
 
 mod errtype;
@@ -153,7 +151,7 @@ fn foreign_err_tree(
     let mut wrapper_struct = parse_macro_input!(wrapper_struct as DeriveInput);
 
     if let Data::Struct(ref mut wrapper_struct_data) = &mut wrapper_struct.data {
-        let boilerplate = wrapper_boilerplate(&ident, &generics, &attrs, name_attribute);
+        let boilerplate = wrapper_boilerplate(ident, generics, attrs, name_attribute);
         let generated_impl = err_tree_struct(
             name_attribute,
             &wrapper_struct.generics,

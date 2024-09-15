@@ -1,13 +1,8 @@
-use core::panic;
 use std::iter;
 
-use proc_macro::{Span, TokenStream};
-use quote::{quote, quote_spanned, ToTokens};
-use syn::{
-    parse::Parser, parse_macro_input, punctuated::Punctuated, spanned::Spanned, token::Comma,
-    Attribute, Data, DataEnum, DataStruct, DeriveInput, Error, Field, Fields, Generics, Ident,
-    Meta, Visibility,
-};
+use proc_macro::TokenStream;
+use quote::quote;
+use syn::{Attribute, Generics, Ident, Meta};
 
 // https://doc.rust-lang.org/rust-by-example/trait/derive.html
 const VALID_DERIVES: [&str; 8] = [

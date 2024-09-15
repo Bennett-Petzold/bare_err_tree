@@ -1,13 +1,6 @@
 use core::panic;
-use std::iter;
 
-use proc_macro::{Span, TokenStream};
-use quote::{quote, quote_spanned, ToTokens};
-use syn::{
-    parse::Parser, parse_macro_input, punctuated::Punctuated, spanned::Spanned, token::Comma,
-    Attribute, Data, DataEnum, DataStruct, DeriveInput, Error, Field, Fields, Generics, Ident,
-    Meta, Visibility,
-};
+use syn::{punctuated::Punctuated, token::Comma, Field, Fields, Ident, Meta, Visibility};
 
 pub fn name_attribute(args: &Punctuated<Meta, Comma>) -> Option<&proc_macro2::Ident> {
     args.iter().find_map(|arg| arg.path().get_ident())

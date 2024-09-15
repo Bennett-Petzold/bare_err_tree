@@ -1,0 +1,13 @@
+[package]
+name = "testing"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+bare_err_tree = { path = "../bare_err_tree" }
+
+[[bin]]
+name = "nesting"
+
+[[bin]]
+name = "simple_derive"

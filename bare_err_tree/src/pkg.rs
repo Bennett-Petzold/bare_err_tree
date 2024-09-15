@@ -1,16 +1,4 @@
-use core::{
-    borrow::Borrow,
-    error::Error,
-    fmt,
-    fmt::{Debug, Display, Formatter},
-    panic::Location,
-};
-
-use alloc::{
-    boxed::Box,
-    string::{String, ToString},
-    vec,
-};
+use core::{fmt::Debug, panic::Location};
 
 /// Captures extra information for [`ErrTree`][`crate::ErrTree`]
 /// automatically.
@@ -19,7 +7,7 @@ use alloc::{
 /// `#[track_caller]` to capture the correct callsite.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ErrTreePkg {
-    pub(crate) location: Option<&'static Location<'static>>,
+    pub location: Option<&'static Location<'static>>,
 }
 
 impl ErrTreePkg {

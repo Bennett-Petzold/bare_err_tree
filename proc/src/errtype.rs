@@ -1,12 +1,6 @@
-use core::panic;
-
-use proc_macro::{Span, TokenStream};
-use quote::{quote, quote_spanned, ToTokens};
-use syn::{
-    parse::Parser, parse_macro_input, punctuated::Punctuated, spanned::Spanned, token::Comma,
-    Attribute, Data, DataEnum, DataStruct, DeriveInput, Error, Field, Fields, Generics, Ident,
-    Meta, Visibility,
-};
+use proc_macro::Span;
+use quote::{quote, quote_spanned};
+use syn::{spanned::Spanned, DataEnum, DataStruct, Error, Ident};
 
 #[derive(Debug)]
 enum ErrType {
@@ -109,7 +103,7 @@ impl CollectedErrType {
         } else {
             let conv = |x, span, y| {
                 quote_spanned! {
-                    span=> bare_err_tree::AsErrTree::as_err_tree(& #ident :: #x #y),
+                    span=> #ident :: #x (x) => vec![bare_err_tree::AsErrTree::as_err_tree(x #y)],
                 }
             };
 
@@ -126,6 +120,8 @@ impl CollectedErrType {
 
             quote! {
                 let sources = match &self.inner {
+                    #(#gen_dyn)*
+                    #(#gen_tree)*
                     _ => vec![]
                 }.into();
             }

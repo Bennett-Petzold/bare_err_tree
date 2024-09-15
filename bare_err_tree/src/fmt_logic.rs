@@ -1,16 +1,9 @@
 use core::{
-    borrow::Borrow,
-    error::Error,
     fmt,
     fmt::{Debug, Display, Formatter},
-    panic::Location,
 };
 
-use alloc::{
-    boxed::Box,
-    string::{String, ToString},
-    vec,
-};
+use alloc::string::{String, ToString};
 
 use crate::ErrTree;
 
