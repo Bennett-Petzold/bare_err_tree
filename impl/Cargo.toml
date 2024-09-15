@@ -5,3 +5,9 @@ edition = "2021"
 
 [lib]
 proc-macro = true
+
+[dependencies]
+proc-macro2 = "1.0.86"
+quote = "1"
+# Extra traits for dev
+syn = { version = "2", features = ["full", "extra-traits"] }

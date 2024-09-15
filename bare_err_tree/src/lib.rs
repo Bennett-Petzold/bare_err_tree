@@ -6,6 +6,8 @@ use core::{
 };
 use std::panic::Location;
 
+pub use bare_err_tree_impl::*;
+
 /// Simple single-linked list, tracking from children
 ///
 /// The node with no parent is treated as empty.
@@ -145,7 +147,7 @@ pub struct ErrTree<'a> {
 ///
 /// This is automatically defined for `dyn` [`Error`], but the macro derives
 /// provide more information.
-pub trait AsErrTree {
+pub trait AsErrTree: Error {
     fn as_err_tree(&self) -> ErrTree<'_>;
 }
 
@@ -189,5 +191,25 @@ impl Error for ErrTree<'_> {
 impl Display for ErrTree<'_> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
         Display::fmt(&self.inner, f)
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub struct ErrTreePkg {
+    pub location: Option<&'static Location<'static>>,
+}
+
+impl ErrTreePkg {
+    #[track_caller]
+    pub fn new() -> Self {
+        Self {
+            location: Some(Location::caller()),
+        }
+    }
+}
+
+impl Default for ErrTreePkg {
+    fn default() -> Self {
+        Self::new()
     }
 }
