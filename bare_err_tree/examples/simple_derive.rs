@@ -4,7 +4,7 @@ use std::{
     marker::PhantomData,
 };
 
-use bare_err_tree::{err_tree, AsErrTree, ErrTree};
+use bare_err_tree::{err_tree, AsErrTree};
 
 fn main() {}
 

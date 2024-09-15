@@ -6,11 +6,11 @@ version = 3
 name = "bare_err_tree"
 version = "0.1.0"
 dependencies = [
- "bare_err_tree_impl",
+ "bare_err_tree_proc",
 ]
 
 [[package]]
-name = "bare_err_tree_impl"
+name = "bare_err_tree_proc"
 version = "0.1.0"
 dependencies = [
  "proc-macro2",

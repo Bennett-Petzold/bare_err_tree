@@ -1,14 +1,22 @@
+#![no_std]
+extern crate alloc;
+
 use core::{
     borrow::Borrow,
     error::Error,
     fmt,
     fmt::{Debug, Display, Formatter},
+    panic::Location,
 };
-use std::panic::Location;
 
-pub use bare_err_tree_impl::*;
+use alloc::{
+    boxed::Box,
+    string::{String, ToString},
+    vec,
+};
+pub use bare_err_tree_proc::*;
 
-/// Simple single-linked list, tracking from children
+/// Simple single-linked list, tracking from children.
 ///
 /// The node with no parent is treated as empty.
 #[derive(Debug, Clone, Copy)]
@@ -127,13 +135,11 @@ where
     S: Borrow<E>,
     E: AsErrTree + ?Sized,
 {
-    format!(
-        "{}",
-        ErrTreeFmt {
-            tree: &tree.borrow().as_err_tree(),
-            node: FmtDepthNode::new(false, None),
-        }
-    )
+    ErrTreeFmt {
+        tree: &tree.borrow().as_err_tree(),
+        node: FmtDepthNode::new(false, None),
+    }
+    .to_string()
 }
 
 #[derive(Debug, Clone)]
@@ -189,7 +195,7 @@ impl Error for ErrTree<'_> {
 }
 
 impl Display for ErrTree<'_> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         Display::fmt(&self.inner, f)
     }
 }

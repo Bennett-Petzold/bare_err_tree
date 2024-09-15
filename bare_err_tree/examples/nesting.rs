@@ -1,7 +1,7 @@
 use std::{
     error::Error,
     fmt::{Display, Formatter},
-    panic::{catch_unwind, Location},
+    panic::Location,
 };
 
 use bare_err_tree::{print_tree, tree_unwrap, AsErrTree, ErrTree};

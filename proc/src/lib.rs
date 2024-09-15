@@ -1,19 +1,13 @@
 extern crate proc_macro;
 use core::panic;
-use std::iter::{self, Once};
+use std::iter::{self};
 
 use proc_macro::{Span, TokenStream};
-use proc_macro2::TokenTree;
-use quote::{format_ident, quote, quote_spanned, ToTokens};
+use quote::{quote, quote_spanned, ToTokens};
 use syn::{
-    parse::Parser,
-    parse_macro_input,
-    punctuated::Punctuated,
-    spanned::Spanned,
-    token::{Comma, Impl, Paren},
-    Attribute, Data, DataEnum, DataStruct, DeriveInput, Error, Expr, Field, Fields, FieldsNamed,
-    GenericParam, Generics, Ident, ItemImpl, Meta, PatPath, Path, Type, TypeParam, TypePath,
-    Visibility,
+    parse::Parser, parse_macro_input, punctuated::Punctuated, spanned::Spanned, token::Comma,
+    Attribute, Data, DataEnum, DataStruct, DeriveInput, Error, Field, Fields, Generics, Ident,
+    Meta, Visibility,
 };
 
 #[derive(Debug)]
@@ -115,8 +109,6 @@ impl CollectedErrType {
             )
             .into_compile_error()
         } else {
-            let parent = quote! { self.inner };
-
             let conv = |x, span, y| {
                 quote_spanned! {
                     span=> bare_err_tree::AsErrTree::as_err_tree(& #ident :: #x #y),
@@ -670,6 +662,9 @@ fn err_tree_struct(
                 impl #impl_generics bare_err_tree::AsErrTree for #ident #ty_generics #where_clause {
                     #[track_caller]
                     fn as_err_tree(&self) -> bare_err_tree::ErrTree<'_> {
+                        extern crate alloc;
+                        use alloc::{boxed::Box, vec};
+
                         #sources
                         bare_err_tree::ErrTree {
                             inner: self,

@@ -1,3 +1,3 @@
 [workspace]
 resolver = "2"
-members = ["bare_err_tree", "impl"]
+members = ["bare_err_tree", "proc"]
