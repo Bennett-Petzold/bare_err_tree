@@ -1,3 +1,5 @@
+//! CRATE DOCS TODO
+
 #![no_std]
 extern crate alloc;
 
@@ -14,93 +16,14 @@ use alloc::{
     string::{String, ToString},
     vec,
 };
+
+mod pkg;
+pub use pkg::*;
+mod fmt_logic;
+use fmt_logic::*;
+
+#[cfg(feature = "derive")]
 pub use bare_err_tree_proc::*;
-
-/// Simple single-linked list, tracking from children.
-///
-/// The node with no parent is treated as empty.
-#[derive(Debug, Clone, Copy)]
-struct FmtDepthNode<'a> {
-    val: bool,
-    parent: Option<&'a FmtDepthNode<'a>>,
-}
-
-impl<'a> FmtDepthNode<'a> {
-    fn new(val: bool, parent: Option<&'a FmtDepthNode<'a>>) -> Self {
-        Self { val, parent }
-    }
-}
-
-/// Iterates nodes from bottom to top (backwards).
-impl Iterator for &FmtDepthNode<'_> {
-    type Item = bool;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        if let Some(parent) = self.parent {
-            let ret = self.val;
-            *self = parent;
-            Some(ret)
-        } else {
-            None
-        }
-    }
-}
-
-pub struct ErrTreeFmt<'a> {
-    tree: &'a ErrTree<'a>,
-    node: FmtDepthNode<'a>,
-}
-
-impl Display for ErrTreeFmt<'_> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        Display::fmt(self.tree, f)?;
-
-        let mut front_lines = String::new();
-        for parent_display in &self.node {
-            if parent_display {
-                front_lines = "│   ".to_string() + &front_lines;
-            } else {
-                front_lines = "    ".to_string() + &front_lines;
-            }
-        }
-
-        if let Some(location) = self.tree.location {
-            writeln!(f)?;
-            write!(f, "{}", front_lines)?;
-            if self.tree.sources().is_empty() {
-                write!(f, "╰─ ")?;
-            } else {
-                write!(f, "├─ ")?;
-            }
-            write!(f, "at \x1b[3m{}\x1b[0m", location)?;
-        }
-
-        let mut source_fmt = |source: &ErrTree, last: bool| {
-            // Preamble arrow connections
-            write!(f, "\n{0}│\n{0}", front_lines)?;
-            if !last {
-                write!(f, "├─▶ ")?;
-            } else {
-                write!(f, "╰─▶ ")?;
-            }
-
-            let next_node = FmtDepthNode::new(!last, Some(&self.node));
-            ErrTreeFmt {
-                tree: source,
-                node: next_node,
-            }
-            .fmt(f)
-        };
-
-        for source in &self.tree.sources()[..self.tree.sources().len().saturating_sub(1)] {
-            source_fmt(source, false)?;
-        }
-        if let Some(last_source) = self.tree.sources().last() {
-            source_fmt(last_source, true)?;
-        }
-        Ok(())
-    }
-}
 
 /// Alternative to [`Result::unwrap`] that formats the error as a tree.
 ///
@@ -142,6 +65,63 @@ where
     .to_string()
 }
 
+/// Intermediate struct for printing created by [`AsErrTree`].
+///
+/// # Fields
+/// * `inner`: The current error.
+/// * `sources`: The source error(s).
+/// * `location`: The callsite (use `#[track_caller]` to track properly).
+///
+/// # Manual Implementation Example
+/// ```
+/// # use std::{
+/// #   panic::Location,
+/// #   error::Error,
+/// #   fmt::{Display, Formatter},
+/// # };
+/// use bare_err_tree::{ErrTree, AsErrTree};
+///
+/// #[derive(Debug)]
+/// pub struct HighLevelIo {
+///     source: std::io::Error,
+///     _location: &'static Location<'static>,
+/// }
+///
+/// impl HighLevelIo {
+///     #[track_caller]
+///     pub fn new(source: std::io::Error) -> Self {
+///         Self {
+///             source,
+///             _location: Location::caller(),
+///         }
+///     }
+/// }
+///
+/// impl AsErrTree for HighLevelIo {
+///     fn as_err_tree(&self) -> ErrTree<'_> {
+///         let sources = Box::new([(&self.source as &dyn Error).as_err_tree()]);
+///         ErrTree {
+///             inner: self,
+///             sources,
+///             location: Some(self._location)
+///         }
+///     }
+/// }
+///
+/// impl Error for HighLevelIo {
+///     fn source(&self) -> Option<&(dyn Error + 'static)> {
+///         Some(&self.source)
+///     }
+/// }
+/// impl Display for HighLevelIo {
+///     # /*
+///     ...
+///     # */
+///     # fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), std::fmt::Error> {
+///         # write!(f, "High level IO error!")
+///     # }
+/// }
+/// ```
 #[derive(Debug, Clone)]
 pub struct ErrTree<'a> {
     pub inner: &'a dyn Error,
@@ -149,10 +129,11 @@ pub struct ErrTree<'a> {
     pub location: Option<&'a Location<'a>>,
 }
 
-/// Defines an [`Error`]'s conversion into [`ErrTree`].
+/// Defines an [`Error`]'s temporary view as an [`ErrTree`] for printing.
 ///
-/// This is automatically defined for `dyn` [`Error`], but the macro derives
-/// provide more information.
+/// This can be defined with [`err_tree`], manually (see [`ErrTree`]), or with
+/// the default `dyn` implementation. The `dyn` implementation does not track
+/// any more information than standard library errors or track multiple sources.
 pub trait AsErrTree: Error {
     fn as_err_tree(&self) -> ErrTree<'_>;
 }
@@ -167,6 +148,10 @@ impl<'a> AsErrTree for ErrTree<'a> {
     }
 }
 
+/// Displays with [`Error::source`] as the child.
+///
+/// Does not provide any of the extra tracking information or handle multiple
+/// sources.
 impl AsErrTree for dyn Error {
     fn as_err_tree(&self) -> ErrTree<'_> {
         let sources = match self.source() {
@@ -197,25 +182,5 @@ impl Error for ErrTree<'_> {
 impl Display for ErrTree<'_> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         Display::fmt(&self.inner, f)
-    }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
-pub struct ErrTreePkg {
-    pub location: Option<&'static Location<'static>>,
-}
-
-impl ErrTreePkg {
-    #[track_caller]
-    pub fn new() -> Self {
-        Self {
-            location: Some(Location::caller()),
-        }
-    }
-}
-
-impl Default for ErrTreePkg {
-    fn default() -> Self {
-        Self::new()
     }
 }
