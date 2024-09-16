@@ -1,0 +1,102 @@
+# Derived from: https://github.com/dnaka91/advent-of-code/blob/main/.github/workflows/docs.yml
+name: pages
+
+on:
+  push:
+    branches: [ "main" ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  docs:
+    permissions:
+      pages: write
+      id-token: write
+      contents: write
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@nightly
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Build docs
+        run: RUSTDOCFLAGS='--cfg docsrs' cargo doc -p bare_err_tree --all-features
+
+      - name: Add redirect
+        run: echo '<meta http-equiv="refresh" content="0;url=bare_err_tree/index.html">' > target/doc/index.html
+      - name: Remove lock file
+        run: rm target/doc/.lock
+
+      - uses: ben-z/gh-action-mutex@v1.0-alpha-8
+        with:
+          branch: gh-pages-mutex
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: target/doc 
+          target-folder: docs/
+
+  coverage:
+    permissions:
+      pages: write
+      id-token: write
+      contents: write
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - uses: awalsh128/cache-apt-pkgs-action@v1
+      with:
+        packages: jq \
+          wget
+
+    - uses: dtolnay/rust-toolchain@nightly
+      with:
+        components: llvm-tools-preview
+    - uses: Swatinem/rust-cache@v2
+    - uses: taiki-e/install-action@cargo-llvm-cov
+
+    - name: Regular Tests
+      run: cargo llvm-cov test --no-report --tests --all-features
+
+    - name: Doc Tests
+      run: cargo llvm-cov test --no-report --doc --all-features
+
+    - name: Coverage Shield
+      run: |
+        printf \
+          'https://img.shields.io/badge/Code_Coverage-%.2f%%25-blue' \
+          "$(cargo llvm-cov --quiet --summary-only --doctests --json | \
+          jq '.data[0].totals.lines.percent')" | \
+          wget -i - -O badge.svg
+
+    - name: Coverage Report
+      run: cargo llvm-cov report --doctests --html
+
+    - name: Add Shield to Report
+      run: mv badge.svg target/llvm-cov/html
+
+    - uses: ben-z/gh-action-mutex@v1.0-alpha-8
+      with:
+        branch: gh-pages-mutex
+
+    - name: Deploy to GitHub Pages
+      id: deployment
+      uses: JamesIves/github-pages-deploy-action@v4
+      with:
+        folder: target/llvm-cov/html
+        target-folder: coverage/

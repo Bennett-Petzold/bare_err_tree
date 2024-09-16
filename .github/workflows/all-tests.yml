@@ -1,0 +1,143 @@
+name: all-tests
+
+on: 
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+permissions: write-all
+
+jobs:
+  # From https://doc.rust-lang.org/rustc/instrument-coverage.html
+  gen-coverage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    environment:
+      name: ${{ github.ref_name != 'main' && 'testing' || 'unrestricted' }}
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - uses: dtolnay/rust-toolchain@nightly
+      with:
+        components: llvm-tools-preview
+    - uses: Swatinem/rust-cache@v2
+    - uses: taiki-e/install-action@cargo-llvm-cov
+
+    - name: Regular Tests
+      run: cargo llvm-cov test --no-report --tests --all-features
+
+    - name: Doc Tests
+      run: cargo llvm-cov test --no-report --doc --all-features
+
+    - name: Coverage Report
+      run: cargo llvm-cov report --doctests --cobertura > coverage.xml
+
+    - name: Generate Coverage Report
+      uses: clearlyip/code-coverage-report-action@v5
+      id: code_coverage_report_action
+      # Don't run for dependabot unless you fix PR comment permissions
+      if: ${{ github.actor != 'dependabot[bot]'}}
+      with:
+        # Location of the generated  coverage file
+        filename: 'coverage.xml'
+        only_list_changed_files: true
+        badge: true
+        fail_on_negative_difference: true
+
+    - name: Add Coverage PR Comment
+      uses: marocchino/sticky-pull-request-comment@v2
+      # Make sure the report was generated and that the event is actually a pull request, run if failed or success
+      if: steps.code_coverage_report_action.outputs.file != '' && github.event_name == 'pull_request' && (success() || failure())
+      with:
+        recreate: true
+        path: code-coverage-results.md
+
+  # See https://crates.io/crates/cargo-hack
+  build_features:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    environment:
+      name: ${{ github.ref_name != 'main' && 'testing' || 'unrestricted' }}
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - uses: dtolnay/rust-toolchain@stable
+    - uses: Swatinem/rust-cache@v2
+    - uses: taiki-e/install-action@cargo-hack
+
+    - run: |
+        cargo hack --each-feature build --ignore-private
+        cargo hack --each-feature test --ignore-private --no-run 
+
+  # From https://github.com/rust-lang/miri
+  miri:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    environment:
+      name: ${{ github.ref_name != 'main' && 'testing' || 'unrestricted' }}
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install Miri
+        run: |
+          rustup toolchain install nightly --component miri
+          rustup override set nightly
+          cargo miri setup
+      - name: Test with Miri
+        run: |
+          MIRIFLAGS="-Zmiri-disable-isolation" \
+            cargo miri test --all-features
+
+  # From https://doc.rust-lang.org/cargo/guide/continuous-integration.html#verifying-rust-version
+  # See https://crates.io/crates/cargo-hack
+  msrv:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    environment:
+      name: ${{ github.ref_name != 'main' && 'testing' || 'unrestricted' }}
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - uses: dtolnay/rust-toolchain@stable
+    - uses: Swatinem/rust-cache@v2
+    - uses: taiki-e/install-action@cargo-hack
+
+    - run: cargo hack check --version-range 1.81 --all-targets --all-features --ignore-private
+
+  test:
+    strategy:
+      matrix:
+        os: [ubuntu, windows, macos]
+        arch: [x86_64]
+        include:
+          - os: macos
+            arch: arm
+            triple: aarch64-apple-darwin
+    runs-on: ${{ format('{0}-latest', matrix.os) }}
+    timeout-minutes: 30
+
+    environment:
+      name: ${{ github.ref_name != 'main' && 'testing' || 'unrestricted' }}
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - uses: dtolnay/rust-toolchain@stable
+      if: ${{ matrix.triple == null }}
+    - uses: dtolnay/rust-toolchain@stable
+      if: ${{ matrix.triple }}
+      with:
+        target: ${{ matrix.triple }}
+
+    - uses: Swatinem/rust-cache@v2
+
+    - run: cargo test --verbose --all-features

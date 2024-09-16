@@ -5,9 +5,13 @@ edition = "2021"
 
 [dependencies]
 bare_err_tree = { path = "../bare_err_tree" }
+thiserror = "1.0.63"
 
 [[bin]]
 name = "nesting"
 
 [[bin]]
-name = "simple_derive"
+name = "derive_testing"
+
+[[bin]]
+name = "example"

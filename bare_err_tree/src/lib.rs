@@ -4,7 +4,8 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-//! CRATE DOCS TODO
+/*! CRATE DOCS TODO
+*/
 
 #![no_std]
 extern crate alloc;

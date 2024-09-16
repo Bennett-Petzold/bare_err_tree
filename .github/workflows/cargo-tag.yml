@@ -1,0 +1,33 @@
+name: cargo-tag
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  update-tag:
+    runs-on: ubuntu-latest
+    if: ${{ ! startsWith(github.ref, 'refs/tags/') }}
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.TAG_TOKEN }}
+
+    - uses: awalsh128/cache-apt-pkgs-action@v1
+      with:
+        packages: |
+          jq
+          libsodium-dev
+
+    - uses: dtolnay/rust-toolchain@stable
+
+    - name: Update tag with Cargo.toml
+      run: |
+        git config --global user.name 'Tag updating bot'
+        git config --global user.email 'bot@noreply.github.com'
+        git remote set-url origin https://x-access-token:${{ secrets.TAG_TOKEN }}@github.com/${{ github.repository }}
+        VERSION="$(cargo metadata --format-version 1 | jq '.packages | .[] | select(.name == "bare_err_tree")| .version' | tr -d '"')"
+        git tag -m '' -a v"$VERSION"
+        git push origin v"$VERSION"
+      continue-on-error: true
