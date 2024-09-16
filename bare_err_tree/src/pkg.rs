@@ -13,7 +13,7 @@ use core::{fmt::Debug, panic::Location};
 /// `#[track_caller]` to capture the correct callsite.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ErrTreePkg {
-    pub location: Option<&'static Location<'static>>,
+    pub(crate) location: Option<&'static Location<'static>>,
 }
 
 impl ErrTreePkg {

@@ -85,12 +85,12 @@ where
 /// #   error::Error,
 /// #   fmt::{Display, Formatter},
 /// # };
-/// use bare_err_tree::{ErrTree, AsErrTree};
+/// use bare_err_tree::{ErrTree, ErrTreePkg, AsErrTree};
 ///
 /// #[derive(Debug)]
 /// pub struct HighLevelIo {
 ///     source: std::io::Error,
-///     _location: &'static Location<'static>,
+///     _pkg: ErrTreePkg,
 /// }
 ///
 /// impl HighLevelIo {
@@ -98,7 +98,7 @@ where
 ///     pub fn new(source: std::io::Error) -> Self {
 ///         Self {
 ///             source,
-///             _location: Location::caller(),
+///             _pkg: ErrTreePkg::new(),
 ///         }
 ///     }
 /// }
@@ -106,11 +106,7 @@ where
 /// impl AsErrTree for HighLevelIo {
 ///     fn as_err_tree(&self) -> ErrTree<'_> {
 ///         let sources = Box::new([(&self.source as &dyn Error).as_err_tree()]);
-///         ErrTree {
-///             inner: self,
-///             sources,
-///             location: Some(self._location)
-///         }
+///         ErrTree::with_pkg(self, sources, self._pkg)
 ///     }
 /// }
 ///
@@ -133,6 +129,24 @@ pub struct ErrTree<'a> {
     pub inner: &'a dyn Error,
     pub sources: Box<[ErrTree<'a>]>,
     pub location: Option<&'a Location<'a>>,
+}
+
+impl<'a> ErrTree<'a> {
+    pub fn with_pkg(inner: &'a dyn Error, sources: Box<[ErrTree<'a>]>, pkg: ErrTreePkg) -> Self {
+        Self {
+            inner,
+            sources,
+            location: pkg.location,
+        }
+    }
+
+    pub fn no_pkg(inner: &'a dyn Error, sources: Box<[ErrTree<'a>]>) -> Self {
+        Self {
+            inner,
+            sources,
+            location: None,
+        }
+    }
 }
 
 /// Defines an [`Error`]'s temporary view as an [`ErrTree`] for printing.

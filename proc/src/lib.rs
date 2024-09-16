@@ -210,11 +210,7 @@ fn err_tree_struct(
                     #[track_caller]
                     fn as_err_tree(&self) -> bare_err_tree::ErrTree<'_> {
                         #sources
-                        bare_err_tree::ErrTree {
-                            inner: self,
-                            sources,
-                            location: self.#field_ident.location,
-                        }
+                        bare_err_tree::ErrTree::with_pkg(self, sources, self.#field_ident)
                     }
                 }
 
@@ -249,11 +245,7 @@ fn err_tree_struct(
                         use alloc::{boxed::Box, vec};
 
                         #sources
-                        bare_err_tree::ErrTree {
-                            inner: self,
-                            sources,
-                            location: self.#prev_len.location,
-                        }
+                        bare_err_tree::ErrTree::with_pkg(self, sources, self.#prev_len)
                     }
                 }
 
