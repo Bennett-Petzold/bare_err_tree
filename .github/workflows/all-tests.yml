@@ -91,9 +91,7 @@ jobs:
           rustup override set nightly
           cargo miri setup
       - name: Test with Miri
-        run: |
-          MIRIFLAGS="-Zmiri-disable-isolation" \
-            cargo miri test --all-features
+        run: cargo miri test --all-features
 
   # From https://doc.rust-lang.org/cargo/guide/continuous-integration.html#verifying-rust-version
   # See https://crates.io/crates/cargo-hack
