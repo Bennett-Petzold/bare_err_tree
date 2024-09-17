@@ -3,7 +3,7 @@
 [![Docs][PagesStatus]][Docs]
 
 # bare\_err\_tree
-`bare_err_tree` is a library to print a standard `Error` with a tree of sources.
+`bare_err_tree` is a `no_std` library to print a standard `Error` with a tree of sources.
 
 Support for the extra information prints does not change the type.
 It is added via macro or manual implementation of the `AsErrTree` trait (see
@@ -16,8 +16,6 @@ A library can use `bare_err_tree` for its errors without changing any types,
 and library users can ignore the the existence of this crate entirely. There is
 also support for including any implementor of `Error` in the tree with less
 information, so it works on top of std and other libraries.
-
-This crate is `no_std` with an allocator required.
 
 The formatting is borrowed from from [error-stack][ErrorStack].
 Please see the [contributors page](https://github.com/hashintel/hash/graphs/contributors) for appropriate credit.

@@ -16,9 +16,7 @@ jobs:
 
     - uses: awalsh128/cache-apt-pkgs-action@v1
       with:
-        packages: |
-          jq
-          libsodium-dev
+        packages: jq
 
     - uses: dtolnay/rust-toolchain@stable
 
@@ -27,6 +25,7 @@ jobs:
         git config --global user.name 'Tag updating bot'
         git config --global user.email 'bot@noreply.github.com'
         git remote set-url origin https://x-access-token:${{ secrets.TAG_TOKEN }}@github.com/${{ github.repository }}
+        cd bare_err_tree
         VERSION="$(cargo metadata --format-version 1 | jq '.packages | .[] | select(.name == "bare_err_tree")| .version' | tr -d '"')"
         git tag -m '' -a v"$VERSION"
         git push origin v"$VERSION"
