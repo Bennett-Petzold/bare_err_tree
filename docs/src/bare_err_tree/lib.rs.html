@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `bare_err_tree/src/lib.rs`."><title>lib.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-405f8b29f52305f8.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="bare_err_tree" data-themes="" data-resource-suffix="" data-rustdoc-version="1.83.0-nightly (c52c23b6f 2024-09-16)" data-channel="nightly" data-search-js="search-0cfde64e8ad3a7fe.js" data-settings-js="settings-7e3bb6c46e92e77c.js" ><script src="../../static.files/storage-29b1d5a9048d38fe.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-14659ec02b58af51.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-40f72c9259523cb3.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `bare_err_tree/src/lib.rs`."><title>lib.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-405f8b29f52305f8.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="bare_err_tree" data-themes="" data-resource-suffix="" data-rustdoc-version="1.83.0-nightly (28e8f01c2 2024-09-17)" data-channel="nightly" data-search-js="search-0cfde64e8ad3a7fe.js" data-settings-js="settings-7e3bb6c46e92e77c.js" ><script src="../../static.files/storage-29b1d5a9048d38fe.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-14659ec02b58af51.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-40f72c9259523cb3.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
 <a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
@@ -205,30 +205,33 @@
 <a href="#204" id="204">204</a>
 <a href="#205" id="205">205</a>
 <a href="#206" id="206">206</a>
-<a href="#207" id="207">207</a></pre></div><pre class="rust"><code><span class="comment">/*
+<a href="#207" id="207">207</a>
+<a href="#208" id="208">208</a>
+<a href="#209" id="209">209</a>
+<a href="#210" id="210">210</a>
+<a href="#211" id="211">211</a>
+<a href="#212" id="212">212</a>
+<a href="#213" id="213">213</a></pre></div><pre class="rust"><code><span class="comment">/*
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-</span><span class="doccomment">/*! CRATE DOCS TODO
+</span><span class="doccomment">/*!
+CRATE DOCS TODO
 */
 
 </span><span class="attr">#![no_std]
+
+#[cfg(feature = <span class="string">"heap_buffer"</span>)]
 </span><span class="kw">extern crate </span>alloc;
 
 <span class="kw">use </span>core::{
     borrow::Borrow,
+    cell::RefCell,
     error::Error,
-    fmt,
-    fmt::{Debug, Display, Formatter},
+    fmt::{<span class="self">self</span>, Debug},
     panic::Location,
-};
-
-<span class="kw">use </span>alloc::{
-    boxed::Box,
-    string::{String, ToString},
-    vec,
 };
 
 <span class="kw">mod </span>pkg;
@@ -246,7 +249,7 @@
 /// multiple sources ([`Error::source`] is designed around a single error
 /// source).
 </span><span class="attr">#[track_caller]
-</span><span class="kw">pub fn </span>tree_unwrap&lt;T, E, S&gt;(res: <span class="prelude-ty">Result</span>&lt;T, S&gt;) -&gt; T
+</span><span class="kw">pub fn </span>tree_unwrap&lt;<span class="kw">const </span>FRONT_MAX: usize, T, E, S&gt;(res: <span class="prelude-ty">Result</span>&lt;T, S&gt;) -&gt; T
 <span class="kw">where
     </span>S: Borrow&lt;E&gt;,
     E: AsErrTree + <span class="question-mark">?</span>Sized,
@@ -254,29 +257,59 @@
     <span class="kw">match </span>res {
         <span class="prelude-val">Ok</span>(x) =&gt; x,
         <span class="prelude-val">Err</span>(tree) =&gt; {
-            <span class="macro">panic!</span>(
-                <span class="string">"{}"</span>,
-                ErrTreeFmt {
-                    tree: <span class="kw-2">&amp;</span>tree.borrow().as_err_tree(),
-                    node: FmtDepthNode::new(<span class="bool-val">false</span>, <span class="prelude-val">None</span>),
-                }
-            );
+            tree.borrow().as_err_tree(<span class="kw-2">&amp;mut </span>|tree| {
+                <span class="attr">#[cfg(not(feature = <span class="string">"heap_buffer"</span>))]
+                </span><span class="kw">let </span>front_lines = RefCell::new([<span class="number">0</span>; FRONT_MAX]);
+
+                <span class="attr">#[cfg(feature = <span class="string">"heap_buffer"</span>)]
+                </span><span class="kw">let </span>front_lines = RefCell::new(alloc::string::String::new());
+
+                <span class="macro">panic!</span>(
+                    <span class="string">"{}"</span>,
+                    ErrTreeFmt::&lt;FRONT_MAX&gt; {
+                        tree,
+                        node: FmtDepthNode::new(<span class="bool-val">false</span>, <span class="prelude-val">None</span>),
+                        front_lines: <span class="kw-2">&amp;</span>front_lines,
+                    }
+                )
+            });
+            <span class="macro">unreachable!</span>()
         }
     }
 }
 
 <span class="doccomment">/// Produces [`ErrTree`] formatted output for an error.
+///
+/// TODO: document `FRONT_MAX`.
 </span><span class="attr">#[track_caller]
-</span><span class="kw">pub fn </span>print_tree&lt;E, S&gt;(tree: S) -&gt; String
+</span><span class="kw">pub fn </span>print_tree&lt;<span class="kw">const </span>FRONT_MAX: usize, E, S, F&gt;(
+    tree: S,
+    formatter: <span class="kw-2">&amp;mut </span>F,
+) -&gt; <span class="prelude-ty">Result</span>&lt;(), fmt::Error&gt;
 <span class="kw">where
     </span>S: Borrow&lt;E&gt;,
     E: AsErrTree + <span class="question-mark">?</span>Sized,
+    F: fmt::Write,
 {
-    ErrTreeFmt {
-        tree: <span class="kw-2">&amp;</span>tree.borrow().as_err_tree(),
-        node: FmtDepthNode::new(<span class="bool-val">false</span>, <span class="prelude-val">None</span>),
-    }
-    .to_string()
+    <span class="kw">let </span><span class="kw-2">mut </span>res = <span class="prelude-val">Ok</span>(());
+    tree.borrow().as_err_tree(<span class="kw-2">&amp;mut </span>|tree| {
+        <span class="attr">#[cfg(not(feature = <span class="string">"heap_buffer"</span>))]
+        </span><span class="kw">let </span>front_lines = RefCell::new([<span class="number">0</span>; FRONT_MAX]);
+
+        <span class="attr">#[cfg(feature = <span class="string">"heap_buffer"</span>)]
+        </span><span class="kw">let </span>front_lines = RefCell::new(alloc::string::String::new());
+
+        res = <span class="macro">write!</span>(
+            formatter,
+            <span class="string">"{}"</span>,
+            ErrTreeFmt::&lt;FRONT_MAX&gt; {
+                tree,
+                node: FmtDepthNode::new(<span class="bool-val">false</span>, <span class="prelude-val">None</span>),
+                front_lines: <span class="kw-2">&amp;</span>front_lines,
+            }
+        );
+    });
+    res
 }
 
 <span class="doccomment">/// Intermediate struct for printing created by [`AsErrTree`].
@@ -312,9 +345,12 @@
 /// }
 ///
 /// impl AsErrTree for HighLevelIo {
-///     fn as_err_tree(&amp;self) -&gt; ErrTree&lt;'_&gt; {
-///         let sources = Box::new([(&amp;self.source as &amp;dyn Error).as_err_tree()]);
-///         ErrTree::with_pkg(self, sources, self._pkg)
+///     fn as_err_tree(&amp;self, func: &amp;mut dyn FnMut(ErrTree&lt;'_&gt;)) {
+///         // Cast to AsErrTree via Error
+///         let source = &amp;(&amp;self.source as &amp;dyn Error) as &amp;dyn AsErrTree;
+///
+///         // Call the formatting function
+///         (func)(ErrTree::with_pkg(self, &amp;[&amp;[source]], self._pkg));
 ///     }
 /// }
 ///
@@ -334,13 +370,17 @@
 /// ```
 </span><span class="attr">#[derive(Debug, Clone)]
 </span><span class="kw">pub struct </span>ErrTree&lt;<span class="lifetime">'a</span>&gt; {
-    <span class="kw">pub </span>inner: <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw">dyn </span>Error,
-    <span class="kw">pub </span>sources: Box&lt;[ErrTree&lt;<span class="lifetime">'a</span>&gt;]&gt;,
-    <span class="kw">pub </span>location: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span>Location&lt;<span class="lifetime">'a</span>&gt;&gt;,
+    inner: <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw">dyn </span>Error,
+    sources: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>[<span class="kw-2">&amp;</span><span class="lifetime">'a </span>[<span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw">dyn </span>AsErrTree]],
+    location: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span>Location&lt;<span class="lifetime">'a</span>&gt;&gt;,
 }
 
 <span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; ErrTree&lt;<span class="lifetime">'a</span>&gt; {
-    <span class="kw">pub fn </span>with_pkg(inner: <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw">dyn </span>Error, sources: Box&lt;[ErrTree&lt;<span class="lifetime">'a</span>&gt;]&gt;, pkg: ErrTreePkg) -&gt; <span class="self">Self </span>{
+    <span class="kw">pub fn </span>with_pkg(
+        inner: <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw">dyn </span>Error,
+        sources: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>[<span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span><span class="kw">dyn </span>AsErrTree]],
+        pkg: ErrTreePkg,
+    ) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             inner,
             sources,
@@ -348,7 +388,7 @@
         }
     }
 
-    <span class="kw">pub fn </span>no_pkg(inner: <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw">dyn </span>Error, sources: Box&lt;[ErrTree&lt;<span class="lifetime">'a</span>&gt;]&gt;) -&gt; <span class="self">Self </span>{
+    <span class="kw">pub fn </span>no_pkg(inner: <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw">dyn </span>Error, sources: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>[<span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span><span class="kw">dyn </span>AsErrTree]]) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             inner,
             sources,
@@ -363,53 +403,25 @@
 /// the default `dyn` implementation. The `dyn` implementation does not track
 /// any more information than standard library errors or track multiple sources.
 </span><span class="kw">pub trait </span>AsErrTree: Error {
-    <span class="kw">fn </span>as_err_tree(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; ErrTree&lt;<span class="lifetime">'_</span>&gt;;
+    <span class="doccomment">/// Constructs the [`ErrTree`] internally and calls `func` on it.
+    </span><span class="kw">fn </span>as_err_tree(<span class="kw-2">&amp;</span><span class="self">self</span>, func: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>FnMut(ErrTree&lt;<span class="lifetime">'_</span>&gt;));
 }
-
-<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; AsErrTree <span class="kw">for </span>ErrTree&lt;<span class="lifetime">'a</span>&gt; {
-    <span class="kw">fn </span>as_err_tree(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; ErrTree&lt;<span class="lifetime">'_</span>&gt; {
-        <span class="self">Self </span>{
-            inner: <span class="self">self</span>.inner,
-            sources: <span class="self">self</span>.sources.clone(),
-            location: <span class="self">self</span>.location,
-        }
-    }
-}
-
 <span class="doccomment">/// Displays with [`Error::source`] as the child.
 ///
 /// Does not provide any of the extra tracking information or handle multiple
 /// sources.
 </span><span class="kw">impl </span>AsErrTree <span class="kw">for dyn </span>Error {
-    <span class="kw">fn </span>as_err_tree(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; ErrTree&lt;<span class="lifetime">'_</span>&gt; {
-        <span class="kw">let </span>sources = <span class="kw">match </span><span class="self">self</span>.source() {
-            <span class="prelude-val">Some</span>(e) =&gt; <span class="macro">vec!</span>[e.as_err_tree()],
-            <span class="prelude-val">None </span>=&gt; <span class="macro">vec!</span>[],
-        }
-        .into_boxed_slice();
-        ErrTree {
-            inner: <span class="self">self</span>,
-            sources,
-            location: <span class="prelude-val">None</span>,
+    <span class="kw">fn </span>as_err_tree(<span class="kw-2">&amp;</span><span class="self">self</span>, func: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>FnMut(ErrTree&lt;<span class="lifetime">'_</span>&gt;)) {
+        <span class="kw">match </span><span class="self">self</span>.source() {
+            <span class="prelude-val">Some</span>(e) =&gt; (func)(ErrTree::no_pkg(<span class="self">self</span>, <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>e <span class="kw">as </span><span class="kw-2">&amp;</span><span class="kw">dyn </span>AsErrTree]])),
+            <span class="prelude-val">None </span>=&gt; (func)(ErrTree::no_pkg(<span class="self">self</span>, <span class="kw-2">&amp;</span>[])),
         }
     }
 }
 
-<span class="kw">impl </span>ErrTree&lt;<span class="lifetime">'_</span>&gt; {
-    <span class="kw">fn </span>sources(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>[ErrTree&lt;<span class="lifetime">'_</span>&gt;] {
-        <span class="kw-2">&amp;</span><span class="self">self</span>.sources
-    }
-}
-
-<span class="kw">impl </span>Error <span class="kw">for </span>ErrTree&lt;<span class="lifetime">'_</span>&gt; {
-    <span class="kw">fn </span>source(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>(<span class="kw">dyn </span>Error + <span class="lifetime">'static</span>)&gt; {
-        <span class="self">self</span>.inner.source()
-    }
-}
-
-<span class="kw">impl </span>Display <span class="kw">for </span>ErrTree&lt;<span class="lifetime">'_</span>&gt; {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
-        Display::fmt(<span class="kw-2">&amp;</span><span class="self">self</span>.inner, f)
+<span class="kw">impl</span>&lt;T: <span class="question-mark">?</span>Sized + AsErrTree&gt; AsErrTree <span class="kw">for </span><span class="kw-2">&amp;</span>T {
+    <span class="kw">fn </span>as_err_tree(<span class="kw-2">&amp;</span><span class="self">self</span>, func: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>FnMut(ErrTree&lt;<span class="lifetime">'_</span>&gt;)) {
+        T::as_err_tree(<span class="self">self</span>, func)
     }
 }
 </code></pre></div></section></main></body></html>
