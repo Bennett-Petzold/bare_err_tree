@@ -4,24 +4,21 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-/*! CRATE DOCS TODO
+/*!
+CRATE DOCS TODO
 */
 
 #![no_std]
+
+#[cfg(feature = "heap_buffer")]
 extern crate alloc;
 
 use core::{
     borrow::Borrow,
+    cell::RefCell,
     error::Error,
-    fmt,
-    fmt::{Debug, Display, Formatter},
+    fmt::{self, Debug},
     panic::Location,
-};
-
-use alloc::{
-    boxed::Box,
-    string::{String, ToString},
-    vec,
 };
 
 mod pkg;
@@ -39,7 +36,7 @@ pub use bare_err_tree_proc::*;
 /// multiple sources ([`Error::source`] is designed around a single error
 /// source).
 #[track_caller]
-pub fn tree_unwrap<T, E, S>(res: Result<T, S>) -> T
+pub fn tree_unwrap<const FRONT_MAX: usize, T, E, S>(res: Result<T, S>) -> T
 where
     S: Borrow<E>,
     E: AsErrTree + ?Sized,
@@ -47,29 +44,59 @@ where
     match res {
         Ok(x) => x,
         Err(tree) => {
-            panic!(
-                "{}",
-                ErrTreeFmt {
-                    tree: &tree.borrow().as_err_tree(),
-                    node: FmtDepthNode::new(false, None),
-                }
-            );
+            tree.borrow().as_err_tree(&mut |tree| {
+                #[cfg(not(feature = "heap_buffer"))]
+                let front_lines = RefCell::new([0; FRONT_MAX]);
+
+                #[cfg(feature = "heap_buffer")]
+                let front_lines = RefCell::new(alloc::string::String::new());
+
+                panic!(
+                    "{}",
+                    ErrTreeFmt::<FRONT_MAX> {
+                        tree,
+                        node: FmtDepthNode::new(false, None),
+                        front_lines: &front_lines,
+                    }
+                )
+            });
+            unreachable!()
         }
     }
 }
 
 /// Produces [`ErrTree`] formatted output for an error.
+///
+/// TODO: document `FRONT_MAX`.
 #[track_caller]
-pub fn print_tree<E, S>(tree: S) -> String
+pub fn print_tree<const FRONT_MAX: usize, E, S, F>(
+    tree: S,
+    formatter: &mut F,
+) -> Result<(), fmt::Error>
 where
     S: Borrow<E>,
     E: AsErrTree + ?Sized,
+    F: fmt::Write,
 {
-    ErrTreeFmt {
-        tree: &tree.borrow().as_err_tree(),
-        node: FmtDepthNode::new(false, None),
-    }
-    .to_string()
+    let mut res = Ok(());
+    tree.borrow().as_err_tree(&mut |tree| {
+        #[cfg(not(feature = "heap_buffer"))]
+        let front_lines = RefCell::new([0; FRONT_MAX]);
+
+        #[cfg(feature = "heap_buffer")]
+        let front_lines = RefCell::new(alloc::string::String::new());
+
+        res = write!(
+            formatter,
+            "{}",
+            ErrTreeFmt::<FRONT_MAX> {
+                tree,
+                node: FmtDepthNode::new(false, None),
+                front_lines: &front_lines,
+            }
+        );
+    });
+    res
 }
 
 /// Intermediate struct for printing created by [`AsErrTree`].
@@ -105,9 +132,12 @@ where
 /// }
 ///
 /// impl AsErrTree for HighLevelIo {
-///     fn as_err_tree(&self) -> ErrTree<'_> {
-///         let sources = Box::new([(&self.source as &dyn Error).as_err_tree()]);
-///         ErrTree::with_pkg(self, sources, self._pkg)
+///     fn as_err_tree(&self, func: &mut dyn FnMut(ErrTree<'_>)) {
+///         // Cast to AsErrTree via Error
+///         let source = &(&self.source as &dyn Error) as &dyn AsErrTree;
+///
+///         // Call the formatting function
+///         (func)(ErrTree::with_pkg(self, &[&[source]], self._pkg));
 ///     }
 /// }
 ///
@@ -127,13 +157,17 @@ where
 /// ```
 #[derive(Debug, Clone)]
 pub struct ErrTree<'a> {
-    pub inner: &'a dyn Error,
-    pub sources: Box<[ErrTree<'a>]>,
-    pub location: Option<&'a Location<'a>>,
+    inner: &'a dyn Error,
+    sources: &'a [&'a [&'a dyn AsErrTree]],
+    location: Option<&'a Location<'a>>,
 }
 
 impl<'a> ErrTree<'a> {
-    pub fn with_pkg(inner: &'a dyn Error, sources: Box<[ErrTree<'a>]>, pkg: ErrTreePkg) -> Self {
+    pub fn with_pkg(
+        inner: &'a dyn Error,
+        sources: &'a [&[&dyn AsErrTree]],
+        pkg: ErrTreePkg,
+    ) -> Self {
         Self {
             inner,
             sources,
@@ -141,7 +175,7 @@ impl<'a> ErrTree<'a> {
         }
     }
 
-    pub fn no_pkg(inner: &'a dyn Error, sources: Box<[ErrTree<'a>]>) -> Self {
+    pub fn no_pkg(inner: &'a dyn Error, sources: &'a [&[&dyn AsErrTree]]) -> Self {
         Self {
             inner,
             sources,
@@ -156,52 +190,24 @@ impl<'a> ErrTree<'a> {
 /// the default `dyn` implementation. The `dyn` implementation does not track
 /// any more information than standard library errors or track multiple sources.
 pub trait AsErrTree: Error {
-    fn as_err_tree(&self) -> ErrTree<'_>;
+    /// Constructs the [`ErrTree`] internally and calls `func` on it.
+    fn as_err_tree(&self, func: &mut dyn FnMut(ErrTree<'_>));
 }
-
-impl<'a> AsErrTree for ErrTree<'a> {
-    fn as_err_tree(&self) -> ErrTree<'_> {
-        Self {
-            inner: self.inner,
-            sources: self.sources.clone(),
-            location: self.location,
-        }
-    }
-}
-
 /// Displays with [`Error::source`] as the child.
 ///
 /// Does not provide any of the extra tracking information or handle multiple
 /// sources.
 impl AsErrTree for dyn Error {
-    fn as_err_tree(&self) -> ErrTree<'_> {
-        let sources = match self.source() {
-            Some(e) => vec![e.as_err_tree()],
-            None => vec![],
-        }
-        .into_boxed_slice();
-        ErrTree {
-            inner: self,
-            sources,
-            location: None,
+    fn as_err_tree(&self, func: &mut dyn FnMut(ErrTree<'_>)) {
+        match self.source() {
+            Some(e) => (func)(ErrTree::no_pkg(self, &[&[&e as &dyn AsErrTree]])),
+            None => (func)(ErrTree::no_pkg(self, &[])),
         }
     }
 }
 
-impl ErrTree<'_> {
-    fn sources(&self) -> &[ErrTree<'_>] {
-        &self.sources
-    }
-}
-
-impl Error for ErrTree<'_> {
-    fn source(&self) -> Option<&(dyn Error + 'static)> {
-        self.inner.source()
-    }
-}
-
-impl Display for ErrTree<'_> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        Display::fmt(&self.inner, f)
+impl<T: ?Sized + AsErrTree> AsErrTree for &T {
+    fn as_err_tree(&self, func: &mut dyn FnMut(ErrTree<'_>)) {
+        T::as_err_tree(self, func)
     }
 }

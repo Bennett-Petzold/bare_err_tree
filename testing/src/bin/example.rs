@@ -7,10 +7,9 @@
 use std::{
     error::Error,
     fmt::{self, Display, Formatter},
-    marker::PhantomData,
 };
 
-use bare_err_tree::{err_tree, print_tree, AsErrTree};
+use bare_err_tree::{err_tree, print_tree};
 use thiserror::Error;
 
 fn main() {
@@ -23,7 +22,9 @@ fn main() {
         ],
     )))
     .into();
-    println!("{}", print_tree(fatal));
+    let mut formatted = String::new();
+    print_tree::<60, _, _, _>(fatal, &mut formatted).unwrap();
+    println!("{formatted}")
 }
 
 #[derive(Debug, Error)]

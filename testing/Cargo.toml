@@ -8,9 +8,6 @@ bare_err_tree = { path = "../bare_err_tree" }
 thiserror = "1.0.63"
 
 [[bin]]
-name = "nesting"
-
-[[bin]]
 name = "derive_testing"
 
 [[bin]]

@@ -8,19 +8,25 @@ use proc_macro::Span;
 use quote::{quote, quote_spanned};
 use syn::{spanned::Spanned, DataEnum, DataStruct, Error, Ident};
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+enum Sizing {
+    Static(usize),
+    Dynamic,
+}
+
 #[derive(Debug)]
 enum ErrType {
     Dyn((Ident, proc_macro2::Span)),
     Tree((Ident, proc_macro2::Span)),
-    DynSlice((Ident, proc_macro2::Span)),
-    TreeSlice((Ident, proc_macro2::Span)),
+    DynSlice((Ident, proc_macro2::Span, Sizing)),
+    TreeSlice((Ident, proc_macro2::Span, Sizing)),
 }
 
 pub struct CollectedErrType {
     r#dyn: Vec<(Ident, proc_macro2::Span)>,
     tree: Vec<(Ident, proc_macro2::Span)>,
-    dyniter: Vec<(Ident, proc_macro2::Span)>,
-    treeiter: Vec<(Ident, proc_macro2::Span)>,
+    dyniter: Vec<(Ident, proc_macro2::Span, Sizing)>,
+    treeiter: Vec<(Ident, proc_macro2::Span, Sizing)>,
 }
 
 impl FromIterator<ErrType> for CollectedErrType {
@@ -56,46 +62,80 @@ impl CollectedErrType {
 
         let conv = |x, span, y| {
             quote_spanned! {
-                span=> bare_err_tree::AsErrTree::as_err_tree(& self.#x #y),
+                span=> &(& self.#x #y) as &dyn bare_err_tree::AsErrTree,
             }
         };
 
-        let conv_vec = |x, span, y| {
-            quote_spanned! {
-                span=> #parent.#x.iter().map(|z|
-                    bare_err_tree::AsErrTree::as_err_tree(z #y)
-                ).collect::<Vec<_>>(),
+        let conv_vec = |x, span, sizing, y| match sizing {
+            Sizing::Dynamic => {
+                quote_spanned! {
+                    span=> let #x = #parent.#x.iter().map(|z|
+                        z #y
+                    ).collect::<alloc::vec::Vec<_>>();
+                    let #x = #x.iter().map(|z|
+                        z as &dyn bare_err_tree::AsErrTree
+                    ).collect::<alloc::vec::Vec<_>>();
+                    let #x = #x.as_slice();
+                }
+            }
+            Sizing::Static(s) => {
+                todo!()
             }
         };
 
         let gen_dyn: Vec<_> = self
             .r#dyn
             .iter()
-            .map(|x| conv(&x.0, x.1, quote! {as &dyn Error}))
+            .map(|x| conv(&x.0, x.1, quote! {as &dyn core::error::Error}))
             .collect();
         let gen_tree: Vec<_> = self
             .tree
             .iter()
             .map(|x| conv(&x.0, x.1, quote! {}))
             .collect();
+
         let gen_dyniter: Vec<_> = self
             .dyniter
             .iter()
-            .map(|x| conv_vec(&x.0, x.1, quote! {as &dyn Error}))
+            .map(|x| conv_vec(&x.0, x.1, x.2, quote! {as &dyn core::error::Error}))
             .collect();
         let gen_treeiter: Vec<_> = self
             .treeiter
             .iter()
-            .map(|x| conv_vec(&x.0, x.1, quote! {}))
+            .map(|x| conv_vec(&x.0, x.1, x.2, quote! {}))
             .collect();
+        let iter_ids = self
+            .dyniter
+            .iter()
+            .chain(self.treeiter.iter())
+            .map(|x| &x.0);
+
+        let any_dyn = self
+            .dyniter
+            .iter()
+            .chain(self.treeiter.iter())
+            .any(|x| x.2 == Sizing::Dynamic);
+        let prelude = if any_dyn {
+            quote! {
+                extern crate alloc;
+            }
+        } else {
+            quote! {}
+        };
 
         quote! {
-            let sources = vec![
-                vec![#(#gen_dyn)*],
-                vec![#(#gen_tree)*],
-                #(#gen_dyniter)*
-                #(#gen_treeiter)*
-            ].into_iter().flatten().collect();
+            #prelude
+            let gen_dyn = [#(#gen_dyn)*];
+            let gen_tree = [#(#gen_tree)*];
+            #(#gen_dyniter)*
+            #(#gen_treeiter)*
+            let sources = [
+                gen_dyn.as_slice(),
+                gen_tree.as_slice(),
+                #(#iter_ids,)*
+            ];
+            let sources = sources.as_slice();
+            (func)(bare_err_tree::ErrTree::with_pkg(self, sources, _err_tree_pkg))
         }
     }
 
@@ -109,27 +149,56 @@ impl CollectedErrType {
         } else {
             let conv = |x, span, y| {
                 quote_spanned! {
-                    span=> #ident :: #x (x) => vec![bare_err_tree::AsErrTree::as_err_tree(x #y)],
+                    span=> #ident :: #x (x) => {
+                        let x = &(x #y) as &dyn bare_err_tree::AsErrTree;
+                        let x = [x];
+                        let x = [x.as_slice()];
+                        (func)(bare_err_tree::ErrTree::with_pkg(self, x.as_slice(), _err_tree_pkg))
+                    },
+                }
+            };
+
+            let conv_vec = |x, span, y| {
+                quote_spanned! {
+                    span=> #ident::.#x (x) => {
+                        todo!()
+                    },
                 }
             };
 
             let gen_dyn: Vec<_> = self
                 .r#dyn
                 .iter()
-                .map(|x| conv(&x.0, x.1, quote! {as &dyn Error}))
+                .map(|x| conv(&x.0, x.1, quote! {as &dyn core::error::Error}))
                 .collect();
             let gen_tree: Vec<_> = self
                 .tree
                 .iter()
                 .map(|x| conv(&x.0, x.1, quote! {}))
                 .collect();
+            let gen_dyniter: Vec<_> = self
+                .dyniter
+                .iter()
+                .map(|x| conv_vec(&x.0, x.1, quote! {as &dyn core::error::Error}))
+                .collect();
+            let gen_treeiter: Vec<_> = self
+                .treeiter
+                .iter()
+                .map(|x| conv_vec(&x.0, x.1, quote! {}))
+                .collect();
 
             quote! {
                 let sources = match &self.inner {
                     #(#gen_dyn)*
                     #(#gen_tree)*
-                    _ => vec![]
-                }.into();
+                    #(#gen_dyniter)*
+                    #(#gen_treeiter)*
+                    _ => {
+                        let empty = [];
+                        let empty = [empty.as_slice()];
+                        (func)(bare_err_tree::ErrTree::with_pkg(self, empty.as_slice(), _err_tree_pkg))
+                    }
+                };
             }
         }
     }
@@ -146,12 +215,16 @@ pub fn get_struct_macros(data: &DataStruct) -> CollectedErrType {
                         .find_map(|seg| match seg.ident.to_string().as_str() {
                             "dyn_err" => Some(ErrType::Dyn((f.ident.clone().unwrap(), f.span()))),
                             "tree_err" => Some(ErrType::Tree((f.ident.clone().unwrap(), f.span()))),
-                            "dyn_iter_err" => {
-                                Some(ErrType::DynSlice((f.ident.clone().unwrap(), f.span())))
-                            }
-                            "tree_iter_err" => {
-                                Some(ErrType::TreeSlice((f.ident.clone().unwrap(), f.span())))
-                            }
+                            "dyn_iter_err" => Some(ErrType::DynSlice((
+                                f.ident.clone().unwrap(),
+                                f.span(),
+                                Sizing::Dynamic,
+                            ))),
+                            "tree_iter_err" => Some(ErrType::TreeSlice((
+                                f.ident.clone().unwrap(),
+                                f.span(),
+                                Sizing::Dynamic,
+                            ))),
                             _ => None,
                         })
                 })
@@ -171,10 +244,16 @@ pub fn get_enum_macros(data: &DataEnum) -> CollectedErrType {
                         .find_map(|seg| match seg.ident.to_string().as_str() {
                             "dyn_err" => Some(ErrType::Dyn((f.ident.clone(), f.span()))),
                             "tree_err" => Some(ErrType::Tree((f.ident.clone(), f.span()))),
-                            "dyn_iter_err" => Some(ErrType::DynSlice((f.ident.clone(), f.span()))),
-                            "tree_iter_err" => {
-                                Some(ErrType::TreeSlice((f.ident.clone(), f.span())))
-                            }
+                            "dyn_iter_err" => Some(ErrType::DynSlice((
+                                f.ident.clone(),
+                                f.span(),
+                                Sizing::Dynamic,
+                            ))),
+                            "tree_iter_err" => Some(ErrType::TreeSlice((
+                                f.ident.clone(),
+                                f.span(),
+                                Sizing::Dynamic,
+                            ))),
                             _ => None,
                         })
                 })

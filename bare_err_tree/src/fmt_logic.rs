@@ -5,11 +5,10 @@
  */
 
 use core::{
-    fmt,
-    fmt::{Debug, Display, Formatter},
+    cell::RefCell,
+    fmt::{self, Debug, Display, Formatter},
+    str,
 };
-
-use alloc::string::{String, ToString};
 
 use crate::ErrTree;
 
@@ -43,28 +42,80 @@ impl Iterator for &FmtDepthNode<'_> {
     }
 }
 
-pub(crate) struct ErrTreeFmt<'a> {
-    pub tree: &'a ErrTree<'a>,
+pub(crate) struct ErrTreeFmt<'a, const FRONT_MAX: usize> {
+    pub tree: ErrTree<'a>,
     pub node: FmtDepthNode<'a>,
+    /// Most be initialized large enough to fit 6 x (max depth) bytes
+    #[cfg(not(feature = "heap_buffer"))]
+    pub front_lines: &'a RefCell<[u8]>,
+    #[cfg(feature = "heap_buffer")]
+    pub front_lines: &'a RefCell<alloc::string::String>,
 }
 
-impl Display for ErrTreeFmt<'_> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        Display::fmt(self.tree, f)?;
+/// Workaround for lack of `const` in [`core::cmp::max`].
+const fn max_const(lhs: usize, rhs: usize) -> usize {
+    if lhs >= rhs {
+        lhs
+    } else {
+        rhs
+    }
+}
 
-        let mut front_lines = String::new();
-        for parent_display in &self.node {
-            if parent_display {
-                front_lines = "│   ".to_string() + &front_lines;
-            } else {
-                front_lines = "    ".to_string() + &front_lines;
-            }
-        }
+const CONTINUING: &str = "│   ";
+const DANGLING: &str = "    ";
+const MAX_CELL_LEN: usize = max_const(CONTINUING.len(), DANGLING.len());
+
+impl<const FRONT_MAX: usize> ErrTreeFmt<'_, FRONT_MAX> {
+    /// Preamble arrow connections
+    #[inline]
+    fn write_front_lines(
+        &self,
+        f: &mut Formatter<'_>,
+        #[cfg(not(feature = "heap_buffer"))] scratch_fill: usize,
+    ) -> fmt::Result {
+        let front_lines = self.front_lines.borrow();
+
+        #[cfg(not(feature = "heap_buffer"))]
+        let front_lines = str::from_utf8(&front_lines[..scratch_fill])
+            .expect("All characters are static and guaranteed to be valid UTF-8");
+
+        write!(f, "\n{0}", front_lines)
+    }
+
+    /// Push in the correct fill characters
+    #[inline]
+    fn add_front_line(&self, last: bool, #[cfg(not(feature = "heap_buffer"))] scratch_fill: usize) {
+        let chars: &str = if last { DANGLING } else { CONTINUING };
+
+        #[cfg(not(feature = "heap_buffer"))]
+        self.front_lines.borrow_mut()[scratch_fill..scratch_fill + chars.len()]
+            .copy_from_slice(chars.as_bytes());
+
+        #[cfg(feature = "heap_buffer")]
+        self.front_lines.borrow_mut().push_str(chars);
+    }
+}
+
+impl<const FRONT_MAX: usize> Display for ErrTreeFmt<'_, FRONT_MAX> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        Display::fmt(self.tree.inner, f)?;
+
+        // Any bytes after this are uninitialized
+        // Handles the two sequences being different lengths
+        let scratch_fill: usize = self
+            .node
+            .into_iter()
+            .map(|x| if x { CONTINUING.len() } else { DANGLING.len() })
+            .sum();
 
         if let Some(location) = self.tree.location {
-            writeln!(f)?;
-            write!(f, "{}", front_lines)?;
-            if self.tree.sources().is_empty() {
+            self.write_front_lines(
+                f,
+                #[cfg(not(feature = "heap_buffer"))]
+                scratch_fill,
+            )?;
+
+            if self.tree.sources.is_empty() {
                 write!(f, "╰─ ")?;
             } else {
                 write!(f, "├─ ")?;
@@ -72,9 +123,19 @@ impl Display for ErrTreeFmt<'_> {
             write!(f, "at \x1b[3m{}\x1b[0m", location)?;
         }
 
-        let mut source_fmt = |source: &ErrTree, last: bool| {
-            // Preamble arrow connections
-            write!(f, "\n{0}│\n{0}", front_lines)?;
+        let mut source_fmt = |source: ErrTree, last: bool| {
+            self.write_front_lines(
+                f,
+                #[cfg(not(feature = "heap_buffer"))]
+                scratch_fill,
+            )?;
+            write!(f, "│")?;
+            self.write_front_lines(
+                f,
+                #[cfg(not(feature = "heap_buffer"))]
+                scratch_fill,
+            )?;
+
             if !last {
                 write!(f, "├─▶ ")?;
             } else {
@@ -82,19 +143,62 @@ impl Display for ErrTreeFmt<'_> {
             }
 
             let next_node = FmtDepthNode::new(!last, Some(&self.node));
-            ErrTreeFmt {
+            ErrTreeFmt::<FRONT_MAX> {
                 tree: source,
                 node: next_node,
+                front_lines: self.front_lines,
             }
             .fmt(f)
         };
 
-        for source in &self.tree.sources()[..self.tree.sources().len().saturating_sub(1)] {
-            source_fmt(source, false)?;
-        }
-        if let Some(last_source) = self.tree.sources().last() {
-            source_fmt(last_source, true)?;
-        }
+        let sources_len: usize = self.tree.sources.iter().map(|x| x.len()).sum();
+        let mut sources_iter = self.tree.sources.iter().flat_map(|x| x.iter());
+
+        if scratch_fill + MAX_CELL_LEN >= FRONT_MAX {
+            // Stop printing deeper in the stack past this point
+            writeln!(f, "{:.<1$}", "", MAX_CELL_LEN)?;
+        } else {
+            // Normal operation
+
+            for _ in 0..sources_len.saturating_sub(1) {
+                self.add_front_line(
+                    false,
+                    #[cfg(not(feature = "heap_buffer"))]
+                    scratch_fill,
+                );
+
+                let mut res = Ok(());
+                sources_iter
+                .next()
+                .expect(
+                    "This is guaranteed to be within the iterator length by previous calculation",
+                )
+                .as_err_tree(&mut |source| {
+                    res = source_fmt(source, false);
+                });
+                res?
+            }
+
+            if sources_len > 0 {
+                self.add_front_line(
+                    true,
+                    #[cfg(not(feature = "heap_buffer"))]
+                    scratch_fill,
+                );
+
+                let mut res = Ok(());
+                sources_iter
+                .next()
+                .expect(
+                    "This is guaranteed to be within the iterator length by previous calculation",
+                )
+                .as_err_tree(&mut |last_source| {
+                    res = source_fmt(last_source, true);
+                });
+                res?
+            }
+        };
+
         Ok(())
     }
 }

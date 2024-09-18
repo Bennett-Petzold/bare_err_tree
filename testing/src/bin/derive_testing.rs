@@ -25,7 +25,7 @@ impl Display for InnerErrStruct {
     }
 }
 
-//#[err_tree(name = ErrStructTree)]
+#[expect(dead_code)]
 #[err_tree]
 #[derive(Default, Debug)]
 struct ErrStruct<
@@ -54,6 +54,7 @@ impl<const C: usize, Tree: AsErrTree, Err: Error> Display for ErrStruct<'_, '_, 
     }
 }
 
+#[expect(dead_code)]
 #[err_tree(ErrEnumWrap)]
 #[derive(Debug, Clone, Copy)]
 enum ErrEnum {

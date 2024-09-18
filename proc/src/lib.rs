@@ -208,9 +208,9 @@ fn err_tree_struct(
                 #[automatically_derived]
                 impl #impl_generics bare_err_tree::AsErrTree for #ident #ty_generics #where_clause {
                     #[track_caller]
-                    fn as_err_tree(&self) -> bare_err_tree::ErrTree<'_> {
+                    fn as_err_tree(&self, func: &mut dyn FnMut(bare_err_tree::ErrTree<'_>)) {
+                        let _err_tree_pkg = self.#field_ident;
                         #sources
-                        bare_err_tree::ErrTree::with_pkg(self, sources, self.#field_ident)
                     }
                 }
 
@@ -240,12 +240,9 @@ fn err_tree_struct(
                 #[automatically_derived]
                 impl #impl_generics bare_err_tree::AsErrTree for #ident #ty_generics #where_clause {
                     #[track_caller]
-                    fn as_err_tree(&self) -> bare_err_tree::ErrTree<'_> {
-                        extern crate alloc;
-                        use alloc::{boxed::Box, vec};
-
+                    fn as_err_tree(&self, func: &mut dyn FnMut(bare_err_tree::ErrTree<'_>)) {
+                        let _err_tree_pkg = self.#prev_len;
                         #sources
-                        bare_err_tree::ErrTree::with_pkg(self, sources, self.#prev_len)
                     }
                 }
 
