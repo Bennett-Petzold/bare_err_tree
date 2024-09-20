@@ -311,29 +311,15 @@
 <a href="#310" id="310">310</a>
 <a href="#311" id="311">311</a>
 <a href="#312" id="312">312</a>
-<a href="#313" id="313">313</a>
-<a href="#314" id="314">314</a>
-<a href="#315" id="315">315</a>
-<a href="#316" id="316">316</a>
-<a href="#317" id="317">317</a>
-<a href="#318" id="318">318</a>
-<a href="#319" id="319">319</a>
-<a href="#320" id="320">320</a>
-<a href="#321" id="321">321</a>
-<a href="#322" id="322">322</a>
-<a href="#323" id="323">323</a>
-<a href="#324" id="324">324</a>
-<a href="#325" id="325">325</a>
-<a href="#326" id="326">326</a>
-<a href="#327" id="327">327</a></pre></div><pre class="rust"><code><span class="comment">/*
+<a href="#313" id="313">313</a></pre></div><pre class="rust"><code><span class="comment">/*
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-</span><span class="kw">use </span>proc_macro::{Span, TokenStream};
+</span><span class="kw">use </span>proc_macro::Span;
 <span class="kw">use </span>quote::{quote, quote_spanned};
-<span class="kw">use </span>syn::{spanned::Spanned, DataEnum, DataStruct, Error, Ident, Meta};
+<span class="kw">use </span>syn::{spanned::Spanned, DataEnum, DataStruct, Error, Ident};
 
 <span class="attr">#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 </span><span class="kw">enum </span>Sizing {
@@ -531,50 +517,36 @@
     }
 }
 
-<span class="kw">pub fn </span>get_struct_macros(data: <span class="kw-2">&amp;</span>DataStruct) -&gt; <span class="prelude-ty">Result</span>&lt;CollectedErrType, TokenStream&gt; {
+<span class="kw">pub fn </span>get_struct_macros(data: <span class="kw-2">&amp;</span>DataStruct) -&gt; CollectedErrType {
     data.fields
         .iter()
         .flat_map(|f| {
-            f.attrs.iter().filter_map(|x| <span class="kw">match </span><span class="kw-2">&amp;</span>x.meta {
-                Meta::Path(y) =&gt; {
+            f.attrs.iter().filter_map(|x| {
+                x.meta.require_path_only().ok().and_then(|y| {
                     y.segments
                         .iter()
                         .find_map(|seg| <span class="kw">match </span>seg.ident.to_string().as_str() {
-                            <span class="string">"dyn_err" </span>=&gt; {
-                                <span class="prelude-val">Some</span>(<span class="prelude-val">Ok</span>(ErrType::Dyn((f.ident.clone().unwrap(), f.span()))))
-                            }
-                            <span class="string">"tree_err" </span>=&gt; {
-                                <span class="prelude-val">Some</span>(<span class="prelude-val">Ok</span>(ErrType::Tree((f.ident.clone().unwrap(), f.span()))))
-                            }
-                            <span class="string">"dyn_iter_err" </span>=&gt; <span class="prelude-val">Some</span>(<span class="prelude-val">Ok</span>(ErrType::DynSlice((
-                                f.ident.clone()<span class="question-mark">?</span>,
+                            <span class="string">"dyn_err" </span>=&gt; <span class="prelude-val">Some</span>(ErrType::Dyn((f.ident.clone().unwrap(), f.span()))),
+                            <span class="string">"tree_err" </span>=&gt; <span class="prelude-val">Some</span>(ErrType::Tree((f.ident.clone().unwrap(), f.span()))),
+                            <span class="string">"dyn_iter_err" </span>=&gt; <span class="prelude-val">Some</span>(ErrType::DynSlice((
+                                f.ident.clone().unwrap(),
                                 f.span(),
                                 Sizing::Dynamic,
-                            )))),
-                            <span class="string">"tree_iter_err" </span>=&gt; <span class="prelude-val">Some</span>(<span class="prelude-val">Ok</span>(ErrType::TreeSlice((
-                                f.ident.clone()<span class="question-mark">?</span>,
+                            ))),
+                            <span class="string">"tree_iter_err" </span>=&gt; <span class="prelude-val">Some</span>(ErrType::TreeSlice((
+                                f.ident.clone().unwrap(),
                                 f.span(),
                                 Sizing::Dynamic,
-                            )))),
+                            ))),
                             <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
                         })
-                }
-                Meta::NameValue(y) =&gt; <span class="kw">match </span>y.path.get_ident()<span class="question-mark">?</span>.to_string().as_str() {
-                    <span class="string">"dyn_iter_err" </span>=&gt; <span class="prelude-val">Some</span>(<span class="prelude-val">Ok</span>(ErrType::DynSlice((
-                        f.ident.clone()<span class="question-mark">?</span>,
-                        f.span(),
-                        Sizing::Static(<span class="macro">todo!</span>()),
-                    )))),
-                    <span class="string">"tree_iter_err" </span>=&gt; <span class="macro">todo!</span>(),
-                    <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
-                },
-                Meta::List(<span class="kw">_</span>) =&gt; <span class="prelude-val">None</span>,
+                })
             })
         })
         .collect()
 }
 
-<span class="kw">pub fn </span>get_enum_macros(data: <span class="kw-2">&amp;</span>DataEnum) -&gt; <span class="prelude-ty">Result</span>&lt;CollectedErrType, TokenStream&gt; {
+<span class="kw">pub fn </span>get_enum_macros(data: <span class="kw-2">&amp;</span>DataEnum) -&gt; CollectedErrType {
     data.variants
         .iter()
         .flat_map(|f| {
@@ -583,18 +555,18 @@
                     y.segments
                         .iter()
                         .find_map(|seg| <span class="kw">match </span>seg.ident.to_string().as_str() {
-                            <span class="string">"dyn_err" </span>=&gt; <span class="prelude-val">Some</span>(<span class="prelude-val">Ok</span>(ErrType::Dyn((f.ident.clone(), f.span())))),
-                            <span class="string">"tree_err" </span>=&gt; <span class="prelude-val">Some</span>(<span class="prelude-val">Ok</span>(ErrType::Tree((f.ident.clone(), f.span())))),
-                            <span class="string">"dyn_iter_err" </span>=&gt; <span class="prelude-val">Some</span>(<span class="prelude-val">Ok</span>(ErrType::DynSlice((
+                            <span class="string">"dyn_err" </span>=&gt; <span class="prelude-val">Some</span>(ErrType::Dyn((f.ident.clone(), f.span()))),
+                            <span class="string">"tree_err" </span>=&gt; <span class="prelude-val">Some</span>(ErrType::Tree((f.ident.clone(), f.span()))),
+                            <span class="string">"dyn_iter_err" </span>=&gt; <span class="prelude-val">Some</span>(ErrType::DynSlice((
                                 f.ident.clone(),
                                 f.span(),
                                 Sizing::Dynamic,
-                            )))),
-                            <span class="string">"tree_iter_err" </span>=&gt; <span class="prelude-val">Some</span>(<span class="prelude-val">Ok</span>(ErrType::TreeSlice((
+                            ))),
+                            <span class="string">"tree_iter_err" </span>=&gt; <span class="prelude-val">Some</span>(ErrType::TreeSlice((
                                 f.ident.clone(),
                                 f.span(),
                                 Sizing::Dynamic,
-                            )))),
+                            ))),
                             <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
                         })
                 })

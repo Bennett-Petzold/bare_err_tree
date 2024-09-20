@@ -211,20 +211,7 @@
 <a href="#210" id="210">210</a>
 <a href="#211" id="211">211</a>
 <a href="#212" id="212">212</a>
-<a href="#213" id="213">213</a>
-<a href="#214" id="214">214</a>
-<a href="#215" id="215">215</a>
-<a href="#216" id="216">216</a>
-<a href="#217" id="217">217</a>
-<a href="#218" id="218">218</a>
-<a href="#219" id="219">219</a>
-<a href="#220" id="220">220</a>
-<a href="#221" id="221">221</a>
-<a href="#222" id="222">222</a>
-<a href="#223" id="223">223</a>
-<a href="#224" id="224">224</a>
-<a href="#225" id="225">225</a>
-<a href="#226" id="226">226</a></pre></div><pre class="rust"><code><span class="comment">/*
+<a href="#213" id="213">213</a></pre></div><pre class="rust"><code><span class="comment">/*
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
@@ -256,12 +243,6 @@ CRATE DOCS TODO
 </span><span class="kw">pub use </span>bare_err_tree_proc::<span class="kw-2">*</span>;
 
 <span class="doccomment">/// Alternative to [`Result::unwrap`] that formats the error as a tree.
-///
-/// `FRONT_MAX` limits the number of leading bytes. Each deeper error requires 6
-/// bytes to fit "│   ". So for a max depth of 3 errors, `FRONT_MAX` == 18.
-/// By default, `FRONT_MAX` bytes are allocated on stack. When `heap_buffer` is
-/// enabled, the bytes are allocated on stack and `FRONT_MAX` only acts as a
-/// depth limit.
 ///
 /// Errors must define [`Error::source`] correctly for the tree to display.
 /// The derive macros for [`ErrTree`] track extra information and handle
@@ -299,16 +280,7 @@ CRATE DOCS TODO
 
 <span class="doccomment">/// Produces [`ErrTree`] formatted output for an error.
 ///
-/// `FRONT_MAX` limits the number of leading bytes. Each deeper error requires 6
-/// bytes to fit "│   ". So for a max depth of 3 errors, `FRONT_MAX` == 18.
-/// By default, `FRONT_MAX` bytes are allocated on stack. When `heap_buffer` is
-/// enabled, the bytes are allocated on stack and `FRONT_MAX` only acts as a
-/// depth limit.
-///
-/// Errors must define [`Error::source`] correctly for the tree to display.
-/// The derive macros for [`ErrTree`] track extra information and handle
-/// multiple sources ([`Error::source`] is designed around a single error
-/// source).
+/// TODO: document `FRONT_MAX`.
 </span><span class="attr">#[track_caller]
 </span><span class="kw">pub fn </span>print_tree&lt;<span class="kw">const </span>FRONT_MAX: usize, E, S, F&gt;(
     tree: S,
@@ -341,6 +313,11 @@ CRATE DOCS TODO
 }
 
 <span class="doccomment">/// Intermediate struct for printing created by [`AsErrTree`].
+///
+/// # Fields
+/// * `inner`: The current error.
+/// * `sources`: The source error(s).
+/// * `location`: The callsite (use `#[track_caller]` to track properly).
 ///
 /// # Manual Implementation Example
 /// ```
@@ -399,8 +376,7 @@ CRATE DOCS TODO
 }
 
 <span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; ErrTree&lt;<span class="lifetime">'a</span>&gt; {
-    <span class="doccomment">/// Common constructor, with metadata.
-    </span><span class="kw">pub fn </span>with_pkg(
+    <span class="kw">pub fn </span>with_pkg(
         inner: <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw">dyn </span>Error,
         sources: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>[<span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span><span class="kw">dyn </span>AsErrTree]],
         pkg: ErrTreePkg,
@@ -412,8 +388,7 @@ CRATE DOCS TODO
         }
     }
 
-    <span class="doccomment">/// Constructor for when metadata needs to be hidden.
-    </span><span class="kw">pub fn </span>no_pkg(inner: <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw">dyn </span>Error, sources: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>[<span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span><span class="kw">dyn </span>AsErrTree]]) -&gt; <span class="self">Self </span>{
+    <span class="kw">pub fn </span>no_pkg(inner: <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw">dyn </span>Error, sources: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>[<span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span><span class="kw">dyn </span>AsErrTree]]) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             inner,
             sources,
@@ -431,7 +406,6 @@ CRATE DOCS TODO
     <span class="doccomment">/// Constructs the [`ErrTree`] internally and calls `func` on it.
     </span><span class="kw">fn </span>as_err_tree(<span class="kw-2">&amp;</span><span class="self">self</span>, func: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>FnMut(ErrTree&lt;<span class="lifetime">'_</span>&gt;));
 }
-
 <span class="doccomment">/// Displays with [`Error::source`] as the child.
 ///
 /// Does not provide any of the extra tracking information or handle multiple

@@ -269,11 +269,7 @@
 <a href="#268" id="268">268</a>
 <a href="#269" id="269">269</a>
 <a href="#270" id="270">270</a>
-<a href="#271" id="271">271</a>
-<a href="#272" id="272">272</a>
-<a href="#273" id="273">273</a>
-<a href="#274" id="274">274</a>
-<a href="#275" id="275">275</a></pre></div><pre class="rust"><code><span class="comment">/*
+<a href="#271" id="271">271</a></pre></div><pre class="rust"><code><span class="comment">/*
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
@@ -339,52 +335,48 @@
     } = <span class="macro">parse_macro_input!</span>(input <span class="kw">as </span>DeriveInput);
 
     <span class="kw">let </span>generated = <span class="kw">match </span>data {
-        Data::Struct(<span class="kw-2">ref mut </span>data) =&gt; <span class="kw">match </span>get_struct_macros(data) {
-            <span class="prelude-val">Ok</span>(errs) =&gt; {
-                clean_struct_macros(data);
+        Data::Struct(<span class="kw-2">ref mut </span>data) =&gt; {
+            <span class="kw">let </span>errs = get_struct_macros(data);
+            clean_struct_macros(data);
 
-                <span class="kw">if let </span><span class="prelude-val">Some</span>(name_attribute) = name_attribute {
-                    foreign_err_tree(
-                        <span class="kw-2">&amp;</span>ident,
-                        <span class="kw-2">&amp;</span>vis,
-                        <span class="kw-2">&amp;</span>attrs,
-                        name_attribute,
-                        <span class="kw-2">&amp;</span>generics,
-                        errs,
-                        Foreign::Struct,
-                    )
-                } <span class="kw">else </span>{
-                    err_tree_struct(<span class="kw-2">&amp;</span>ident, <span class="kw-2">&amp;</span>generics, data, errs, Foreign::Not)
-                }
+            <span class="kw">if let </span><span class="prelude-val">Some</span>(name_attribute) = name_attribute {
+                foreign_err_tree(
+                    <span class="kw-2">&amp;</span>ident,
+                    <span class="kw-2">&amp;</span>vis,
+                    <span class="kw-2">&amp;</span>attrs,
+                    name_attribute,
+                    <span class="kw-2">&amp;</span>generics,
+                    errs,
+                    Foreign::Struct,
+                )
+            } <span class="kw">else </span>{
+                err_tree_struct(<span class="kw-2">&amp;</span>ident, <span class="kw-2">&amp;</span>generics, data, errs, Foreign::Not)
             }
-            <span class="prelude-val">Err</span>(e) =&gt; <span class="kw">return </span>e,
-        },
-        Data::Enum(<span class="kw-2">ref mut </span>data) =&gt; <span class="kw">match </span>get_enum_macros(data) {
-            <span class="prelude-val">Ok</span>(errs) =&gt; {
-                clean_enum_macros(data);
+        }
+        Data::Enum(<span class="kw-2">ref mut </span>data) =&gt; {
+            <span class="kw">let </span>errs = get_enum_macros(data);
+            clean_enum_macros(data);
 
-                <span class="kw">if let </span><span class="prelude-val">Some</span>(name_attribute) = name_attribute {
-                    foreign_err_tree(
-                        <span class="kw-2">&amp;</span>ident,
-                        <span class="kw-2">&amp;</span>vis,
-                        <span class="kw-2">&amp;</span>attrs,
-                        name_attribute,
-                        <span class="kw-2">&amp;</span>generics,
-                        errs,
-                        Foreign::Enum(<span class="kw-2">&amp;</span>ident),
-                    )
-                } <span class="kw">else </span>{
-                    TokenStream::from(
+            <span class="kw">if let </span><span class="prelude-val">Some</span>(name_attribute) = name_attribute {
+                foreign_err_tree(
+                    <span class="kw-2">&amp;</span>ident,
+                    <span class="kw-2">&amp;</span>vis,
+                    <span class="kw-2">&amp;</span>attrs,
+                    name_attribute,
+                    <span class="kw-2">&amp;</span>generics,
+                    errs,
+                    Foreign::Enum(<span class="kw-2">&amp;</span>ident),
+                )
+            } <span class="kw">else </span>{
+                TokenStream::from(
                     Error::new(
                         Span::call_site().into(),
                         <span class="string">"err_tree cannot implement directly on an enum type. Use '#[err_tree(WRAPPER)]'"</span>,
                     )
                     .into_compile_error(),
                 )
-                }
             }
-            <span class="prelude-val">Err</span>(e) =&gt; <span class="kw">return </span>e,
-        },
+        }
         Data::Union(<span class="kw">_</span>) =&gt; TokenStream::from(
             Error::new(
                 Span::call_site().into(),
