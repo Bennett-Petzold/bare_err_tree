@@ -43,13 +43,15 @@ struct ErrStruct<
     err_slice: Vec<std::io::Error>,
     #[tree_iter_err]
     err2_slice: Vec<InnerErrWrap>,
-    #[dyn_iter_err = 3]
-    err_slice_static: [std::io::Error; 3],
-    #[tree_iter_err = 4]
-    err2_slice_static: [InnerErrWrap; 3],
+    #[dyn_iter_err]
+    err_slice_static: &'a [std::io::Error; 3],
+    #[tree_iter_err]
+    err2_slice_static: [InnerErrWrap; THREE],
     _phantom: PhantomData<&'a ()>,
     _phantom_2: PhantomData<&'b ()>,
 }
+
+const THREE: usize = 3;
 
 impl<const C: usize, Tree: AsErrTree, Err: Error> Error for ErrStruct<'_, '_, Tree, C, Err> {}
 impl<const C: usize, Tree: AsErrTree, Err: Error> Display for ErrStruct<'_, '_, Tree, C, Err> {
@@ -60,16 +62,22 @@ impl<const C: usize, Tree: AsErrTree, Err: Error> Display for ErrStruct<'_, '_, 
 
 #[expect(dead_code)]
 #[err_tree(ErrEnumWrap)]
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug)]
 enum ErrEnum {
     #[dyn_err]
     Local(InnerErrWrap),
+    #[dyn_iter_err]
+    IoGroup([std::io::Error; 7]),
+    #[dyn_iter_err]
+    IoVec(Vec<std::io::Error>),
 }
 
 impl Error for ErrEnum {
     fn source(&self) -> Option<&(dyn Error + 'static)> {
         match self {
             Self::Local(x) => x.source(),
+            Self::IoGroup(x) => Some(&x[0]),
+            Self::IoVec(x) => x.first().map(|x| x as &dyn Error),
         }
     }
 }

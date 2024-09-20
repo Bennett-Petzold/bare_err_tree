@@ -3,6 +3,10 @@ name = "bare_err_tree_proc"
 version = "0.1.0"
 edition = "2021"
 
+[features]
+default = []
+alloc = []
+
 [lib]
 proc-macro = true
 
