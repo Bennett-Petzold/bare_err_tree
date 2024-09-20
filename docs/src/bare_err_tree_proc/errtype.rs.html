@@ -355,7 +355,22 @@
 <a href="#354" id="354">354</a>
 <a href="#355" id="355">355</a>
 <a href="#356" id="356">356</a>
-<a href="#357" id="357">357</a></pre></div><pre class="rust"><code><span class="comment">/*
+<a href="#357" id="357">357</a>
+<a href="#358" id="358">358</a>
+<a href="#359" id="359">359</a>
+<a href="#360" id="360">360</a>
+<a href="#361" id="361">361</a>
+<a href="#362" id="362">362</a>
+<a href="#363" id="363">363</a>
+<a href="#364" id="364">364</a>
+<a href="#365" id="365">365</a>
+<a href="#366" id="366">366</a>
+<a href="#367" id="367">367</a>
+<a href="#368" id="368">368</a>
+<a href="#369" id="369">369</a>
+<a href="#370" id="370">370</a>
+<a href="#371" id="371">371</a>
+<a href="#372" id="372">372</a></pre></div><pre class="rust"><code><span class="comment">/*
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
@@ -363,11 +378,13 @@
 
 </span><span class="kw">use </span>proc_macro::{Span, TokenStream};
 <span class="kw">use </span>quote::{format_ident, quote, quote_spanned, ToTokens};
-<span class="kw">use </span>syn::{spanned::Spanned, DataEnum, DataStruct, Error, Expr, Ident, Lit, Meta, PatLit};
+<span class="kw">use </span>syn::{
+    spanned::Spanned, DataEnum, DataStruct, Error, Expr, Field, Ident, Lit, Meta, PatLit, Type,
+};
 
-<span class="attr">#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+<span class="attr">#[derive(Debug, Clone, PartialEq, Eq)]
 </span><span class="kw">enum </span>Sizing {
-    Static(usize),
+    Static(Expr),
     Dynamic,
 }
 
@@ -423,7 +440,7 @@
             }
         };
 
-        <span class="kw">let </span>conv_vec = |x, span, sizing, y| <span class="kw">match </span>sizing {
+        <span class="kw">let </span>conv_vec = |x, span, sizing: <span class="kw-2">&amp;</span><span class="kw">_</span>, y| <span class="kw">match </span>sizing {
             Sizing::Dynamic =&gt; {
                 <span class="macro">quote_spanned!</span> {
                     span=&gt; <span class="kw">let </span>#x = #parent.#x.iter().map(|z|
@@ -458,12 +475,12 @@
         <span class="kw">let </span>gen_dyniter: Vec&lt;<span class="kw">_</span>&gt; = <span class="self">self
             </span>.dyniter
             .iter()
-            .map(|x| conv_vec(<span class="kw-2">&amp;</span>x.<span class="number">0</span>, x.<span class="number">1</span>, x.<span class="number">2</span>, <span class="macro">quote!</span> {<span class="kw">as </span><span class="kw-2">&amp;</span><span class="kw">dyn </span>core::error::Error}))
+            .map(|x| conv_vec(<span class="kw-2">&amp;</span>x.<span class="number">0</span>, x.<span class="number">1</span>, <span class="kw-2">&amp;</span>x.<span class="number">2</span>, <span class="macro">quote!</span> {<span class="kw">as </span><span class="kw-2">&amp;</span><span class="kw">dyn </span>core::error::Error}))
             .collect();
         <span class="kw">let </span>gen_treeiter: Vec&lt;<span class="kw">_</span>&gt; = <span class="self">self
             </span>.treeiter
             .iter()
-            .map(|x| conv_vec(<span class="kw-2">&amp;</span>x.<span class="number">0</span>, x.<span class="number">1</span>, x.<span class="number">2</span>, <span class="macro">quote!</span> {}))
+            .map(|x| conv_vec(<span class="kw-2">&amp;</span>x.<span class="number">0</span>, x.<span class="number">1</span>, <span class="kw-2">&amp;</span>x.<span class="number">2</span>, <span class="macro">quote!</span> {}))
             .collect();
         <span class="kw">let </span>iter_ids = <span class="self">self
             </span>.dyniter
@@ -501,67 +518,104 @@
     }
 
     <span class="kw">pub fn </span>gen_sources_enum(<span class="kw-2">&amp;</span><span class="self">self</span>, ident: <span class="kw-2">&amp;</span>Ident) -&gt; proc_macro2::TokenStream {
-        <span class="kw">if </span>!<span class="self">self</span>.dyniter.is_empty() || !<span class="self">self</span>.treeiter.is_empty() {
-            Error::new(
-                Span::call_site().into(),
-                <span class="string">"'*_iter' is not valid on enum fields"</span>,
-            )
-            .into_compile_error()
-        } <span class="kw">else </span>{
-            <span class="kw">let </span>conv = |x, span, y| {
+        <span class="kw">let </span>conv = |x, span, y| {
+            <span class="macro">quote_spanned!</span> {
+                span=&gt; #ident :: #x (x) =&gt; {
+                    <span class="kw">let </span>x = <span class="kw-2">&amp;</span>(x #y) <span class="kw">as </span><span class="kw-2">&amp;</span><span class="kw">dyn </span>bare_err_tree::AsErrTree;
+                    <span class="kw">let </span>x = [x];
+                    <span class="kw">let </span>x = [x.as_slice()];
+                    (func)(bare_err_tree::ErrTree::with_pkg(<span class="self">self</span>, x.as_slice(), _err_tree_pkg))
+                },
+            }
+        };
+
+        <span class="kw">let </span>conv_vec = |x, span, sizing: <span class="kw-2">&amp;</span><span class="kw">_</span>, y| <span class="kw">match </span>sizing {
+            Sizing::Dynamic =&gt; {
                 <span class="macro">quote_spanned!</span> {
                     span=&gt; #ident :: #x (x) =&gt; {
-                        <span class="kw">let </span>x = <span class="kw-2">&amp;</span>(x #y) <span class="kw">as </span><span class="kw-2">&amp;</span><span class="kw">dyn </span>bare_err_tree::AsErrTree;
-                        <span class="kw">let </span>x = [x];
+                        <span class="kw">let </span>x = x.iter().map(|z|
+                            z #y
+                        ).collect::&lt;alloc::vec::Vec&lt;<span class="kw">_</span>&gt;&gt;();
+                        <span class="kw">let </span>x = x.iter().map(|z|
+                            z <span class="kw">as </span><span class="kw-2">&amp;</span><span class="kw">dyn </span>bare_err_tree::AsErrTree
+                        ).collect::&lt;alloc::vec::Vec&lt;<span class="kw">_</span>&gt;&gt;();
                         <span class="kw">let </span>x = [x.as_slice()];
                         (func)(bare_err_tree::ErrTree::with_pkg(<span class="self">self</span>, x.as_slice(), _err_tree_pkg))
-                    },
-                }
-            };
-
-            <span class="kw">let </span>conv_vec = |x, span, y| {
-                <span class="macro">quote_spanned!</span> {
-                    span=&gt; #ident::.#x (x) =&gt; {
-                        <span class="macro">todo!</span>()
-                    },
-                }
-            };
-
-            <span class="kw">let </span>gen_dyn: Vec&lt;<span class="kw">_</span>&gt; = <span class="self">self
-                </span>.r#dyn
-                .iter()
-                .map(|x| conv(<span class="kw-2">&amp;</span>x.<span class="number">0</span>, x.<span class="number">1</span>, <span class="macro">quote!</span> {<span class="kw">as </span><span class="kw-2">&amp;</span><span class="kw">dyn </span>core::error::Error}))
-                .collect();
-            <span class="kw">let </span>gen_tree: Vec&lt;<span class="kw">_</span>&gt; = <span class="self">self
-                </span>.tree
-                .iter()
-                .map(|x| conv(<span class="kw-2">&amp;</span>x.<span class="number">0</span>, x.<span class="number">1</span>, <span class="macro">quote!</span> {}))
-                .collect();
-            <span class="kw">let </span>gen_dyniter: Vec&lt;<span class="kw">_</span>&gt; = <span class="self">self
-                </span>.dyniter
-                .iter()
-                .map(|x| conv_vec(<span class="kw-2">&amp;</span>x.<span class="number">0</span>, x.<span class="number">1</span>, <span class="macro">quote!</span> {<span class="kw">as </span><span class="kw-2">&amp;</span><span class="kw">dyn </span>core::error::Error}))
-                .collect();
-            <span class="kw">let </span>gen_treeiter: Vec&lt;<span class="kw">_</span>&gt; = <span class="self">self
-                </span>.treeiter
-                .iter()
-                .map(|x| conv_vec(<span class="kw-2">&amp;</span>x.<span class="number">0</span>, x.<span class="number">1</span>, <span class="macro">quote!</span> {}))
-                .collect();
-
-            <span class="macro">quote!</span> {
-                <span class="kw">let </span>sources = <span class="kw">match </span><span class="kw-2">&amp;</span><span class="self">self</span>.inner {
-                    #(#gen_dyn)*
-                    #(#gen_tree)*
-                    #(#gen_dyniter)*
-                    #(#gen_treeiter)*
-                    <span class="kw">_ </span>=&gt; {
-                        <span class="kw">let </span>empty = [];
-                        <span class="kw">let </span>empty = [empty.as_slice()];
-                        (func)(bare_err_tree::ErrTree::with_pkg(<span class="self">self</span>, empty.as_slice(), _err_tree_pkg))
                     }
-                };
+                }
             }
+            Sizing::Static(s) =&gt; {
+                <span class="macro">quote_spanned!</span> {
+                    span=&gt; #ident :: #x (x) =&gt; {
+                        <span class="kw">let </span>x : [<span class="kw">_</span>; #s] = core::array::from_fn(|i| &amp; x [i] #y);
+                        <span class="kw">let </span>x : [<span class="kw">_</span>; #s] = core::array::from_fn(|i| &amp; x [i] <span class="kw">as </span><span class="kw-2">&amp;</span><span class="kw">dyn </span>bare_err_tree::AsErrTree);
+                        <span class="kw">let </span>x = [x.as_slice()];
+                        (func)(bare_err_tree::ErrTree::with_pkg(<span class="self">self</span>, x.as_slice(), _err_tree_pkg))
+                    }
+                }
+            }
+        };
+
+        <span class="kw">let </span>gen_dyn: Vec&lt;<span class="kw">_</span>&gt; = <span class="self">self
+            </span>.r#dyn
+            .iter()
+            .map(|x| conv(<span class="kw-2">&amp;</span>x.<span class="number">0</span>, x.<span class="number">1</span>, <span class="macro">quote!</span> {<span class="kw">as </span><span class="kw-2">&amp;</span><span class="kw">dyn </span>core::error::Error}))
+            .collect();
+        <span class="kw">let </span>gen_tree: Vec&lt;<span class="kw">_</span>&gt; = <span class="self">self
+            </span>.tree
+            .iter()
+            .map(|x| conv(<span class="kw-2">&amp;</span>x.<span class="number">0</span>, x.<span class="number">1</span>, <span class="macro">quote!</span> {}))
+            .collect();
+        <span class="kw">let </span>gen_dyniter: Vec&lt;<span class="kw">_</span>&gt; = <span class="self">self
+            </span>.dyniter
+            .iter()
+            .map(|x| conv_vec(<span class="kw-2">&amp;</span>x.<span class="number">0</span>, x.<span class="number">1</span>, <span class="kw-2">&amp;</span>x.<span class="number">2</span>, <span class="macro">quote!</span> {<span class="kw">as </span><span class="kw-2">&amp;</span><span class="kw">dyn </span>core::error::Error}))
+            .collect();
+        <span class="kw">let </span>gen_treeiter: Vec&lt;<span class="kw">_</span>&gt; = <span class="self">self
+            </span>.treeiter
+            .iter()
+            .map(|x| conv_vec(<span class="kw-2">&amp;</span>x.<span class="number">0</span>, x.<span class="number">1</span>, <span class="kw-2">&amp;</span>x.<span class="number">2</span>, <span class="macro">quote!</span> {}))
+            .collect();
+
+        <span class="macro">quote!</span> {
+            <span class="kw">let </span>sources = <span class="kw">match </span><span class="kw-2">&amp;</span><span class="self">self</span>.inner {
+                #(#gen_dyn)*
+                #(#gen_tree)*
+                #(#gen_dyniter)*
+                #(#gen_treeiter)*
+                <span class="kw">_ </span>=&gt; {
+                    <span class="kw">let </span>empty = [];
+                    <span class="kw">let </span>empty = [empty.as_slice()];
+                    (func)(bare_err_tree::ErrTree::with_pkg(<span class="self">self</span>, empty.as_slice(), _err_tree_pkg))
+                }
+            };
         }
+    }
+}
+
+<span class="kw">fn </span>iter_parse(
+    f: <span class="kw-2">&amp;</span>Field,
+    ident: Ident,
+) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="prelude-ty">Result</span>&lt;(Ident, proc_macro2::Span, Sizing), TokenStream&gt;&gt; {
+    <span class="kw">let </span><span class="kw-2">mut </span>ty = f.ty.clone();
+    <span class="kw">while let </span>Type::Reference(ty_ref) = ty {
+        ty = <span class="kw-2">*</span>ty_ref.elem;
+    }
+
+    <span class="kw">if let </span>Type::Array(ty) = ty {
+        <span class="prelude-val">Some</span>(<span class="prelude-val">Ok</span>((ident, f.span(), Sizing::Static(ty.len.clone()))))
+    } <span class="kw">else if </span><span class="macro">cfg!</span>(feature = <span class="string">"alloc"</span>) {
+        <span class="prelude-val">Some</span>(<span class="prelude-val">Ok</span>((f.ident.clone()<span class="question-mark">?</span>, f.span(), Sizing::Dynamic)))
+    } <span class="kw">else </span>{
+        <span class="prelude-val">Some</span>(<span class="prelude-val">Err</span>(syn::Error::new(
+            f.span(),
+            <span class="macro">format!</span>(
+                <span class="string">"{} is dynamically sized, but the \"derive_alloc\" feature is not enabled."</span>,
+                ident
+            ),
+        )
+        .into_compile_error()
+        .into()))
     }
 }
 
@@ -569,8 +623,8 @@
     data.fields
         .iter()
         .flat_map(|f| {
-            f.attrs.iter().filter_map(|x| <span class="kw">match </span><span class="kw-2">&amp;</span>x.meta {
-                Meta::Path(y) =&gt; {
+            f.attrs.iter().filter_map(|x| {
+                x.meta.require_path_only().ok().and_then(|y| {
                     y.segments
                         .iter()
                         .find_map(|seg| <span class="kw">match </span>seg.ident.to_string().as_str() {
@@ -580,59 +634,13 @@
                             <span class="string">"tree_err" </span>=&gt; {
                                 <span class="prelude-val">Some</span>(<span class="prelude-val">Ok</span>(ErrType::Tree((f.ident.clone().unwrap(), f.span()))))
                             }
-                            <span class="string">"dyn_iter_err" </span>=&gt; <span class="prelude-val">Some</span>(<span class="prelude-val">Ok</span>(ErrType::DynSlice((
-                                f.ident.clone()<span class="question-mark">?</span>,
-                                f.span(),
-                                Sizing::Dynamic,
-                            )))),
-                            <span class="string">"tree_iter_err" </span>=&gt; <span class="prelude-val">Some</span>(<span class="prelude-val">Ok</span>(ErrType::TreeSlice((
-                                f.ident.clone()<span class="question-mark">?</span>,
-                                f.span(),
-                                Sizing::Dynamic,
-                            )))),
+                            <span class="string">"dyn_iter_err" </span>=&gt; iter_parse(f, f.ident.clone().unwrap())
+                                .map(|z| z.map(ErrType::DynSlice)),
+                            <span class="string">"tree_iter_err" </span>=&gt; iter_parse(f, f.ident.clone().unwrap())
+                                .map(|z| z.map(ErrType::TreeSlice)),
                             <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
                         })
-                }
-                Meta::NameValue(y) =&gt; {
-                    <span class="kw">let </span>value = || <span class="kw">match </span><span class="kw-2">&amp;</span>y.value {
-                        Expr::Lit(value) =&gt; <span class="kw">match </span><span class="kw-2">&amp;</span>value.lit {
-                            Lit::Int(value) =&gt; <span class="kw">match </span>value.base10_parse() {
-                                <span class="prelude-val">Ok</span>(value) =&gt; <span class="prelude-val">Ok</span>(value),
-                                <span class="prelude-val">Err</span>(e) =&gt; <span class="prelude-val">Err</span>(e.to_compile_error()),
-                            },
-                            value =&gt; <span class="prelude-val">Err</span>(syn::Error::new(
-                                f.span(),
-                                <span class="macro">format!</span>(<span class="string">"{:#?} is not a usize literal"</span>, value),
-                            )
-                            .to_compile_error()),
-                        },
-                        value =&gt; <span class="prelude-val">Err</span>(syn::Error::new(
-                            f.span(),
-                            <span class="macro">format!</span>(<span class="string">"{:#?} is not a literal"</span>, value),
-                        )
-                        .to_compile_error()),
-                    };
-                    <span class="kw">match </span>y.path.get_ident()<span class="question-mark">?</span>.to_string().as_str() {
-                        <span class="string">"dyn_iter_err" </span>=&gt; <span class="kw">match </span>value() {
-                            <span class="prelude-val">Ok</span>(value) =&gt; <span class="prelude-val">Some</span>(<span class="prelude-val">Ok</span>(ErrType::DynSlice((
-                                f.ident.clone()<span class="question-mark">?</span>,
-                                f.span(),
-                                Sizing::Static(value),
-                            )))),
-                            <span class="prelude-val">Err</span>(e) =&gt; <span class="prelude-val">Some</span>(<span class="prelude-val">Err</span>(e.into())),
-                        },
-                        <span class="string">"tree_iter_err" </span>=&gt; <span class="kw">match </span>value() {
-                            <span class="prelude-val">Ok</span>(value) =&gt; <span class="prelude-val">Some</span>(<span class="prelude-val">Ok</span>(ErrType::TreeSlice((
-                                f.ident.clone()<span class="question-mark">?</span>,
-                                f.span(),
-                                Sizing::Static(value),
-                            )))),
-                            <span class="prelude-val">Err</span>(e) =&gt; <span class="prelude-val">Some</span>(<span class="prelude-val">Err</span>(e.into())),
-                        },
-                        <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
-                    }
-                }
-                Meta::List(<span class="kw">_</span>) =&gt; <span class="prelude-val">None</span>,
+                })
             })
         })
         .collect()
@@ -649,16 +657,34 @@
                         .find_map(|seg| <span class="kw">match </span>seg.ident.to_string().as_str() {
                             <span class="string">"dyn_err" </span>=&gt; <span class="prelude-val">Some</span>(<span class="prelude-val">Ok</span>(ErrType::Dyn((f.ident.clone(), f.span())))),
                             <span class="string">"tree_err" </span>=&gt; <span class="prelude-val">Some</span>(<span class="prelude-val">Ok</span>(ErrType::Tree((f.ident.clone(), f.span())))),
-                            <span class="string">"dyn_iter_err" </span>=&gt; <span class="prelude-val">Some</span>(<span class="prelude-val">Ok</span>(ErrType::DynSlice((
-                                f.ident.clone(),
-                                f.span(),
-                                Sizing::Dynamic,
-                            )))),
-                            <span class="string">"tree_iter_err" </span>=&gt; <span class="prelude-val">Some</span>(<span class="prelude-val">Ok</span>(ErrType::TreeSlice((
-                                f.ident.clone(),
-                                f.span(),
-                                Sizing::Dynamic,
-                            )))),
+                            <span class="string">"dyn_iter_err" </span>=&gt; {
+                                <span class="kw">if </span>f.fields.len() == <span class="number">1 </span>{
+                                    <span class="kw">let </span>field =
+                                        f.fields.iter().next().expect(<span class="string">"Previously checked length"</span>);
+                                    iter_parse(field, f.ident.clone())
+                                        .map(|z| z.map(ErrType::DynSlice))
+                                } <span class="kw">else </span>{
+                                    <span class="prelude-val">Some</span>(<span class="prelude-val">Ok</span>(ErrType::DynSlice((
+                                        f.ident.clone(),
+                                        f.span(),
+                                        Sizing::Dynamic,
+                                    ))))
+                                }
+                            }
+                            <span class="string">"tree_iter_err" </span>=&gt; {
+                                <span class="kw">if </span>f.fields.len() == <span class="number">1 </span>{
+                                    <span class="kw">let </span>field =
+                                        f.fields.iter().next().expect(<span class="string">"Previously checked length"</span>);
+                                    iter_parse(field, f.ident.clone())
+                                        .map(|z| z.map(ErrType::DynSlice))
+                                } <span class="kw">else </span>{
+                                    <span class="prelude-val">Some</span>(<span class="prelude-val">Ok</span>(ErrType::TreeSlice((
+                                        f.ident.clone(),
+                                        f.span(),
+                                        Sizing::Dynamic,
+                                    ))))
+                                }
+                            }
                             <span class="kw">_ </span>=&gt; <span class="prelude-val">None</span>,
                         })
                 })
@@ -673,16 +699,20 @@
             .attrs
             .clone()
             .into_iter()
-            .filter(|x| !<span class="kw">match </span><span class="kw-2">&amp;</span>x.meta {
-                Meta::Path(y) =&gt; y.segments.iter().any(|seg| {
-                    [<span class="string">"dyn_err"</span>, <span class="string">"tree_err"</span>, <span class="string">"dyn_iter_err"</span>, <span class="string">"tree_iter_err"</span>]
-                        .contains(<span class="kw-2">&amp;</span>seg.ident.to_string().as_str())
-                }),
-                Meta::List(<span class="kw">_</span>) =&gt; <span class="bool-val">false</span>,
-                Meta::NameValue(y) =&gt; y.path.segments.iter().any(|seg| {
-                    [<span class="string">"dyn_err"</span>, <span class="string">"tree_err"</span>, <span class="string">"dyn_iter_err"</span>, <span class="string">"tree_iter_err"</span>]
-                        .contains(<span class="kw-2">&amp;</span>seg.ident.to_string().as_str())
-                }),
+            .filter(|x| {
+                x.meta
+                    .require_path_only()
+                    .ok()
+                    .and_then(|y| {
+                        y.segments
+                            .iter()
+                            .any(|seg| {
+                                [<span class="string">"dyn_err"</span>, <span class="string">"tree_err"</span>, <span class="string">"dyn_iter_err"</span>, <span class="string">"tree_iter_err"</span>]
+                                    .contains(<span class="kw-2">&amp;</span>seg.ident.to_string().as_str())
+                            })
+                            .then_some(())
+                    })
+                    .is_none()
             })
             .collect();
     });
