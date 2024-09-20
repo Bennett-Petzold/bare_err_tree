@@ -202,7 +202,8 @@
 <a href="#201" id="201">201</a>
 <a href="#202" id="202">202</a>
 <a href="#203" id="203">203</a>
-<a href="#204" id="204">204</a></pre></div><pre class="rust"><code><span class="comment">/*
+<a href="#204" id="204">204</a>
+<a href="#205" id="205">205</a></pre></div><pre class="rust"><code><span class="comment">/*
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
@@ -312,7 +313,8 @@
             .map(|x| <span class="kw">if </span>x { CONTINUING.len() } <span class="kw">else </span>{ DANGLING.len() })
             .sum();
 
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(location) = <span class="self">self</span>.tree.location {
+        <span class="attr">#[cfg(feature = <span class="string">"source_line"</span>)]
+        </span><span class="kw">if let </span><span class="prelude-val">Some</span>(location) = <span class="self">self</span>.tree.location {
             <span class="self">self</span>.write_front_lines(
                 f,
                 <span class="attr">#[cfg(not(feature = <span class="string">"heap_buffer"</span>))]

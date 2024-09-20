@@ -288,7 +288,16 @@
 <a href="#287" id="287">287</a>
 <a href="#288" id="288">288</a>
 <a href="#289" id="289">289</a>
-<a href="#290" id="290">290</a></pre></div><pre class="rust"><code><span class="comment">/*
+<a href="#290" id="290">290</a>
+<a href="#291" id="291">291</a>
+<a href="#292" id="292">292</a>
+<a href="#293" id="293">293</a>
+<a href="#294" id="294">294</a>
+<a href="#295" id="295">295</a>
+<a href="#296" id="296">296</a>
+<a href="#297" id="297">297</a>
+<a href="#298" id="298">298</a>
+<a href="#299" id="299">299</a></pre></div><pre class="rust"><code><span class="comment">/*
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
@@ -357,12 +366,14 @@ Contributions are welcome at
 #[cfg(feature = <span class="string">"heap_buffer"</span>)]
 </span><span class="kw">extern crate </span>alloc;
 
+<span class="attr">#[cfg(feature = <span class="string">"source_line"</span>)]
+</span><span class="kw">use </span>core::panic::Location;
+
 <span class="kw">use </span>core::{
     borrow::Borrow,
     cell::RefCell,
     error::Error,
     fmt::{<span class="self">self</span>, Debug},
-    panic::Location,
 };
 
 <span class="kw">mod </span>pkg;
@@ -519,7 +530,8 @@ Contributions are welcome at
 </span><span class="kw">pub struct </span>ErrTree&lt;<span class="lifetime">'a</span>&gt; {
     inner: <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw">dyn </span>Error,
     sources: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>[<span class="kw-2">&amp;</span><span class="lifetime">'a </span>[<span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw">dyn </span>AsErrTree]],
-    location: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span>Location&lt;<span class="lifetime">'a</span>&gt;&gt;,
+    <span class="attr">#[cfg(feature = <span class="string">"source_line"</span>)]
+    </span>location: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span>Location&lt;<span class="lifetime">'a</span>&gt;&gt;,
 }
 
 <span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; ErrTree&lt;<span class="lifetime">'a</span>&gt; {
@@ -527,12 +539,17 @@ Contributions are welcome at
     </span><span class="kw">pub fn </span>with_pkg(
         inner: <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw">dyn </span>Error,
         sources: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>[<span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span><span class="kw">dyn </span>AsErrTree]],
-        pkg: ErrTreePkg,
+        <span class="attr">#[cfg_attr(
+            not(feature = <span class="string">"source_line"</span>),
+            expect(unused, reason = <span class="string">"should be null when no tracking is enabled"</span>)
+        )]
+        </span>pkg: ErrTreePkg,
     ) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             inner,
             sources,
-            location: pkg.location,
+            <span class="attr">#[cfg(feature = <span class="string">"source_line"</span>)]
+            </span>location: pkg.location,
         }
     }
 
@@ -541,7 +558,8 @@ Contributions are welcome at
         <span class="self">Self </span>{
             inner,
             sources,
-            location: <span class="prelude-val">None</span>,
+            <span class="attr">#[cfg(feature = <span class="string">"source_line"</span>)]
+            </span>location: <span class="prelude-val">None</span>,
         }
     }
 
