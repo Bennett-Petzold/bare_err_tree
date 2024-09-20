@@ -27,7 +27,7 @@ impl Display for InnerErrStruct {
 
 #[expect(dead_code)]
 #[err_tree]
-#[derive(Default, Debug)]
+#[derive(Debug)]
 struct ErrStruct<
     'a,
     'b: 'a,
@@ -43,6 +43,10 @@ struct ErrStruct<
     err_slice: Vec<std::io::Error>,
     #[tree_iter_err]
     err2_slice: Vec<InnerErrWrap>,
+    #[dyn_iter_err = 3]
+    err_slice_static: [std::io::Error; 3],
+    #[tree_iter_err = 4]
+    err2_slice_static: [InnerErrWrap; 3],
     _phantom: PhantomData<&'a ()>,
     _phantom_2: PhantomData<&'b ()>,
 }

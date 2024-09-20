@@ -4,9 +4,9 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-use proc_macro::Span;
-use quote::{quote, quote_spanned};
-use syn::{spanned::Spanned, DataEnum, DataStruct, Error, Ident};
+use proc_macro::{Span, TokenStream};
+use quote::{format_ident, quote, quote_spanned, ToTokens};
+use syn::{spanned::Spanned, DataEnum, DataStruct, Error, Expr, Ident, Lit, Meta, PatLit};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 enum Sizing {
@@ -79,7 +79,11 @@ impl CollectedErrType {
                 }
             }
             Sizing::Static(s) => {
-                todo!()
+                quote_spanned! {
+                    span=> let #x : [_; #s] = core::array::from_fn(|i| & #parent.#x [i] #y);
+                    let #x : [_; #s] = core::array::from_fn(|i| & #x [i] as &dyn bare_err_tree::AsErrTree);
+                    let #x = #x.as_slice();
+                }
             }
         };
 
@@ -204,36 +208,80 @@ impl CollectedErrType {
     }
 }
 
-pub fn get_struct_macros(data: &DataStruct) -> CollectedErrType {
+pub fn get_struct_macros(data: &DataStruct) -> Result<CollectedErrType, TokenStream> {
     data.fields
         .iter()
         .flat_map(|f| {
-            f.attrs.iter().filter_map(|x| {
-                x.meta.require_path_only().ok().and_then(|y| {
+            f.attrs.iter().filter_map(|x| match &x.meta {
+                Meta::Path(y) => {
                     y.segments
                         .iter()
                         .find_map(|seg| match seg.ident.to_string().as_str() {
-                            "dyn_err" => Some(ErrType::Dyn((f.ident.clone().unwrap(), f.span()))),
-                            "tree_err" => Some(ErrType::Tree((f.ident.clone().unwrap(), f.span()))),
-                            "dyn_iter_err" => Some(ErrType::DynSlice((
-                                f.ident.clone().unwrap(),
+                            "dyn_err" => {
+                                Some(Ok(ErrType::Dyn((f.ident.clone().unwrap(), f.span()))))
+                            }
+                            "tree_err" => {
+                                Some(Ok(ErrType::Tree((f.ident.clone().unwrap(), f.span()))))
+                            }
+                            "dyn_iter_err" => Some(Ok(ErrType::DynSlice((
+                                f.ident.clone()?,
                                 f.span(),
                                 Sizing::Dynamic,
-                            ))),
-                            "tree_iter_err" => Some(ErrType::TreeSlice((
-                                f.ident.clone().unwrap(),
+                            )))),
+                            "tree_iter_err" => Some(Ok(ErrType::TreeSlice((
+                                f.ident.clone()?,
                                 f.span(),
                                 Sizing::Dynamic,
-                            ))),
+                            )))),
                             _ => None,
                         })
-                })
+                }
+                Meta::NameValue(y) => {
+                    let value = || match &y.value {
+                        Expr::Lit(value) => match &value.lit {
+                            Lit::Int(value) => match value.base10_parse() {
+                                Ok(value) => Ok(value),
+                                Err(e) => Err(e.to_compile_error()),
+                            },
+                            value => Err(syn::Error::new(
+                                f.span(),
+                                format!("{:#?} is not a usize literal", value),
+                            )
+                            .to_compile_error()),
+                        },
+                        value => Err(syn::Error::new(
+                            f.span(),
+                            format!("{:#?} is not a literal", value),
+                        )
+                        .to_compile_error()),
+                    };
+                    match y.path.get_ident()?.to_string().as_str() {
+                        "dyn_iter_err" => match value() {
+                            Ok(value) => Some(Ok(ErrType::DynSlice((
+                                f.ident.clone()?,
+                                f.span(),
+                                Sizing::Static(value),
+                            )))),
+                            Err(e) => Some(Err(e.into())),
+                        },
+                        "tree_iter_err" => match value() {
+                            Ok(value) => Some(Ok(ErrType::TreeSlice((
+                                f.ident.clone()?,
+                                f.span(),
+                                Sizing::Static(value),
+                            )))),
+                            Err(e) => Some(Err(e.into())),
+                        },
+                        _ => None,
+                    }
+                }
+                Meta::List(_) => None,
             })
         })
         .collect()
 }
 
-pub fn get_enum_macros(data: &DataEnum) -> CollectedErrType {
+pub fn get_enum_macros(data: &DataEnum) -> Result<CollectedErrType, TokenStream> {
     data.variants
         .iter()
         .flat_map(|f| {
@@ -242,18 +290,18 @@ pub fn get_enum_macros(data: &DataEnum) -> CollectedErrType {
                     y.segments
                         .iter()
                         .find_map(|seg| match seg.ident.to_string().as_str() {
-                            "dyn_err" => Some(ErrType::Dyn((f.ident.clone(), f.span()))),
-                            "tree_err" => Some(ErrType::Tree((f.ident.clone(), f.span()))),
-                            "dyn_iter_err" => Some(ErrType::DynSlice((
+                            "dyn_err" => Some(Ok(ErrType::Dyn((f.ident.clone(), f.span())))),
+                            "tree_err" => Some(Ok(ErrType::Tree((f.ident.clone(), f.span())))),
+                            "dyn_iter_err" => Some(Ok(ErrType::DynSlice((
                                 f.ident.clone(),
                                 f.span(),
                                 Sizing::Dynamic,
-                            ))),
-                            "tree_iter_err" => Some(ErrType::TreeSlice((
+                            )))),
+                            "tree_iter_err" => Some(Ok(ErrType::TreeSlice((
                                 f.ident.clone(),
                                 f.span(),
                                 Sizing::Dynamic,
-                            ))),
+                            )))),
                             _ => None,
                         })
                 })
@@ -268,20 +316,16 @@ pub fn clean_struct_macros(data: &mut DataStruct) {
             .attrs
             .clone()
             .into_iter()
-            .filter(|x| {
-                x.meta
-                    .require_path_only()
-                    .ok()
-                    .and_then(|y| {
-                        y.segments
-                            .iter()
-                            .any(|seg| {
-                                ["dyn_err", "tree_err", "dyn_iter_err", "tree_iter_err"]
-                                    .contains(&seg.ident.to_string().as_str())
-                            })
-                            .then_some(())
-                    })
-                    .is_none()
+            .filter(|x| !match &x.meta {
+                Meta::Path(y) => y.segments.iter().any(|seg| {
+                    ["dyn_err", "tree_err", "dyn_iter_err", "tree_iter_err"]
+                        .contains(&seg.ident.to_string().as_str())
+                }),
+                Meta::List(_) => false,
+                Meta::NameValue(y) => y.path.segments.iter().any(|seg| {
+                    ["dyn_err", "tree_err", "dyn_iter_err", "tree_iter_err"]
+                        .contains(&seg.ident.to_string().as_str())
+                }),
             })
             .collect();
     });

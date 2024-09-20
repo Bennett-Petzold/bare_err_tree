@@ -64,48 +64,52 @@ pub fn err_tree(args: TokenStream, input: TokenStream) -> TokenStream {
     } = parse_macro_input!(input as DeriveInput);
 
     let generated = match data {
-        Data::Struct(ref mut data) => {
-            let errs = get_struct_macros(data);
-            clean_struct_macros(data);
+        Data::Struct(ref mut data) => match get_struct_macros(data) {
+            Ok(errs) => {
+                clean_struct_macros(data);
 
-            if let Some(name_attribute) = name_attribute {
-                foreign_err_tree(
-                    &ident,
-                    &vis,
-                    &attrs,
-                    name_attribute,
-                    &generics,
-                    errs,
-                    Foreign::Struct,
-                )
-            } else {
-                err_tree_struct(&ident, &generics, data, errs, Foreign::Not)
+                if let Some(name_attribute) = name_attribute {
+                    foreign_err_tree(
+                        &ident,
+                        &vis,
+                        &attrs,
+                        name_attribute,
+                        &generics,
+                        errs,
+                        Foreign::Struct,
+                    )
+                } else {
+                    err_tree_struct(&ident, &generics, data, errs, Foreign::Not)
+                }
             }
-        }
-        Data::Enum(ref mut data) => {
-            let errs = get_enum_macros(data);
-            clean_enum_macros(data);
+            Err(e) => return e,
+        },
+        Data::Enum(ref mut data) => match get_enum_macros(data) {
+            Ok(errs) => {
+                clean_enum_macros(data);
 
-            if let Some(name_attribute) = name_attribute {
-                foreign_err_tree(
-                    &ident,
-                    &vis,
-                    &attrs,
-                    name_attribute,
-                    &generics,
-                    errs,
-                    Foreign::Enum(&ident),
-                )
-            } else {
-                TokenStream::from(
+                if let Some(name_attribute) = name_attribute {
+                    foreign_err_tree(
+                        &ident,
+                        &vis,
+                        &attrs,
+                        name_attribute,
+                        &generics,
+                        errs,
+                        Foreign::Enum(&ident),
+                    )
+                } else {
+                    TokenStream::from(
                     Error::new(
                         Span::call_site().into(),
                         "err_tree cannot implement directly on an enum type. Use '#[err_tree(WRAPPER)]'",
                     )
                     .into_compile_error(),
                 )
+                }
             }
-        }
+            Err(e) => return e,
+        },
         Data::Union(_) => TokenStream::from(
             Error::new(
                 Span::call_site().into(),

@@ -31,6 +31,12 @@ pub use bare_err_tree_proc::*;
 
 /// Alternative to [`Result::unwrap`] that formats the error as a tree.
 ///
+/// `FRONT_MAX` limits the number of leading bytes. Each deeper error requires 6
+/// bytes to fit "│   ". So for a max depth of 3 errors, `FRONT_MAX` == 18.
+/// By default, `FRONT_MAX` bytes are allocated on stack. When `heap_buffer` is
+/// enabled, the bytes are allocated on stack and `FRONT_MAX` only acts as a
+/// depth limit.
+///
 /// Errors must define [`Error::source`] correctly for the tree to display.
 /// The derive macros for [`ErrTree`] track extra information and handle
 /// multiple sources ([`Error::source`] is designed around a single error
@@ -67,7 +73,16 @@ where
 
 /// Produces [`ErrTree`] formatted output for an error.
 ///
-/// TODO: document `FRONT_MAX`.
+/// `FRONT_MAX` limits the number of leading bytes. Each deeper error requires 6
+/// bytes to fit "│   ". So for a max depth of 3 errors, `FRONT_MAX` == 18.
+/// By default, `FRONT_MAX` bytes are allocated on stack. When `heap_buffer` is
+/// enabled, the bytes are allocated on stack and `FRONT_MAX` only acts as a
+/// depth limit.
+///
+/// Errors must define [`Error::source`] correctly for the tree to display.
+/// The derive macros for [`ErrTree`] track extra information and handle
+/// multiple sources ([`Error::source`] is designed around a single error
+/// source).
 #[track_caller]
 pub fn print_tree<const FRONT_MAX: usize, E, S, F>(
     tree: S,
@@ -100,11 +115,6 @@ where
 }
 
 /// Intermediate struct for printing created by [`AsErrTree`].
-///
-/// # Fields
-/// * `inner`: The current error.
-/// * `sources`: The source error(s).
-/// * `location`: The callsite (use `#[track_caller]` to track properly).
 ///
 /// # Manual Implementation Example
 /// ```
@@ -163,6 +173,7 @@ pub struct ErrTree<'a> {
 }
 
 impl<'a> ErrTree<'a> {
+    /// Common constructor, with metadata.
     pub fn with_pkg(
         inner: &'a dyn Error,
         sources: &'a [&[&dyn AsErrTree]],
@@ -175,6 +186,7 @@ impl<'a> ErrTree<'a> {
         }
     }
 
+    /// Constructor for when metadata needs to be hidden.
     pub fn no_pkg(inner: &'a dyn Error, sources: &'a [&[&dyn AsErrTree]]) -> Self {
         Self {
             inner,
@@ -193,6 +205,7 @@ pub trait AsErrTree: Error {
     /// Constructs the [`ErrTree`] internally and calls `func` on it.
     fn as_err_tree(&self, func: &mut dyn FnMut(ErrTree<'_>));
 }
+
 /// Displays with [`Error::source`] as the child.
 ///
 /// Does not provide any of the extra tracking information or handle multiple
