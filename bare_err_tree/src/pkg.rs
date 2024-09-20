@@ -4,7 +4,10 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-use core::{fmt::Debug, panic::Location};
+use core::fmt::Debug;
+
+#[cfg(feature = "source_line")]
+use core::panic::Location;
 
 /// Captures extra information for [`ErrTree`][`crate::ErrTree`]
 /// automatically.
@@ -16,6 +19,7 @@ use core::{fmt::Debug, panic::Location};
 /// combinations via feature flags without changing the API.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ErrTreePkg {
+    #[cfg(feature = "source_line")]
     pub(crate) location: Option<&'static Location<'static>>,
 }
 
@@ -23,6 +27,7 @@ impl ErrTreePkg {
     #[track_caller]
     pub fn new() -> Self {
         Self {
+            #[cfg(feature = "source_line")]
             location: Some(Location::caller()),
         }
     }

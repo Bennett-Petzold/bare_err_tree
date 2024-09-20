@@ -67,12 +67,14 @@ Contributions are welcome at
 #[cfg(feature = "heap_buffer")]
 extern crate alloc;
 
+#[cfg(feature = "source_line")]
+use core::panic::Location;
+
 use core::{
     borrow::Borrow,
     cell::RefCell,
     error::Error,
     fmt::{self, Debug},
-    panic::Location,
 };
 
 mod pkg;
@@ -229,6 +231,7 @@ where
 pub struct ErrTree<'a> {
     inner: &'a dyn Error,
     sources: &'a [&'a [&'a dyn AsErrTree]],
+    #[cfg(feature = "source_line")]
     location: Option<&'a Location<'a>>,
 }
 
@@ -237,11 +240,16 @@ impl<'a> ErrTree<'a> {
     pub fn with_pkg(
         inner: &'a dyn Error,
         sources: &'a [&[&dyn AsErrTree]],
+        #[cfg_attr(
+            not(feature = "source_line"),
+            expect(unused, reason = "should be null when no tracking is enabled")
+        )]
         pkg: ErrTreePkg,
     ) -> Self {
         Self {
             inner,
             sources,
+            #[cfg(feature = "source_line")]
             location: pkg.location,
         }
     }
@@ -251,6 +259,7 @@ impl<'a> ErrTree<'a> {
         Self {
             inner,
             sources,
+            #[cfg(feature = "source_line")]
             location: None,
         }
     }

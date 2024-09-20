@@ -8,6 +8,7 @@ default = ["derive"]
 derive = ["dep:bare_err_tree_proc"]
 derive_alloc = ["derive", "bare_err_tree_proc/alloc"]
 heap_buffer = []
+source_line = []
 
 [dependencies]
 bare_err_tree_proc = { version = "0.1.0", path = "../proc", optional = true }

@@ -108,6 +108,7 @@ impl<const FRONT_MAX: usize> Display for ErrTreeFmt<'_, FRONT_MAX> {
             .map(|x| if x { CONTINUING.len() } else { DANGLING.len() })
             .sum();
 
+        #[cfg(feature = "source_line")]
         if let Some(location) = self.tree.location {
             self.write_front_lines(
                 f,
