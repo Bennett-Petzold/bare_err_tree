@@ -15,3 +15,6 @@ proc-macro2 = "1"
 quote = "1"
 # Extra traits for dev
 syn = { version = "2", features = ["full", "extra-traits"] }
+
+[dev-dependencies]
+bare_err_tree = { path = "../bare_err_tree" }

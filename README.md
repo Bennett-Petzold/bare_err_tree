@@ -5,7 +5,7 @@
 # bare\_err\_tree
 `bare_err_tree` is a `no_std` library to print a standard `Error` with a tree of sources.
 
-Support for the extra information prints does not change the type.
+Support for the extra information prints does not change the type or public API (besides a hidden field or deref).
 It is added via macro or manual implementation of the `AsErrTree` trait (see
 the [docs][Docs] for details).
 End users can then use `tree_unwrap` or `print_tree` to get better error output.
@@ -42,6 +42,12 @@ missed class
         │
         ╰─▶ playing video games
 ```
+
+# TODO
+* Add support for [tracing-error](https://crates.io/crates/tracing-error)
+* Clean up proc macro code
+    * Add more internal documentation
+    * Write tests to make sure the proc macro is fully correct
 
 [CrateStatus]: https://img.shields.io/crates/v/bare_err_tree.svg
 [Crate]: https://crates.io/crates/bare_err_tree

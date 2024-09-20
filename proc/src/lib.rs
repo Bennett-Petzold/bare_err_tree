@@ -4,6 +4,8 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
+//! Derive macros for `bare_err_tree`.
+
 extern crate proc_macro;
 use core::panic;
 
@@ -21,19 +23,31 @@ use boiler::*;
 mod fields;
 use fields::*;
 
-/// MACRO DOCS TODO
+/// Implements a type as an error tree.
 ///
-/// Internal constructor for a type derived with
-/// [`err_tree`][`bare_err_tree::err_tree`].
+/// The struct must define [`Error`](`core::error::Error`) and be annotated with `#[err_tree]` above
+/// any attributes relying on a full field definition. The type must then be
+/// internally constructed with `Self::_tree` to capture extra error
+/// information in a hidden field.
 ///
-/// Call this to construct with the hidden [`ErrTreePkg`] field.
-/// Annotate any public constructor call with `#[track_caller]`
-/// so the error tracks the outer origin line.
+/// # `Self::_tree`
+/// This is an internal-use constructor that takes all struct fields in order.
+/// Use `#[track_caller]` on any functions calling `Self::_tree` to store the
+/// callsite correctly.
+/// [Open an issue or PR](<https://github.com/Bennett-Petzold/bare_err_tree>)
+/// if this hidden field degrades a struct's API (aside from requiring a
+/// constructor method).
 ///
-/// # Example:
-/// ```ignore
+/// #### Example
+/// ```
+/// # use std::{error::Error, fmt::{self, Debug, Display, Formatter}};
+/// use bare_err_tree::{err_tree, tree_unwrap};
+///
 /// #[err_tree]
-/// struct Foo { num: i32 }
+/// #[derive(Debug)]
+/// struct Foo {
+///     num: i32,
+/// }
 ///
 /// impl Foo {
 ///     #[track_caller]
@@ -42,11 +56,204 @@ use fields::*;
 ///     }
 /// }
 ///
-/// impl Error for Foo {}
+/// impl Error for Foo {
+///     fn source(&self) -> Option<&(dyn Error + 'static)> {
+///         # /*
+///         ...
+///         # */
+///         # unimplemented!()
+///     }
+/// }
 /// impl Display for Foo {
 ///     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-///         write!(f, "")
+///         # /*
+///         ...
+///         # */
+///         # unimplemented!()
 ///     }
+/// }
+/// ```
+///
+/// # Field Annotations
+/// The macro needs annotations for underlying source fields.
+///
+/// #### Single Item
+/// * `tree_err`: Mark a field as a `ErrTree` implementing [`Error`](`core::error::Error`).
+/// * `dyn_err`: Mark a field as a generic [`Error`](`core::error::Error`).
+///
+/// #### Collection
+/// `*_iter_err` works on any type with a `.iter()` method returning its items.
+///
+/// * `tree_iter_err`: Mark a field as a collection of `ErrTree` implementing [`Error`](`core::error::Error`)s.
+/// * `dyn_iter_err`: Mark a field as a collection of generic [`Error`](`core::error::Error`)s.
+///
+/// `*_iter_err` does not allocate for arrays with a known length.
+/// The `derive_alloc` feature enables generation of allocating code to support
+/// dynamically sized collections.
+///
+/// #### Example
+/// ```
+/// # use std::{any::Any, error::Error, fmt::{self, Debug, Display, Formatter}};
+/// use bare_err_tree::{err_tree, tree_unwrap, AsErrTree, ErrTree};
+///
+/// #[err_tree]
+/// #[derive(Debug)]
+/// struct Foo {
+///     #[dyn_err]
+///     io_err: std::io::Error,
+///     #[dyn_iter_err]
+///     extra_io_errs: [std::io::Error; 5],
+/// }
+///
+/// impl Foo {
+///     #[track_caller]
+///     pub fn new(io_err: std::io::Error, extra_io_errs: [std::io::Error; 5]) -> Self {
+///         Foo::_tree(io_err, extra_io_errs)
+///     }
+/// }
+///
+/// impl Error for Foo {
+///     fn source(&self) -> Option<&(dyn Error + 'static)> {
+///         # /*
+///         ...
+///         # */
+///         # unimplemented!()
+///     }
+/// }
+/// impl Display for Foo {
+///     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+///         # /*
+///         ...
+///         # */
+///         # unimplemented!()
+///     }
+/// }
+///
+/// fn main() {
+///     // Make a Foo of all EOF errors
+///     let eof_gen = || std::io::Error::from(std::io::ErrorKind::UnexpectedEof);
+///     let err = Foo::new(eof_gen(), std::array::from_fn(|_| eof_gen()));
+///
+///     // Confirm exactly six sources from annotation
+///     err.as_err_tree(&mut |tree| {
+///         let sources = tree.sources();
+///         assert_eq!(sources.iter().map(|s| s.iter()).flatten().count(), 6);
+///     });
+/// }
+/// ```
+///
+/// # Generating a Wrapper
+/// `#[err_tree(WRAPPER)]` will generate a wrapper struct for storing metadata.
+/// Enums need this form, as a hidden field cannot be added to the enum.
+/// `WRAPPER` provides [`From`](`core::convert::From`) both ways and
+/// [`Deref`](`core::ops::Deref`)/[`DerefMut`](`core::ops::DerefMut`) to be
+/// maximally transparent.
+/// Some derives are automatically re-derived for the wrapper; any other traits
+/// that need to be implemented for the wrapper can be written manually.
+///
+/// #### Wrapper automatic re-derives
+// https://doc.rust-lang.org/rust-by-example/trait/derive.html
+/// [`Eq`](`core::cmp::Eq`), [`PartialEq`](`core::cmp::PartialEq`),
+/// [`Ord`](`core::cmp::Ord`), [`PartialOrd`](`core::cmp::PartialOrd`),
+/// [`Clone`](`core::clone::Clone`), [`Copy`](`core::marker::Copy`),
+/// [`Hash`](`core::hash::Hash`), [`Default`](`core::default::Default).
+///
+/// #### Enum Example
+/// ```
+/// # use std::{error::Error, fmt::{self, Debug, Display, Formatter}};
+/// use bare_err_tree::{err_tree, tree_unwrap};
+///
+/// // Generates `FooWrap<T: Debug>`
+/// #[err_tree(FooWrap)]
+/// #[derive(Debug)]
+/// enum Foo<T: Debug> {
+///     Val(T),
+///     #[dyn_err]
+///     Single(std::io::Error),
+///     #[dyn_iter_err]
+///     Many([std::io::Error; 5]),
+/// }
+///
+/// impl<T: Debug> Error for Foo<T> {
+///     fn source(&self) -> Option<&(dyn Error + 'static)> {
+///         # /*
+///         ...
+///         # */
+///         # unimplemented!()
+///     }
+/// }
+/// impl<T: Debug> Display for Foo<T> {
+///     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+///         # /*
+///         ...
+///         # */
+///         # unimplemented!()
+///     }
+/// }
+///
+/// fn main() {
+///     let wrapped = FooWrap::from(Foo::Val(8_i32));
+///     assert!(matches!(*wrapped, Foo::Val(8_i32)));
+/// }
+///
+/// ```
+///
+/// # Full Usage Example:
+/// ```
+/// # use std::{error::Error, fmt::{self, Debug, Display, Formatter}};
+/// use bare_err_tree::{err_tree, tree_unwrap};
+///
+/// #[err_tree]
+/// #[derive(Debug)]
+/// struct Foo {
+///     #[dyn_err]
+///     io_err: std::io::Error,
+///     #[dyn_iter_err]
+///     extra_io_errs: [std::io::Error; 5],
+/// }
+///
+/// impl Foo {
+///     #[track_caller]
+///     pub fn new(io_err: std::io::Error, extra_io_errs: [std::io::Error; 5]) -> Self {
+///         Foo::_tree(io_err, extra_io_errs)
+///     }
+/// }
+///
+/// impl Error for Foo {
+///     fn source(&self) -> Option<&(dyn Error + 'static)> {
+///         Some(&self.io_err)
+///     }
+/// }
+/// impl Display for Foo {
+///     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+///         # /*
+///         ...
+///         # */
+///         # Display::fmt(&self.io_err, f)
+///     }
+/// }
+///
+/// /// Always return the error with tree formatting support
+/// pub fn always_fail() -> Result<(), Foo> {
+///     # let get_err = || std::io::Error::from(std::io::ErrorKind::UnexpectedEof);
+///     Err(Foo::new(
+///     # /*
+///         ...
+///     # */
+///     # get_err(), std::array::from_fn(|_| get_err()),
+///     ))
+/// }
+///
+/// const MAX_DEPTH: usize = 10;
+/// const MAX_CHARS: usize = MAX_DEPTH * 6;
+///
+/// pub fn main() {
+///     # let _ = std::panic::catch_unwind(|| {
+///     let result = always_fail();
+///
+///     /// Fancy display panic with a maximum tree depth of 10 errors
+///     tree_unwrap::<MAX_CHARS, _, _, _>(result);
+///     # });
 /// }
 /// ```
 #[proc_macro_attribute]
@@ -151,7 +358,25 @@ fn foreign_err_tree(
 ) -> TokenStream {
     let (_, ty_generics, _) = generics.split_for_impl();
 
+    let doc_attrs: Vec<_> = attrs
+        .iter()
+        .filter(|x| {
+            if let Ok(x) = x.meta.require_name_value() {
+                if let Some(x) = x.path.get_ident() {
+                    x == "doc"
+                } else {
+                    false
+                }
+            } else {
+                false
+            }
+        })
+        .collect();
+
     let wrapper_struct: TokenStream = quote! {
+        /// Wrapper for [` #ident `] generated by [`bare_err_tree`].
+        ///
+        #(#doc_attrs)*
         #vis struct #name_attribute #generics {
             inner: #ident #ty_generics,
         }
@@ -221,6 +446,7 @@ fn err_tree_struct(
                 #[automatically_derived]
                 impl #impl_generics #ident #ty_generics #where_clause {
                     #[track_caller]
+                    #[allow(clippy::too_many_arguments)]
                     fn _tree(#field_bounds) -> Self {
                         let #field_ident = bare_err_tree::ErrTreePkg::new();
                         Self {
@@ -253,6 +479,7 @@ fn err_tree_struct(
                 #[automatically_derived]
                 impl #impl_generics #ident #ty_generics #where_clause {
                     #[track_caller]
+                    #[allow(clippy::too_many_arguments)]
                     fn _tree(#field_bounds) -> Self {
                         let err_tree_pkg = bare_err_tree::ErrTreePkg::new();
                         Self (

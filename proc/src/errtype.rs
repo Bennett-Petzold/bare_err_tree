@@ -4,11 +4,9 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-use proc_macro::{Span, TokenStream};
-use quote::{format_ident, quote, quote_spanned, ToTokens};
-use syn::{
-    spanned::Spanned, DataEnum, DataStruct, Error, Expr, Field, Ident, Lit, Meta, PatLit, Type,
-};
+use proc_macro::TokenStream;
+use quote::{quote, quote_spanned};
+use syn::{spanned::Spanned, DataEnum, DataStruct, Expr, Field, Ident, Type};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 enum Sizing {

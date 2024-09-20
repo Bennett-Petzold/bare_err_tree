@@ -11,6 +11,9 @@ use core::{fmt::Debug, panic::Location};
 ///
 /// [`Self::new()`] must be called by a function annotated with
 /// `#[track_caller]` to capture the correct callsite.
+///
+/// The inner fields are obscured to allow arbitrary metadata tracking
+/// combinations via feature flags without changing the API.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ErrTreePkg {
     pub(crate) location: Option<&'static Location<'static>>,

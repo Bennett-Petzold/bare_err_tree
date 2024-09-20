@@ -5,7 +5,61 @@
  */
 
 /*!
-CRATE DOCS TODO
+`bare_err_tree` is a `no_std` library to print a [`Error`] with a tree of sources.
+
+The functionality introduced by this library does not change the type or public API (besides a hidden field or deref).
+It is added via macro or manual implementation of [`AsErrTree`].
+End users can then use [`tree_unwrap`] or [`print_tree`] to get better error output.
+
+
+If none of the [tracking feature flags](#tracking-feature-flags) are enabled,
+the metadata is set to the [`unit`] type to take zero space.
+If the print methods are never called, this library incurs zero runtime cost.
+Usage of the [`err_tree`] macro incurs a compliation time cost.
+
+# Feature Flags
+* `derive`: Enabled by default, provides [`err_tree`] via proc macro.
+* `derive_alloc`: Allows derive to generate allocating code (e.g. for `Vec`
+    sources).
+* `heap_buffer`: Uses heap to store leading arrows so that `FRONT_MAX` bytes of
+    the stack aren't statically allocated for this purpose.
+#### Tracking Feature Flags
+* `source_line`: Tracks the source line of tree errors.
+
+# Adding [`ErrTree`] Support (Library or Bin)
+Both libraries and binaries can add type support for [`ErrTree`] prints.
+The [`err_tree`] macro is recommended, but [`ErrTree`] allows for a manual
+implementation.
+
+#### Feature Flags in Libraries
+Libraries should NOT enable any of the
+[tracking feature flags](#tracking-feature-flags) by default. Those are tunable
+for a particular binary's environment and needs. If
+[`tree_unwrap`]/[`print_tree`] are used internally, `FRONT_MAX` should be
+clearly documented in the relevant API to make users aware of resource
+requirements.
+
+# Using [`AsErrTree`] Implementors (Bin)
+Call [`tree_unwrap`] on the [`Result`] or [`print_tree`] on the [`Error`] with
+`FRONT_MAX` set to `6 * (maximum tree depth)`. Note that unless `heap_buffer`
+is enabled, `FRONT_MAX` bytes will always be occupied on stack for the duration
+of a print call. Make sure this falls within platform stack size, and single
+stack frame size, limits.
+
+# Credit
+
+The formatting is borrowed from from [error-stack](https://crates.io/crates/error-stack).
+Please see the [contributors page](https://github.com/hashintel/hash/graphs/contributors) for appropriate credit.
+
+# Licensing and Contributing
+
+All code is licensed under MPL 2.0. See the [FAQ](https://www.mozilla.org/en-US/MPL/2.0/FAQ/)
+for license questions. The license non-viral copyleft and does not block this library from
+being used in closed-source codebases. If you are using this library for a commercial purpose,
+consider reaching out to `dansecob.dev@gmail.com` to make a financial contribution.
+
+Contributions are welcome at
+<https://github.com/Bennett-Petzold/bare_err_tree>.
 */
 
 #![no_std]
@@ -34,7 +88,7 @@ pub use bare_err_tree_proc::*;
 /// `FRONT_MAX` limits the number of leading bytes. Each deeper error requires 6
 /// bytes to fit "│   ". So for a max depth of 3 errors, `FRONT_MAX` == 18.
 /// By default, `FRONT_MAX` bytes are allocated on stack. When `heap_buffer` is
-/// enabled, the bytes are allocated on stack and `FRONT_MAX` only acts as a
+/// enabled, the bytes are allocated on heap and `FRONT_MAX` only acts as a
 /// depth limit.
 ///
 /// Errors must define [`Error::source`] correctly for the tree to display.
@@ -116,6 +170,12 @@ where
 
 /// Intermediate struct for printing created by [`AsErrTree`].
 ///
+/// Only allowing construction through [`Self::with_pkg`] and [`Self::no_pkg`]
+/// allows arbitrary combinations of metadata tracking without changing
+/// construction syntax. Sources are stored under three layers of indirection
+/// to allow for maximum type and size flexibility without generics or heap
+/// allocation.
+///
 /// # Manual Implementation Example
 /// ```
 /// # use std::{
@@ -193,6 +253,10 @@ impl<'a> ErrTree<'a> {
             sources,
             location: None,
         }
+    }
+
+    pub fn sources(&self) -> &[&[&dyn AsErrTree]] {
+        self.sources
     }
 }
 

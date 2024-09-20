@@ -13,6 +13,7 @@ dependencies = [
 name = "bare_err_tree_proc"
 version = "0.1.0"
 dependencies = [
+ "bare_err_tree",
  "proc-macro2",
  "quote",
  "syn",

@@ -10,18 +10,6 @@ use proc_macro::TokenStream;
 use quote::quote;
 use syn::{Attribute, Generics, Ident, Meta};
 
-// https://doc.rust-lang.org/rust-by-example/trait/derive.html
-const VALID_DERIVES: [&str; 8] = [
-    "Eq",
-    "PartialEq",
-    "Ord",
-    "PartialOrd",
-    "Clone",
-    "Copy",
-    "Hash",
-    "Default",
-];
-
 pub fn wrapper_boilerplate(
     ident: &Ident,
     generics: &Generics,
@@ -69,7 +57,7 @@ pub fn wrapper_boilerplate(
 
         #[automatically_derived]
         impl #impl_generics core::ops::Deref for #name_attribute #ty_generics #where_clause {
-            type Target = #ident #ty_generics #where_clause;
+            type Target = #ident #ty_generics;
             fn deref(&self) -> &Self::Target {
                 &self.inner
             }
