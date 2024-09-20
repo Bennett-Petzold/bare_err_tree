@@ -31,7 +31,10 @@
 <a href="#30" id="30">30</a>
 <a href="#31" id="31">31</a>
 <a href="#32" id="32">32</a>
-<a href="#33" id="33">33</a></pre></div><pre class="rust"><code><span class="comment">/*
+<a href="#33" id="33">33</a>
+<a href="#34" id="34">34</a>
+<a href="#35" id="35">35</a>
+<a href="#36" id="36">36</a></pre></div><pre class="rust"><code><span class="comment">/*
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
@@ -44,6 +47,9 @@
 ///
 /// [`Self::new()`] must be called by a function annotated with
 /// `#[track_caller]` to capture the correct callsite.
+///
+/// The inner fields are obscured to allow arbitrary metadata tracking
+/// combinations via feature flags without changing the API.
 </span><span class="attr">#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 </span><span class="kw">pub struct </span>ErrTreePkg {
     <span class="kw">pub</span>(<span class="kw">crate</span>) location: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">'static </span>Location&lt;<span class="lifetime">'static</span>&gt;&gt;,

@@ -1,12 +1,23 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="MACRO DOCS TODO"><title>err_tree in bare_err_tree - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../static.files/rustdoc-405f8b29f52305f8.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="bare_err_tree" data-themes="" data-resource-suffix="" data-rustdoc-version="1.83.0-nightly (506f22b46 2024-09-19)" data-channel="nightly" data-search-js="search-0cfde64e8ad3a7fe.js" data-settings-js="settings-7e3bb6c46e92e77c.js" ><script src="../static.files/storage-29b1d5a9048d38fe.js"></script><script defer src="sidebar-items.js"></script><script defer src="../static.files/main-59a36e46ca746814.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-40f72c9259523cb3.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc attr"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../bare_err_tree/index.html">bare_<wbr>err_<wbr>tree</a><span class="version">0.1.0</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">err_<wbr>tree</a></h2><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#example" title="Example:">Example:</a></li></ul></section><div id="rustdoc-modnav"><h2 class="in-crate"><a href="index.html">In crate bare_<wbr>err_<wbr>tree</a></h2></div></div></nav><div class="sidebar-resizer"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1>Attribute Macro <a href="index.html">bare_err_tree</a>::<wbr><a class="attr" href="#">err_tree</a><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><span class="out-of-band"><a class="src" href="../src/bare_err_tree_proc/lib.rs.html#53">source</a> · <button id="toggle-all-docs" title="collapse all docs">[<span>&#x2212;</span>]</button></span></div><pre class="rust item-decl"><code>#[err_tree]</code></pre><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>MACRO DOCS TODO</p>
-<p>Internal constructor for a type derived with
-[<code>err_tree</code>][<code>bare_err_tree::err_tree</code>].</p>
-<p>Call this to construct with the hidden [<code>ErrTreePkg</code>] field.
-Annotate any public constructor call with <code>#[track_caller]</code>
-so the error tracks the outer origin line.</p>
-<h2 id="example"><a class="doc-anchor" href="#example">§</a>Example:</h2>
-<div class="example-wrap ignore"><a href="#" class="tooltip" title="This example is not tested">ⓘ</a><pre class="rust rust-example-rendered"><code><span class="attr">#[err_tree]
-</span><span class="kw">struct </span>Foo { num: i32 }
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Implements a type as an error tree."><title>err_tree in bare_err_tree - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../static.files/rustdoc-405f8b29f52305f8.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="bare_err_tree" data-themes="" data-resource-suffix="" data-rustdoc-version="1.83.0-nightly (506f22b46 2024-09-19)" data-channel="nightly" data-search-js="search-0cfde64e8ad3a7fe.js" data-settings-js="settings-7e3bb6c46e92e77c.js" ><script src="../static.files/storage-29b1d5a9048d38fe.js"></script><script defer src="sidebar-items.js"></script><script defer src="../static.files/main-59a36e46ca746814.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-40f72c9259523cb3.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc attr"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../bare_err_tree/index.html">bare_<wbr>err_<wbr>tree</a><span class="version">0.1.0</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">err_<wbr>tree</a></h2><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#self_tree" title="`Self::_tree`"><code>Self::_tree</code></a><ul><li><a href="#example" title="Example">Example</a></li></ul></li><li><a href="#field-annotations" title="Field Annotations">Field Annotations</a><ul><li><a href="#single-item" title="Single Item">Single Item</a></li><li><a href="#collection" title="Collection">Collection</a></li><li><a href="#example-1" title="Example">Example</a></li></ul></li><li><a href="#generating-a-wrapper" title="Generating a Wrapper">Generating a Wrapper</a><ul><li><a href="#wrapper-automatic-re-derives" title="Wrapper automatic re-derives">Wrapper automatic re-derives</a></li><li><a href="#enum-example" title="Enum Example">Enum Example</a></li></ul></li><li><a href="#full-usage-example" title="Full Usage Example:">Full Usage Example:</a></li></ul></section><div id="rustdoc-modnav"><h2 class="in-crate"><a href="index.html">In crate bare_<wbr>err_<wbr>tree</a></h2></div></div></nav><div class="sidebar-resizer"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1>Attribute Macro <a href="index.html">bare_err_tree</a>::<wbr><a class="attr" href="#">err_tree</a><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><span class="out-of-band"><a class="src" href="../src/bare_err_tree_proc/lib.rs.html#260">source</a> · <button id="toggle-all-docs" title="collapse all docs">[<span>&#x2212;</span>]</button></span></div><pre class="rust item-decl"><code>#[err_tree]</code></pre><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Implements a type as an error tree.</p>
+<p>The struct must define <a href="%60core::error::Error%60"><code>Error</code></a> and be annotated with <code>#[err_tree]</code> above
+any attributes relying on a full field definition. The type must then be
+internally constructed with <code>Self::_tree</code> to capture extra error
+information in a hidden field.</p>
+<h2 id="self_tree"><a class="doc-anchor" href="#self_tree">§</a><code>Self::_tree</code></h2>
+<p>This is an internal-use constructor that takes all struct fields in order.
+Use <code>#[track_caller]</code> on any functions calling <code>Self::_tree</code> to store the
+callsite correctly.
+<a href="https://github.com/Bennett-Petzold/bare_err_tree">Open an issue or PR</a>
+if this hidden field degrades a struct’s API (aside from requiring a
+constructor method).</p>
+<h5 id="example"><a class="doc-anchor" href="#example">§</a>Example</h5>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>bare_err_tree::{err_tree, tree_unwrap};
+
+<span class="attr">#[err_tree]
+#[derive(Debug)]
+</span><span class="kw">struct </span>Foo {
+    num: i32,
+}
 
 <span class="kw">impl </span>Foo {
     <span class="attr">#[track_caller]
@@ -15,10 +26,160 @@ so the error tracks the outer origin line.</p>
     }
 }
 
-<span class="kw">impl </span>Error <span class="kw">for </span>Foo {}
+<span class="kw">impl </span>Error <span class="kw">for </span>Foo {
+    <span class="kw">fn </span>source(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>(<span class="kw">dyn </span>Error + <span class="lifetime">'static</span>)&gt; {
+        ...
+    }
+}
 <span class="kw">impl </span>Display <span class="kw">for </span>Foo {
     <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
-        <span class="macro">write!</span>(f, <span class="string">""</span>)
+        ...
     }
+}</code></pre></div>
+<h2 id="field-annotations"><a class="doc-anchor" href="#field-annotations">§</a>Field Annotations</h2>
+<p>The macro needs annotations for underlying source fields.</p>
+<h5 id="single-item"><a class="doc-anchor" href="#single-item">§</a>Single Item</h5>
+<ul>
+<li><code>tree_err</code>: Mark a field as a <code>ErrTree</code> implementing <a href="%60core::error::Error%60"><code>Error</code></a>.</li>
+<li><code>dyn_err</code>: Mark a field as a generic <a href="%60core::error::Error%60"><code>Error</code></a>.</li>
+</ul>
+<h5 id="collection"><a class="doc-anchor" href="#collection">§</a>Collection</h5>
+<p><code>*_iter_err</code> works on any type with a <code>.iter()</code> method returning its items.</p>
+<ul>
+<li><code>tree_iter_err</code>: Mark a field as a collection of <code>ErrTree</code> implementing <a href="%60core::error::Error%60"><code>Error</code></a>s.</li>
+<li><code>dyn_iter_err</code>: Mark a field as a collection of generic <a href="%60core::error::Error%60"><code>Error</code></a>s.</li>
+</ul>
+<p><code>*_iter_err</code> does not allocate for arrays with a known length.
+The <code>derive_alloc</code> feature enables generation of allocating code to support
+dynamically sized collections.</p>
+<h5 id="example-1"><a class="doc-anchor" href="#example-1">§</a>Example</h5>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>bare_err_tree::{err_tree, tree_unwrap, AsErrTree, ErrTree};
+
+<span class="attr">#[err_tree]
+#[derive(Debug)]
+</span><span class="kw">struct </span>Foo {
+    <span class="attr">#[dyn_err]
+    </span>io_err: std::io::Error,
+    <span class="attr">#[dyn_iter_err]
+    </span>extra_io_errs: [std::io::Error; <span class="number">5</span>],
+}
+
+<span class="kw">impl </span>Foo {
+    <span class="attr">#[track_caller]
+    </span><span class="kw">pub fn </span>new(io_err: std::io::Error, extra_io_errs: [std::io::Error; <span class="number">5</span>]) -&gt; <span class="self">Self </span>{
+        Foo::_tree(io_err, extra_io_errs)
+    }
+}
+
+<span class="kw">impl </span>Error <span class="kw">for </span>Foo {
+    <span class="kw">fn </span>source(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>(<span class="kw">dyn </span>Error + <span class="lifetime">'static</span>)&gt; {
+        ...
+    }
+}
+<span class="kw">impl </span>Display <span class="kw">for </span>Foo {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
+        ...
+    }
+}
+
+<span class="kw">fn </span>main() {
+    <span class="comment">// Make a Foo of all EOF errors
+    </span><span class="kw">let </span>eof_gen = || std::io::Error::from(std::io::ErrorKind::UnexpectedEof);
+    <span class="kw">let </span>err = Foo::new(eof_gen(), std::array::from_fn(|<span class="kw">_</span>| eof_gen()));
+
+    <span class="comment">// Confirm exactly six sources from annotation
+    </span>err.as_err_tree(<span class="kw-2">&amp;mut </span>|tree| {
+        <span class="kw">let </span>sources = tree.sources();
+        <span class="macro">assert_eq!</span>(sources.iter().map(|s| s.iter()).flatten().count(), <span class="number">6</span>);
+    });
+}</code></pre></div>
+<h2 id="generating-a-wrapper"><a class="doc-anchor" href="#generating-a-wrapper">§</a>Generating a Wrapper</h2>
+<p><code>#[err_tree(WRAPPER)]</code> will generate a wrapper struct for storing metadata.
+Enums need this form, as a hidden field cannot be added to the enum.
+<code>WRAPPER</code> provides <a href="%60core::convert::From%60"><code>From</code></a> both ways and
+<a href="%60core::ops::Deref%60"><code>Deref</code></a>/<a href="%60core::ops::DerefMut%60"><code>DerefMut</code></a> to be
+maximally transparent.
+Some derives are automatically re-derived for the wrapper; any other traits
+that need to be implemented for the wrapper can be written manually.</p>
+<h5 id="wrapper-automatic-re-derives"><a class="doc-anchor" href="#wrapper-automatic-re-derives">§</a>Wrapper automatic re-derives</h5>
+<p><a href="%60core::cmp::Eq%60"><code>Eq</code></a>, <a href="%60core::cmp::PartialEq%60"><code>PartialEq</code></a>,
+<a href="%60core::cmp::Ord%60"><code>Ord</code></a>, <a href="%60core::cmp::PartialOrd%60"><code>PartialOrd</code></a>,
+<a href="%60core::clone::Clone%60"><code>Clone</code></a>, <a href="%60core::marker::Copy%60"><code>Copy</code></a>,
+<a href="%60core::hash::Hash%60"><code>Hash</code></a>, <a href="%60core::default::Default"><code>Default</code></a>.</p>
+<h5 id="enum-example"><a class="doc-anchor" href="#enum-example">§</a>Enum Example</h5>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>bare_err_tree::{err_tree, tree_unwrap};
+
+<span class="comment">// Generates `FooWrap&lt;T: Debug&gt;`
+</span><span class="attr">#[err_tree(FooWrap)]
+#[derive(Debug)]
+</span><span class="kw">enum </span>Foo&lt;T: Debug&gt; {
+    Val(T),
+    <span class="attr">#[dyn_err]
+    </span>Single(std::io::Error),
+    <span class="attr">#[dyn_iter_err]
+    </span>Many([std::io::Error; <span class="number">5</span>]),
+}
+
+<span class="kw">impl</span>&lt;T: Debug&gt; Error <span class="kw">for </span>Foo&lt;T&gt; {
+    <span class="kw">fn </span>source(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>(<span class="kw">dyn </span>Error + <span class="lifetime">'static</span>)&gt; {
+        ...
+    }
+}
+<span class="kw">impl</span>&lt;T: Debug&gt; Display <span class="kw">for </span>Foo&lt;T&gt; {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
+        ...
+    }
+}
+
+<span class="kw">fn </span>main() {
+    <span class="kw">let </span>wrapped = FooWrap::from(Foo::Val(<span class="number">8_i32</span>));
+    <span class="macro">assert!</span>(<span class="macro">matches!</span>(<span class="kw-2">*</span>wrapped, Foo::Val(<span class="number">8_i32</span>)));
+}
+</code></pre></div>
+<h2 id="full-usage-example"><a class="doc-anchor" href="#full-usage-example">§</a>Full Usage Example:</h2>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>bare_err_tree::{err_tree, tree_unwrap};
+
+<span class="attr">#[err_tree]
+#[derive(Debug)]
+</span><span class="kw">struct </span>Foo {
+    <span class="attr">#[dyn_err]
+    </span>io_err: std::io::Error,
+    <span class="attr">#[dyn_iter_err]
+    </span>extra_io_errs: [std::io::Error; <span class="number">5</span>],
+}
+
+<span class="kw">impl </span>Foo {
+    <span class="attr">#[track_caller]
+    </span><span class="kw">pub fn </span>new(io_err: std::io::Error, extra_io_errs: [std::io::Error; <span class="number">5</span>]) -&gt; <span class="self">Self </span>{
+        Foo::_tree(io_err, extra_io_errs)
+    }
+}
+
+<span class="kw">impl </span>Error <span class="kw">for </span>Foo {
+    <span class="kw">fn </span>source(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>(<span class="kw">dyn </span>Error + <span class="lifetime">'static</span>)&gt; {
+        <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.io_err)
+    }
+}
+<span class="kw">impl </span>Display <span class="kw">for </span>Foo {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
+        ...
+    }
+}
+
+<span class="doccomment">/// Always return the error with tree formatting support
+</span><span class="kw">pub fn </span>always_fail() -&gt; <span class="prelude-ty">Result</span>&lt;(), Foo&gt; {
+    <span class="prelude-val">Err</span>(Foo::new(
+        ...
+    ))
+}
+
+<span class="kw">const </span>MAX_DEPTH: usize = <span class="number">10</span>;
+<span class="kw">const </span>MAX_CHARS: usize = MAX_DEPTH * <span class="number">6</span>;
+
+<span class="kw">pub fn </span>main() {
+    <span class="kw">let </span>result = always_fail();
+
+    <span class="doccomment">/// Fancy display panic with a maximum tree depth of 10 errors
+    </span>tree_unwrap::&lt;MAX_CHARS, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>&gt;(result);
 }</code></pre></div>
 </div></details></section></div></main></body></html>

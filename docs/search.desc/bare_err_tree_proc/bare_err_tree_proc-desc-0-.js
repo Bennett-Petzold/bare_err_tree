@@ -1,1 +1,1 @@
-searchState.loadedDescShard("bare_err_tree_proc", 0, "MACRO DOCS TODO")
+searchState.loadedDescShard("bare_err_tree_proc", 0, "Derive macros for <code>bare_err_tree</code>.\nImplements a type as an error tree.")
