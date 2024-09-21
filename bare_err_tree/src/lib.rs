@@ -14,7 +14,8 @@ End users can then use [`tree_unwrap`] or [`print_tree`] to get better error out
 
 If none of the [tracking feature flags](#tracking-feature-flags) are enabled,
 the metadata is set to the [`unit`] type to take zero space.
-If the print methods are never called, this library incurs zero runtime cost.
+If the print methods are never called, and none of the tracking features are
+enabled, this library incurs zero runtime cost.
 Usage of the [`err_tree`] macro incurs a compliation time cost.
 
 # Feature Flags
@@ -34,12 +35,14 @@ implementation.
 #### Feature Flags in Libraries
 Libraries should NOT enable any of the
 [tracking feature flags](#tracking-feature-flags) by default. Those are tunable
-for a particular binary's environment and needs. If
-[`tree_unwrap`]/[`print_tree`] are used internally, `FRONT_MAX` should be
-clearly documented in the relevant API to make users aware of resource
-requirements.
+for a particular binary's environment and needs. [`tree_unwrap`]/[`print_tree`]
+should be used sparingly within the library, ideally with a small `FRONT_MAX`
+to minimize out of stack memory errors.
 
 # Using [`AsErrTree`] Implementors (Bin)
+Specify desired tracking features by importing `bare_err_tree` in `Cargo.toml`.
+(e.g. `bare_err_tree = { version = "*", features = ["source_line"] }`)
+
 Call [`tree_unwrap`] on the [`Result`] or [`print_tree`] on the [`Error`] with
 `FRONT_MAX` set to `6 * (maximum tree depth)`. Note that unless `heap_buffer`
 is enabled, `FRONT_MAX` bytes will always be occupied on stack for the duration
