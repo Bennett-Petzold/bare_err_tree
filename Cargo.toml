@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["bare_err_tree", "proc", "testing"]
+members = ["bare_err_tree", "bare_err_tree_proc", "testing"]
 
 [workspace.package]
 authors = ["Bennett Petzold <dansecob.dev@gmail.com>"]
