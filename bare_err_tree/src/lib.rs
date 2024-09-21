@@ -72,7 +72,6 @@ use core::panic::Location;
 
 use core::{
     borrow::Borrow,
-    cell::RefCell,
     error::Error,
     fmt::{self, Debug},
 };
@@ -106,22 +105,8 @@ where
     match res {
         Ok(x) => x,
         Err(tree) => {
-            tree.borrow().as_err_tree(&mut |tree| {
-                #[cfg(not(feature = "heap_buffer"))]
-                let front_lines = RefCell::new([0; FRONT_MAX]);
-
-                #[cfg(feature = "heap_buffer")]
-                let front_lines = RefCell::new(alloc::string::String::new());
-
-                panic!(
-                    "{}",
-                    ErrTreeFmt::<FRONT_MAX> {
-                        tree,
-                        node: FmtDepthNode::new(false, None),
-                        front_lines: &front_lines,
-                    }
-                )
-            });
+            tree.borrow()
+                .as_err_tree(&mut |tree| panic!("{}", ErrTreeFmtWrap::<FRONT_MAX> { tree }));
             unreachable!()
         }
     }
@@ -151,21 +136,7 @@ where
 {
     let mut res = Ok(());
     tree.borrow().as_err_tree(&mut |tree| {
-        #[cfg(not(feature = "heap_buffer"))]
-        let front_lines = RefCell::new([0; FRONT_MAX]);
-
-        #[cfg(feature = "heap_buffer")]
-        let front_lines = RefCell::new(alloc::string::String::new());
-
-        res = write!(
-            formatter,
-            "{}",
-            ErrTreeFmt::<FRONT_MAX> {
-                tree,
-                node: FmtDepthNode::new(false, None),
-                front_lines: &front_lines,
-            }
-        );
+        res = write!(formatter, "{}", ErrTreeFmtWrap::<FRONT_MAX> { tree });
     });
     res
 }

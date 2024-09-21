@@ -5,51 +5,41 @@
  */
 
 use core::{
-    cell::RefCell,
-    fmt::{self, Debug, Display, Formatter},
+    fmt::{self, Display, Formatter},
     str,
 };
 
 use crate::ErrTree;
 
-/// Simple single-linked list, tracking from children.
-///
-/// The node with no parent is treated as empty.
-#[derive(Debug, Clone, Copy)]
-pub(crate) struct FmtDepthNode<'a> {
-    pub val: bool,
-    pub parent: Option<&'a FmtDepthNode<'a>>,
+pub(crate) struct ErrTreeFmtWrap<'a, const FRONT_MAX: usize> {
+    pub tree: ErrTree<'a>,
 }
 
-impl<'a> FmtDepthNode<'a> {
-    pub fn new(val: bool, parent: Option<&'a FmtDepthNode<'a>>) -> Self {
-        Self { val, parent }
-    }
-}
+impl<const FRONT_MAX: usize> Display for ErrTreeFmtWrap<'_, FRONT_MAX> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        #[cfg(not(feature = "heap_buffer"))]
+        let mut front_lines = [0; FRONT_MAX];
 
-/// Iterates nodes from bottom to top (backwards).
-impl Iterator for &FmtDepthNode<'_> {
-    type Item = bool;
+        #[cfg(feature = "heap_buffer")]
+        let mut front_lines = alloc::string::String::new();
 
-    fn next(&mut self) -> Option<Self::Item> {
-        if let Some(parent) = self.parent {
-            let ret = self.val;
-            *self = parent;
-            Some(ret)
-        } else {
-            None
+        ErrTreeFmt::<FRONT_MAX> {
+            tree: self.tree.clone(),
+            scratch_fill: 0,
+            front_lines: &mut front_lines,
         }
+        .fmt(f)
     }
 }
 
 pub(crate) struct ErrTreeFmt<'a, const FRONT_MAX: usize> {
     pub tree: ErrTree<'a>,
-    pub node: FmtDepthNode<'a>,
+    pub scratch_fill: usize,
     /// Most be initialized large enough to fit 6 x (max depth) bytes
     #[cfg(not(feature = "heap_buffer"))]
-    pub front_lines: &'a RefCell<[u8]>,
+    pub front_lines: &'a mut [u8],
     #[cfg(feature = "heap_buffer")]
-    pub front_lines: &'a RefCell<alloc::string::String>,
+    pub front_lines: &'a mut alloc::string::String,
 }
 
 /// Workaround for lack of `const` in [`core::cmp::max`].
@@ -73,7 +63,7 @@ impl<const FRONT_MAX: usize> ErrTreeFmt<'_, FRONT_MAX> {
         f: &mut Formatter<'_>,
         #[cfg(not(feature = "heap_buffer"))] scratch_fill: usize,
     ) -> fmt::Result {
-        let front_lines = self.front_lines.borrow();
+        let front_lines = &self.front_lines;
 
         #[cfg(not(feature = "heap_buffer"))]
         let front_lines = str::from_utf8(&front_lines[..scratch_fill])
@@ -84,36 +74,32 @@ impl<const FRONT_MAX: usize> ErrTreeFmt<'_, FRONT_MAX> {
 
     /// Push in the correct fill characters
     #[inline]
-    fn add_front_line(&self, last: bool, #[cfg(not(feature = "heap_buffer"))] scratch_fill: usize) {
+    fn add_front_line(
+        &mut self,
+        last: bool,
+        #[cfg(not(feature = "heap_buffer"))] scratch_fill: usize,
+    ) {
         let chars: &str = if last { DANGLING } else { CONTINUING };
 
         #[cfg(not(feature = "heap_buffer"))]
-        self.front_lines.borrow_mut()[scratch_fill..scratch_fill + chars.len()]
+        self.front_lines[scratch_fill..scratch_fill + chars.len()]
             .copy_from_slice(chars.as_bytes());
 
         #[cfg(feature = "heap_buffer")]
-        self.front_lines.borrow_mut().push_str(chars);
+        self.front_lines.push_str(chars);
     }
 }
 
-impl<const FRONT_MAX: usize> Display for ErrTreeFmt<'_, FRONT_MAX> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+impl<const FRONT_MAX: usize> ErrTreeFmt<'_, FRONT_MAX> {
+    fn fmt(mut self, f: &mut Formatter<'_>) -> fmt::Result {
         Display::fmt(self.tree.inner, f)?;
-
-        // Any bytes after this are uninitialized
-        // Handles the two sequences being different lengths
-        let scratch_fill: usize = self
-            .node
-            .into_iter()
-            .map(|x| if x { CONTINUING.len() } else { DANGLING.len() })
-            .sum();
 
         #[cfg(feature = "source_line")]
         if let Some(location) = self.tree.location {
             self.write_front_lines(
                 f,
                 #[cfg(not(feature = "heap_buffer"))]
-                scratch_fill,
+                self.scratch_fill,
             )?;
 
             if self.tree.sources.is_empty() {
@@ -124,17 +110,17 @@ impl<const FRONT_MAX: usize> Display for ErrTreeFmt<'_, FRONT_MAX> {
             write!(f, "at \x1b[3m{}\x1b[0m", location)?;
         }
 
-        let mut source_fmt = |source: ErrTree, last: bool| {
-            self.write_front_lines(
+        let mut source_fmt = |this: &mut Self, source: ErrTree, last: bool| {
+            this.write_front_lines(
                 f,
                 #[cfg(not(feature = "heap_buffer"))]
-                scratch_fill,
+                this.scratch_fill,
             )?;
             write!(f, "│")?;
-            self.write_front_lines(
+            this.write_front_lines(
                 f,
                 #[cfg(not(feature = "heap_buffer"))]
-                scratch_fill,
+                this.scratch_fill,
             )?;
 
             if !last {
@@ -143,11 +129,16 @@ impl<const FRONT_MAX: usize> Display for ErrTreeFmt<'_, FRONT_MAX> {
                 write!(f, "╰─▶ ")?;
             }
 
-            let next_node = FmtDepthNode::new(!last, Some(&self.node));
+            let additional_scratch = if last {
+                DANGLING.len()
+            } else {
+                CONTINUING.len()
+            };
+
             ErrTreeFmt::<FRONT_MAX> {
                 tree: source,
-                node: next_node,
-                front_lines: self.front_lines,
+                scratch_fill: this.scratch_fill + additional_scratch,
+                front_lines: this.front_lines,
             }
             .fmt(f)
         };
@@ -155,7 +146,7 @@ impl<const FRONT_MAX: usize> Display for ErrTreeFmt<'_, FRONT_MAX> {
         let sources_len: usize = self.tree.sources.iter().map(|x| x.len()).sum();
         let mut sources_iter = self.tree.sources.iter().flat_map(|x| x.iter());
 
-        if scratch_fill + MAX_CELL_LEN >= FRONT_MAX {
+        if self.scratch_fill + MAX_CELL_LEN >= FRONT_MAX {
             // Stop printing deeper in the stack past this point
             writeln!(f, "{:.<1$}", "", MAX_CELL_LEN)?;
         } else {
@@ -165,7 +156,7 @@ impl<const FRONT_MAX: usize> Display for ErrTreeFmt<'_, FRONT_MAX> {
                 self.add_front_line(
                     false,
                     #[cfg(not(feature = "heap_buffer"))]
-                    scratch_fill,
+                    self.scratch_fill,
                 );
 
                 let mut res = Ok(());
@@ -175,7 +166,7 @@ impl<const FRONT_MAX: usize> Display for ErrTreeFmt<'_, FRONT_MAX> {
                     "This is guaranteed to be within the iterator length by previous calculation",
                 )
                 .as_err_tree(&mut |source| {
-                    res = source_fmt(source, false);
+                    res = source_fmt(&mut self, source, false);
                 });
                 res?
             }
@@ -184,7 +175,7 @@ impl<const FRONT_MAX: usize> Display for ErrTreeFmt<'_, FRONT_MAX> {
                 self.add_front_line(
                     true,
                     #[cfg(not(feature = "heap_buffer"))]
-                    scratch_fill,
+                    self.scratch_fill,
                 );
 
                 let mut res = Ok(());
@@ -194,7 +185,7 @@ impl<const FRONT_MAX: usize> Display for ErrTreeFmt<'_, FRONT_MAX> {
                     "This is guaranteed to be within the iterator length by previous calculation",
                 )
                 .as_err_tree(&mut |last_source| {
-                    res = source_fmt(last_source, true);
+                    res = source_fmt(&mut self, last_source, true);
                 });
                 res?
             }
