@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `bare_err_tree/src/fmt_logic.rs`."><title>fmt_logic.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-405f8b29f52305f8.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="bare_err_tree" data-themes="" data-resource-suffix="" data-rustdoc-version="1.83.0-nightly (506f22b46 2024-09-19)" data-channel="nightly" data-search-js="search-0cfde64e8ad3a7fe.js" data-settings-js="settings-7e3bb6c46e92e77c.js" ><script src="../../static.files/storage-29b1d5a9048d38fe.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-59a36e46ca746814.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-40f72c9259523cb3.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `bare_err_tree/src/fmt_logic.rs`."><title>fmt_logic.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-9d5ec5f3536319c6.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="bare_err_tree" data-themes="" data-resource-suffix="" data-rustdoc-version="1.83.0-nightly (da889684c 2024-09-20)" data-channel="nightly" data-search-js="search-0cfde64e8ad3a7fe.js" data-settings-js="settings-7e3bb6c46e92e77c.js" ><script src="../../static.files/storage-29b1d5a9048d38fe.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-59a36e46ca746814.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-40f72c9259523cb3.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
 <a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
@@ -194,67 +194,48 @@
 <a href="#193" id="193">193</a>
 <a href="#194" id="194">194</a>
 <a href="#195" id="195">195</a>
-<a href="#196" id="196">196</a>
-<a href="#197" id="197">197</a>
-<a href="#198" id="198">198</a>
-<a href="#199" id="199">199</a>
-<a href="#200" id="200">200</a>
-<a href="#201" id="201">201</a>
-<a href="#202" id="202">202</a>
-<a href="#203" id="203">203</a>
-<a href="#204" id="204">204</a>
-<a href="#205" id="205">205</a></pre></div><pre class="rust"><code><span class="comment">/*
+<a href="#196" id="196">196</a></pre></div><pre class="rust"><code><span class="comment">/*
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
 </span><span class="kw">use </span>core::{
-    cell::RefCell,
-    fmt::{<span class="self">self</span>, Debug, Display, Formatter},
+    fmt::{<span class="self">self</span>, Display, Formatter},
     str,
 };
 
 <span class="kw">use </span><span class="kw">crate</span>::ErrTree;
 
-<span class="doccomment">/// Simple single-linked list, tracking from children.
-///
-/// The node with no parent is treated as empty.
-</span><span class="attr">#[derive(Debug, Clone, Copy)]
-</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>FmtDepthNode&lt;<span class="lifetime">'a</span>&gt; {
-    <span class="kw">pub </span>val: bool,
-    <span class="kw">pub </span>parent: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span>FmtDepthNode&lt;<span class="lifetime">'a</span>&gt;&gt;,
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>ErrTreeFmtWrap&lt;<span class="lifetime">'a</span>, <span class="kw">const </span>FRONT_MAX: usize&gt; {
+    <span class="kw">pub </span>tree: ErrTree&lt;<span class="lifetime">'a</span>&gt;,
 }
 
-<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; FmtDepthNode&lt;<span class="lifetime">'a</span>&gt; {
-    <span class="kw">pub fn </span>new(val: bool, parent: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span>FmtDepthNode&lt;<span class="lifetime">'a</span>&gt;&gt;) -&gt; <span class="self">Self </span>{
-        <span class="self">Self </span>{ val, parent }
-    }
-}
+<span class="kw">impl</span>&lt;<span class="kw">const </span>FRONT_MAX: usize&gt; Display <span class="kw">for </span>ErrTreeFmtWrap&lt;<span class="lifetime">'_</span>, FRONT_MAX&gt; {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
+        <span class="attr">#[cfg(not(feature = <span class="string">"heap_buffer"</span>))]
+        </span><span class="kw">let </span><span class="kw-2">mut </span>front_lines = [<span class="number">0</span>; FRONT_MAX];
 
-<span class="doccomment">/// Iterates nodes from bottom to top (backwards).
-</span><span class="kw">impl </span>Iterator <span class="kw">for </span><span class="kw-2">&amp;</span>FmtDepthNode&lt;<span class="lifetime">'_</span>&gt; {
-    <span class="kw">type </span>Item = bool;
+        <span class="attr">#[cfg(feature = <span class="string">"heap_buffer"</span>)]
+        </span><span class="kw">let </span><span class="kw-2">mut </span>front_lines = alloc::string::String::new();
 
-    <span class="kw">fn </span>next(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>::Item&gt; {
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(parent) = <span class="self">self</span>.parent {
-            <span class="kw">let </span>ret = <span class="self">self</span>.val;
-            <span class="kw-2">*</span><span class="self">self </span>= parent;
-            <span class="prelude-val">Some</span>(ret)
-        } <span class="kw">else </span>{
-            <span class="prelude-val">None
-        </span>}
+        ErrTreeFmt::&lt;FRONT_MAX&gt; {
+            tree: <span class="self">self</span>.tree.clone(),
+            scratch_fill: <span class="number">0</span>,
+            front_lines: <span class="kw-2">&amp;mut </span>front_lines,
+        }
+        .fmt(f)
     }
 }
 
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>ErrTreeFmt&lt;<span class="lifetime">'a</span>, <span class="kw">const </span>FRONT_MAX: usize&gt; {
     <span class="kw">pub </span>tree: ErrTree&lt;<span class="lifetime">'a</span>&gt;,
-    <span class="kw">pub </span>node: FmtDepthNode&lt;<span class="lifetime">'a</span>&gt;,
+    <span class="kw">pub </span>scratch_fill: usize,
     <span class="doccomment">/// Most be initialized large enough to fit 6 x (max depth) bytes
     </span><span class="attr">#[cfg(not(feature = <span class="string">"heap_buffer"</span>))]
-    </span><span class="kw">pub </span>front_lines: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>RefCell&lt;[u8]&gt;,
+    </span><span class="kw">pub </span>front_lines: <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>[u8],
     <span class="attr">#[cfg(feature = <span class="string">"heap_buffer"</span>)]
-    </span><span class="kw">pub </span>front_lines: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>RefCell&lt;alloc::string::String&gt;,
+    </span><span class="kw">pub </span>front_lines: <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>alloc::string::String,
 }
 
 <span class="doccomment">/// Workaround for lack of `const` in [`core::cmp::max`].
@@ -278,7 +259,7 @@
         f: <span class="kw-2">&amp;mut </span>Formatter&lt;<span class="lifetime">'_</span>&gt;,
         <span class="attr">#[cfg(not(feature = <span class="string">"heap_buffer"</span>))] </span>scratch_fill: usize,
     ) -&gt; fmt::Result {
-        <span class="kw">let </span>front_lines = <span class="self">self</span>.front_lines.borrow();
+        <span class="kw">let </span>front_lines = <span class="kw-2">&amp;</span><span class="self">self</span>.front_lines;
 
         <span class="attr">#[cfg(not(feature = <span class="string">"heap_buffer"</span>))]
         </span><span class="kw">let </span>front_lines = str::from_utf8(<span class="kw-2">&amp;</span>front_lines[..scratch_fill])
@@ -289,36 +270,32 @@
 
     <span class="doccomment">/// Push in the correct fill characters
     </span><span class="attr">#[inline]
-    </span><span class="kw">fn </span>add_front_line(<span class="kw-2">&amp;</span><span class="self">self</span>, last: bool, <span class="attr">#[cfg(not(feature = <span class="string">"heap_buffer"</span>))] </span>scratch_fill: usize) {
+    </span><span class="kw">fn </span>add_front_line(
+        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
+        last: bool,
+        <span class="attr">#[cfg(not(feature = <span class="string">"heap_buffer"</span>))] </span>scratch_fill: usize,
+    ) {
         <span class="kw">let </span>chars: <span class="kw-2">&amp;</span>str = <span class="kw">if </span>last { DANGLING } <span class="kw">else </span>{ CONTINUING };
 
         <span class="attr">#[cfg(not(feature = <span class="string">"heap_buffer"</span>))]
-        </span><span class="self">self</span>.front_lines.borrow_mut()[scratch_fill..scratch_fill + chars.len()]
+        </span><span class="self">self</span>.front_lines[scratch_fill..scratch_fill + chars.len()]
             .copy_from_slice(chars.as_bytes());
 
         <span class="attr">#[cfg(feature = <span class="string">"heap_buffer"</span>)]
-        </span><span class="self">self</span>.front_lines.borrow_mut().push_str(chars);
+        </span><span class="self">self</span>.front_lines.push_str(chars);
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="kw">const </span>FRONT_MAX: usize&gt; Display <span class="kw">for </span>ErrTreeFmt&lt;<span class="lifetime">'_</span>, FRONT_MAX&gt; {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
+<span class="kw">impl</span>&lt;<span class="kw">const </span>FRONT_MAX: usize&gt; ErrTreeFmt&lt;<span class="lifetime">'_</span>, FRONT_MAX&gt; {
+    <span class="kw">fn </span>fmt(<span class="kw-2">mut </span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
         Display::fmt(<span class="self">self</span>.tree.inner, f)<span class="question-mark">?</span>;
-
-        <span class="comment">// Any bytes after this are uninitialized
-        // Handles the two sequences being different lengths
-        </span><span class="kw">let </span>scratch_fill: usize = <span class="self">self
-            </span>.node
-            .into_iter()
-            .map(|x| <span class="kw">if </span>x { CONTINUING.len() } <span class="kw">else </span>{ DANGLING.len() })
-            .sum();
 
         <span class="attr">#[cfg(feature = <span class="string">"source_line"</span>)]
         </span><span class="kw">if let </span><span class="prelude-val">Some</span>(location) = <span class="self">self</span>.tree.location {
             <span class="self">self</span>.write_front_lines(
                 f,
                 <span class="attr">#[cfg(not(feature = <span class="string">"heap_buffer"</span>))]
-                </span>scratch_fill,
+                </span><span class="self">self</span>.scratch_fill,
             )<span class="question-mark">?</span>;
 
             <span class="kw">if </span><span class="self">self</span>.tree.sources.is_empty() {
@@ -329,17 +306,17 @@
             <span class="macro">write!</span>(f, <span class="string">"at \x1b[3m{}\x1b[0m"</span>, location)<span class="question-mark">?</span>;
         }
 
-        <span class="kw">let </span><span class="kw-2">mut </span>source_fmt = |source: ErrTree, last: bool| {
-            <span class="self">self</span>.write_front_lines(
+        <span class="kw">let </span><span class="kw-2">mut </span>source_fmt = |this: <span class="kw-2">&amp;mut </span><span class="self">Self</span>, source: ErrTree, last: bool| {
+            this.write_front_lines(
                 f,
                 <span class="attr">#[cfg(not(feature = <span class="string">"heap_buffer"</span>))]
-                </span>scratch_fill,
+                </span>this.scratch_fill,
             )<span class="question-mark">?</span>;
             <span class="macro">write!</span>(f, <span class="string">"│"</span>)<span class="question-mark">?</span>;
-            <span class="self">self</span>.write_front_lines(
+            this.write_front_lines(
                 f,
                 <span class="attr">#[cfg(not(feature = <span class="string">"heap_buffer"</span>))]
-                </span>scratch_fill,
+                </span>this.scratch_fill,
             )<span class="question-mark">?</span>;
 
             <span class="kw">if </span>!last {
@@ -348,11 +325,16 @@
                 <span class="macro">write!</span>(f, <span class="string">"╰─▶ "</span>)<span class="question-mark">?</span>;
             }
 
-            <span class="kw">let </span>next_node = FmtDepthNode::new(!last, <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.node));
+            <span class="kw">let </span>additional_scratch = <span class="kw">if </span>last {
+                DANGLING.len()
+            } <span class="kw">else </span>{
+                CONTINUING.len()
+            };
+
             ErrTreeFmt::&lt;FRONT_MAX&gt; {
                 tree: source,
-                node: next_node,
-                front_lines: <span class="self">self</span>.front_lines,
+                scratch_fill: this.scratch_fill + additional_scratch,
+                front_lines: this.front_lines,
             }
             .fmt(f)
         };
@@ -360,7 +342,7 @@
         <span class="kw">let </span>sources_len: usize = <span class="self">self</span>.tree.sources.iter().map(|x| x.len()).sum();
         <span class="kw">let </span><span class="kw-2">mut </span>sources_iter = <span class="self">self</span>.tree.sources.iter().flat_map(|x| x.iter());
 
-        <span class="kw">if </span>scratch_fill + MAX_CELL_LEN &gt;= FRONT_MAX {
+        <span class="kw">if </span><span class="self">self</span>.scratch_fill + MAX_CELL_LEN &gt;= FRONT_MAX {
             <span class="comment">// Stop printing deeper in the stack past this point
             </span><span class="macro">writeln!</span>(f, <span class="string">"{:.&lt;1$}"</span>, <span class="string">""</span>, MAX_CELL_LEN)<span class="question-mark">?</span>;
         } <span class="kw">else </span>{
@@ -370,7 +352,7 @@
                 <span class="self">self</span>.add_front_line(
                     <span class="bool-val">false</span>,
                     <span class="attr">#[cfg(not(feature = <span class="string">"heap_buffer"</span>))]
-                    </span>scratch_fill,
+                    </span><span class="self">self</span>.scratch_fill,
                 );
 
                 <span class="kw">let </span><span class="kw-2">mut </span>res = <span class="prelude-val">Ok</span>(());
@@ -380,7 +362,7 @@
                     <span class="string">"This is guaranteed to be within the iterator length by previous calculation"</span>,
                 )
                 .as_err_tree(<span class="kw-2">&amp;mut </span>|source| {
-                    res = source_fmt(source, <span class="bool-val">false</span>);
+                    res = source_fmt(<span class="kw-2">&amp;mut </span><span class="self">self</span>, source, <span class="bool-val">false</span>);
                 });
                 res<span class="question-mark">?
             </span>}
@@ -389,7 +371,7 @@
                 <span class="self">self</span>.add_front_line(
                     <span class="bool-val">true</span>,
                     <span class="attr">#[cfg(not(feature = <span class="string">"heap_buffer"</span>))]
-                    </span>scratch_fill,
+                    </span><span class="self">self</span>.scratch_fill,
                 );
 
                 <span class="kw">let </span><span class="kw-2">mut </span>res = <span class="prelude-val">Ok</span>(());
@@ -399,7 +381,7 @@
                     <span class="string">"This is guaranteed to be within the iterator length by previous calculation"</span>,
                 )
                 .as_err_tree(<span class="kw-2">&amp;mut </span>|last_source| {
-                    res = source_fmt(last_source, <span class="bool-val">true</span>);
+                    res = source_fmt(<span class="kw-2">&amp;mut </span><span class="self">self</span>, last_source, <span class="bool-val">true</span>);
                 });
                 res<span class="question-mark">?
             </span>}
