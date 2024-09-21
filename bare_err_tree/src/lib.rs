@@ -57,7 +57,7 @@ Please see the [contributors page](https://github.com/hashintel/hash/graphs/cont
 # Licensing and Contributing
 
 All code is licensed under MPL 2.0. See the [FAQ](https://www.mozilla.org/en-US/MPL/2.0/FAQ/)
-for license questions. The license non-viral copyleft and does not block this library from
+for license questions. The license is non-viral copyleft and does not block this library from
 being used in closed-source codebases. If you are using this library for a commercial purpose,
 consider reaching out to `dansecob.dev@gmail.com` to make a financial contribution.
 
