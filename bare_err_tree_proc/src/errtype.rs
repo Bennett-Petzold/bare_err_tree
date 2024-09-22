@@ -139,7 +139,7 @@ impl CollectedErrType {
                 #(#iter_ids,)*
             ];
             let sources = sources.as_slice();
-            (func)(bare_err_tree::ErrTree::with_pkg(self, sources, _err_tree_pkg))
+            (func)(bare_err_tree::ErrTree::with_pkg(self, sources, _err_tree_pkg.clone()))
         }
     }
 
@@ -150,7 +150,7 @@ impl CollectedErrType {
                     let x = &(x #y) as &dyn bare_err_tree::AsErrTree;
                     let x = [x];
                     let x = [x.as_slice()];
-                    (func)(bare_err_tree::ErrTree::with_pkg(self, x.as_slice(), _err_tree_pkg))
+                    (func)(bare_err_tree::ErrTree::with_pkg(self, x.as_slice(), _err_tree_pkg.clone()))
                 },
             }
         };
@@ -166,7 +166,7 @@ impl CollectedErrType {
                             z as &dyn bare_err_tree::AsErrTree
                         ).collect::<alloc::vec::Vec<_>>();
                         let x = [x.as_slice()];
-                        (func)(bare_err_tree::ErrTree::with_pkg(self, x.as_slice(), _err_tree_pkg))
+                        (func)(bare_err_tree::ErrTree::with_pkg(self, x.as_slice(), _err_tree_pkg.clone()))
                     }
                 }
             }
@@ -176,7 +176,7 @@ impl CollectedErrType {
                         let x : [_; #s] = core::array::from_fn(|i| & x [i] #y);
                         let x : [_; #s] = core::array::from_fn(|i| & x [i] as &dyn bare_err_tree::AsErrTree);
                         let x = [x.as_slice()];
-                        (func)(bare_err_tree::ErrTree::with_pkg(self, x.as_slice(), _err_tree_pkg))
+                        (func)(bare_err_tree::ErrTree::with_pkg(self, x.as_slice(), _err_tree_pkg.clone()))
                     }
                 }
             }
@@ -212,7 +212,7 @@ impl CollectedErrType {
                 _ => {
                     let empty = [];
                     let empty = [empty.as_slice()];
-                    (func)(bare_err_tree::ErrTree::with_pkg(self, empty.as_slice(), _err_tree_pkg))
+                    (func)(bare_err_tree::ErrTree::with_pkg(self, empty.as_slice(), _err_tree_pkg.clone()))
                 }
             };
         }

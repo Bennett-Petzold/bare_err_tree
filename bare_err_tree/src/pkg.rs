@@ -4,7 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-use core::fmt::Debug;
+use core::{cmp::Ordering, fmt::Debug};
 
 #[cfg(feature = "source_line")]
 use core::panic::Location;
@@ -17,10 +17,15 @@ use core::panic::Location;
 ///
 /// The inner fields are obscured to allow arbitrary metadata tracking
 /// combinations via feature flags without changing the API.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+///
+/// All instances of this are considered equal, to avoid infecting sort order
+/// or comparisons between the parent error types.
+#[derive(Debug, Clone)]
 pub struct ErrTreePkg {
     #[cfg(feature = "source_line")]
-    pub(crate) location: Option<&'static Location<'static>>,
+    pub(crate) location: &'static Location<'static>,
+    #[cfg(feature = "tracing")]
+    pub(crate) trace: tracing_error::SpanTrace,
 }
 
 impl ErrTreePkg {
@@ -28,7 +33,9 @@ impl ErrTreePkg {
     pub fn new() -> Self {
         Self {
             #[cfg(feature = "source_line")]
-            location: Some(Location::caller()),
+            location: Location::caller(),
+            #[cfg(feature = "tracing")]
+            trace: tracing_error::SpanTrace::capture(),
         }
     }
 }
@@ -37,5 +44,25 @@ impl Default for ErrTreePkg {
     #[track_caller]
     fn default() -> Self {
         Self::new()
+    }
+}
+
+impl PartialEq for ErrTreePkg {
+    fn eq(&self, _other: &Self) -> bool {
+        true
+    }
+}
+
+impl Ord for ErrTreePkg {
+    fn cmp(&self, _other: &Self) -> core::cmp::Ordering {
+        Ordering::Equal
+    }
+}
+
+impl Eq for ErrTreePkg {}
+
+impl PartialOrd for ErrTreePkg {
+    fn partial_cmp(&self, other: &Self) -> Option<core::cmp::Ordering> {
+        Some(self.cmp(other))
     }
 }

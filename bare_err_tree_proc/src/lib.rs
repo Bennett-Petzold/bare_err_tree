@@ -155,8 +155,8 @@ use fields::*;
 // https://doc.rust-lang.org/rust-by-example/trait/derive.html
 /// [`Eq`](`core::cmp::Eq`), [`PartialEq`](`core::cmp::PartialEq`),
 /// [`Ord`](`core::cmp::Ord`), [`PartialOrd`](`core::cmp::PartialOrd`),
-/// [`Clone`](`core::clone::Clone`), [`Copy`](`core::marker::Copy`),
-/// [`Hash`](`core::hash::Hash`), [`Default`](`core::default::Default).
+/// [`Clone`](`core::clone::Clone`), [`Hash`](`core::hash::Hash`),
+/// [`Default`](`core::default::Default).
 ///
 /// #### Enum Example
 /// ```
@@ -438,7 +438,7 @@ fn err_tree_struct(
                 impl #impl_generics bare_err_tree::AsErrTree for #ident #ty_generics #where_clause {
                     #[track_caller]
                     fn as_err_tree(&self, func: &mut dyn FnMut(bare_err_tree::ErrTree<'_>)) {
-                        let _err_tree_pkg = self.#field_ident;
+                        let _err_tree_pkg = self.#field_ident .clone();
                         #sources
                     }
                 }
@@ -471,7 +471,7 @@ fn err_tree_struct(
                 impl #impl_generics bare_err_tree::AsErrTree for #ident #ty_generics #where_clause {
                     #[track_caller]
                     fn as_err_tree(&self, func: &mut dyn FnMut(bare_err_tree::ErrTree<'_>)) {
-                        let _err_tree_pkg = self.#prev_len;
+                        let _err_tree_pkg = self.#prev_len .clone();
                         #sources
                     }
                 }

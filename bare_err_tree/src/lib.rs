@@ -26,6 +26,7 @@ Usage of the [`err_tree`] macro incurs a compliation time cost.
     the stack aren't statically allocated for this purpose.
 #### Tracking Feature Flags
 * `source_line`: Tracks the source line of tree errors.
+* `tracing`: Produces a `tracing` backtrace with [`tracing_error`].
 
 # Adding [`ErrTree`] Support (Library or Bin)
 Both libraries and binaries can add type support for [`ErrTree`] prints.
@@ -207,6 +208,8 @@ pub struct ErrTree<'a> {
     sources: &'a [&'a [&'a dyn AsErrTree]],
     #[cfg(feature = "source_line")]
     location: Option<&'a Location<'a>>,
+    #[cfg(feature = "tracing")]
+    trace: Option<tracing_error::SpanTrace>,
 }
 
 impl<'a> ErrTree<'a> {
@@ -224,7 +227,9 @@ impl<'a> ErrTree<'a> {
             inner,
             sources,
             #[cfg(feature = "source_line")]
-            location: pkg.location,
+            location: Some(pkg.location),
+            #[cfg(feature = "tracing")]
+            trace: Some(pkg.trace),
         }
     }
 
@@ -235,6 +240,8 @@ impl<'a> ErrTree<'a> {
             sources,
             #[cfg(feature = "source_line")]
             location: None,
+            #[cfg(feature = "tracing")]
+            trace: None,
         }
     }
 

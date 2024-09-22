@@ -128,15 +128,10 @@ pub fn wrapper_boilerplate(
                         fn clone(&self) -> Self {
                             Self {
                                 inner: self.inner.clone(),
-                                _err_tree_pkg: self._err_tree_pkg
+                                _err_tree_pkg: self._err_tree_pkg.clone()
                             }
                         }
                     }
-                }
-                .into(),
-                "copy" => quote! {
-                    #[automatically_derived]
-                    impl #impl_generics core::marker::Copy for #name_attribute #ty_generics #where_clause {}
                 }
                 .into(),
                 "hash" => quote! {
