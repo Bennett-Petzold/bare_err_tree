@@ -180,12 +180,17 @@ impl<const FRONT_MAX: usize> ErrTreeFmt<'_, FRONT_MAX> {
                         && before(last_search_char, comma)
                         && before(last_search_char, quote)
                     {
-                        *depth = depth.saturating_sub(1);
+                        //*depth = depth.saturating_sub(1);
 
                         if last_search_char == 0 {
                             let _ = search_chars.pop();
+                            *depth = depth.saturating_sub(1);
 
-                            idx = Some(last_search_char + 1);
+                            if fields.chars().nth(1) == Some(',') {
+                                idx = Some(2);
+                            } else {
+                                idx = Some(1);
+                            }
                         } else {
                             idx = Some(last_search_char);
                         }
@@ -259,7 +264,7 @@ impl<const FRONT_MAX: usize> ErrTreeFmt<'_, FRONT_MAX> {
                 scratch_fill,
             );
             let _ = write!(f, "│    ");
-            for _ in 0..prev_depth {
+            for _ in 0..core::cmp::min(prev_depth, depth) {
                 let _ = write!(f, "  ");
             }
             let _ = write!(f, "{}", next);
@@ -280,13 +285,18 @@ impl<const FRONT_MAX: usize> ErrTreeFmt<'_, FRONT_MAX> {
             )?;
             write!(f, "│")?;
 
-            let mut depth = 0_usize;
-            let mut last_unique = 0;
+            let mut repeated = alloc::vec::Vec::<usize>::new();
 
             trace.with_spans(|metadata, fields| {
-                let pos_unique = !self.found_traces.contains(&metadata.callsite());
+                let pos_dup = self
+                    .found_traces
+                    .iter()
+                    .position(|c| *c == metadata.callsite());
 
-                if pos_unique {
+                if let Some(pos_dup) = pos_dup {
+                    repeated.push(pos_dup);
+                } else {
+                    let depth = self.found_traces.len();
                     self.found_traces.push(metadata.callsite());
 
                     let _ = Self::write_front_lines(
@@ -328,22 +338,22 @@ impl<const FRONT_MAX: usize> ErrTreeFmt<'_, FRONT_MAX> {
                     };
                 };
 
-                depth = depth.saturating_add(1);
-                if pos_unique {
-                    last_unique = depth;
-                }
-
                 true
             });
 
-            if last_unique < depth {
+            if !repeated.is_empty() {
                 let _ = Self::write_front_lines(
                     self.front_lines,
                     f,
                     #[cfg(not(feature = "heap_buffer"))]
                     self.scratch_fill,
                 );
-                let _ = write!(f, "├─ {} duplicate tracing frame(s)", depth - last_unique);
+                let _ = write!(
+                    f,
+                    "├─ {} duplicate tracing frame(s): {:?}",
+                    repeated.len(),
+                    repeated
+                );
             }
         };
 
