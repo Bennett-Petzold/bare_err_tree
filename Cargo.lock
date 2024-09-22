@@ -21,7 +21,7 @@ dependencies = [
 
 [[package]]
 name = "bare_err_tree_proc"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "bare_err_tree",
  "proc-macro2",
