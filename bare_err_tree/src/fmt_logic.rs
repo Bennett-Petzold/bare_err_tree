@@ -23,23 +23,32 @@ impl<const FRONT_MAX: usize> Display for ErrTreeFmtWrap<'_, FRONT_MAX> {
         #[cfg(feature = "heap_buffer")]
         let mut front_lines = alloc::string::String::new();
 
+        #[cfg(feature = "tracing")]
+        let mut found_traces = alloc::vec::Vec::new();
+
         ErrTreeFmt::<FRONT_MAX> {
             tree: self.tree.clone(),
             scratch_fill: 0,
             front_lines: &mut front_lines,
+
+            #[cfg(feature = "tracing")]
+            found_traces: &mut found_traces,
         }
         .fmt(f)
     }
 }
 
 pub(crate) struct ErrTreeFmt<'a, const FRONT_MAX: usize> {
-    pub tree: ErrTree<'a>,
-    pub scratch_fill: usize,
+    tree: ErrTree<'a>,
+    scratch_fill: usize,
     /// Most be initialized large enough to fit 6 x (max depth) bytes
     #[cfg(not(feature = "heap_buffer"))]
-    pub front_lines: &'a mut [u8],
+    front_lines: &'a mut [u8],
     #[cfg(feature = "heap_buffer")]
-    pub front_lines: &'a mut alloc::string::String,
+    front_lines: &'a mut alloc::string::String,
+
+    #[cfg(feature = "tracing")]
+    found_traces: &'a mut alloc::vec::Vec<tracing_core::callsite::Identifier>,
 }
 
 /// Workaround for lack of `const` in [`core::cmp::max`].
@@ -59,12 +68,11 @@ impl<const FRONT_MAX: usize> ErrTreeFmt<'_, FRONT_MAX> {
     /// Preamble arrow connections
     #[inline]
     fn write_front_lines(
-        &self,
+        #[cfg(not(feature = "heap_buffer"))] front_lines: &[u8],
+        #[cfg(feature = "heap_buffer")] front_lines: &alloc::string::String,
         f: &mut Formatter<'_>,
         #[cfg(not(feature = "heap_buffer"))] scratch_fill: usize,
     ) -> fmt::Result {
-        let front_lines = &self.front_lines;
-
         #[cfg(not(feature = "heap_buffer"))]
         let front_lines = str::from_utf8(&front_lines[..scratch_fill])
             .expect("All characters are static and guaranteed to be valid UTF-8");
@@ -75,34 +83,55 @@ impl<const FRONT_MAX: usize> ErrTreeFmt<'_, FRONT_MAX> {
     /// Push in the correct fill characters
     #[inline]
     fn add_front_line(
-        &mut self,
+        #[cfg(not(feature = "heap_buffer"))] front_lines: &mut [u8],
+        #[cfg(feature = "heap_buffer")] front_lines: &mut alloc::string::String,
         last: bool,
         #[cfg(not(feature = "heap_buffer"))] scratch_fill: usize,
     ) {
         let chars: &str = if last { DANGLING } else { CONTINUING };
 
         #[cfg(not(feature = "heap_buffer"))]
-        self.front_lines[scratch_fill..scratch_fill + chars.len()]
-            .copy_from_slice(chars.as_bytes());
+        front_lines[scratch_fill..scratch_fill + chars.len()].copy_from_slice(chars.as_bytes());
 
         #[cfg(feature = "heap_buffer")]
-        self.front_lines.push_str(chars);
+        front_lines.push_str(chars);
     }
 }
 
 impl<const FRONT_MAX: usize> ErrTreeFmt<'_, FRONT_MAX> {
-    fn fmt(mut self, f: &mut Formatter<'_>) -> fmt::Result {
-        Display::fmt(self.tree.inner, f)?;
+    #[cfg(feature = "tracing")]
+    /// Check for a unique trace by searching found traces
+    fn tracing_after(&self) -> bool {
+        if let Some(trace) = &self.tree.trace {
+            let mut unique = false;
 
-        #[cfg(feature = "source_line")]
+            trace.with_spans(|metadata, _| {
+                unique = self.found_traces.contains(&metadata.callsite());
+                false
+            });
+
+            unique
+        } else {
+            false
+        }
+    }
+
+    #[cfg(not(feature = "tracing"))]
+    fn tracing_after(&self) -> bool {
+        false
+    }
+
+    #[cfg(feature = "source_line")]
+    fn source_line(&self, f: &mut Formatter<'_>, tracing_after: bool) -> fmt::Result {
         if let Some(location) = self.tree.location {
-            self.write_front_lines(
+            Self::write_front_lines(
+                self.front_lines,
                 f,
                 #[cfg(not(feature = "heap_buffer"))]
                 self.scratch_fill,
             )?;
 
-            if self.tree.sources.is_empty() {
+            if !tracing_after && self.tree.sources.is_empty() {
                 write!(f, "╰─ ")?;
             } else {
                 write!(f, "├─ ")?;
@@ -110,14 +139,242 @@ impl<const FRONT_MAX: usize> ErrTreeFmt<'_, FRONT_MAX> {
             write!(f, "at \x1b[3m{}\x1b[0m", location)?;
         }
 
+        Ok(())
+    }
+
+    #[cfg(feature = "tracing")]
+    /// Simple implementation of pretty formatting
+    fn tracing_field_fmt(
+        f: &mut Formatter<'_>,
+        #[cfg(not(feature = "heap_buffer"))] front_lines: &[u8],
+        #[cfg(feature = "heap_buffer")] front_lines: &alloc::string::String,
+        mut fields: &str,
+        #[cfg(not(feature = "heap_buffer"))] scratch_fill: usize,
+    ) {
+        let mut next_slice = |search_chars: &mut alloc::vec::Vec<_>, depth: &mut usize| {
+            fields = fields.trim();
+
+            let next_idx = {
+                let last_search_char = search_chars.last().and_then(|c| fields.find(*c));
+                let brace = fields.find('{');
+                let bracket = fields.find('[');
+                let paren = fields.find('(');
+                let comma = fields.find(',');
+                let quote = fields.find('"');
+
+                let before = |lhs: usize, rhs: Option<usize>| {
+                    if let Some(rhs) = rhs {
+                        lhs < rhs
+                    } else {
+                        true
+                    }
+                };
+
+                // Default, no special chars left
+                let mut idx = None;
+
+                if let Some(last_search_char) = last_search_char {
+                    if before(last_search_char, brace)
+                        && before(last_search_char, paren)
+                        && before(last_search_char, bracket)
+                        && before(last_search_char, comma)
+                        && before(last_search_char, quote)
+                    {
+                        *depth = depth.saturating_sub(1);
+
+                        if last_search_char == 0 {
+                            let _ = search_chars.pop();
+
+                            idx = Some(last_search_char + 1);
+                        } else {
+                            idx = Some(last_search_char);
+                        }
+                    }
+                }
+                if let Some(brace) = brace {
+                    if idx.is_none()
+                        && before(brace, bracket)
+                        && before(brace, paren)
+                        && before(brace, comma)
+                        && before(brace, quote)
+                    {
+                        search_chars.push('}');
+                        *depth = depth.saturating_add(1);
+                        idx = Some(brace + 1);
+                    }
+                }
+                if let Some(bracket) = bracket {
+                    if idx.is_none()
+                        && before(bracket, paren)
+                        && before(bracket, comma)
+                        && before(bracket, quote)
+                    {
+                        search_chars.push(']');
+                        *depth = depth.saturating_add(1);
+                        idx = Some(bracket + 1);
+                    }
+                }
+                if let Some(paren) = paren {
+                    if idx.is_none() && before(paren, comma) && before(paren, quote) {
+                        search_chars.push(')');
+                        *depth = depth.saturating_add(1);
+                        idx = Some(paren + 1);
+                    }
+                }
+                if let Some(comma) = comma {
+                    if idx.is_none() && before(comma, quote) {
+                        idx = Some(comma + 1);
+                    }
+                }
+                if let Some(quote) = quote {
+                    if idx.is_none() {
+                        idx = Some(
+                            fields[quote + 1..]
+                                .find('"')
+                                .expect("If the quote opens, it must close")
+                                + quote
+                                + 2,
+                        );
+                    }
+                }
+
+                idx.unwrap_or(fields.len())
+            };
+
+            let cur = &fields[..next_idx];
+            fields = &fields[next_idx..];
+            cur
+        };
+
+        let mut search_chars = alloc::vec::Vec::new();
+        let mut prev_depth = 0;
+        let mut depth = 0;
+
+        let mut next = next_slice(&mut search_chars, &mut depth);
+        while !next.is_empty() {
+            let _ = Self::write_front_lines(
+                front_lines,
+                f,
+                #[cfg(not(feature = "heap_buffer"))]
+                scratch_fill,
+            );
+            let _ = write!(f, "│    ");
+            for _ in 0..prev_depth {
+                let _ = write!(f, "  ");
+            }
+            let _ = write!(f, "{}", next);
+
+            prev_depth = depth;
+            next = next_slice(&mut search_chars, &mut depth);
+        }
+    }
+
+    #[cfg(feature = "tracing")]
+    fn tracing(&mut self, f: &mut Formatter<'_>, tracing_after: bool) -> fmt::Result {
+        if let Some(trace) = &self.tree.trace {
+            Self::write_front_lines(
+                self.front_lines,
+                f,
+                #[cfg(not(feature = "heap_buffer"))]
+                self.scratch_fill,
+            )?;
+            write!(f, "│")?;
+
+            let mut depth = 0_usize;
+            let mut last_unique = 0;
+
+            trace.with_spans(|metadata, fields| {
+                let pos_unique = !self.found_traces.contains(&metadata.callsite());
+
+                if pos_unique {
+                    self.found_traces.push(metadata.callsite());
+
+                    let _ = Self::write_front_lines(
+                        self.front_lines,
+                        f,
+                        #[cfg(not(feature = "heap_buffer"))]
+                        self.scratch_fill,
+                    );
+                    let _ = write!(
+                        f,
+                        "├─ tracing frame {} => {}::{}",
+                        depth,
+                        metadata.target(),
+                        metadata.name()
+                    );
+
+                    if !fields.is_empty() {
+                        let _ = write!(f, " with");
+                        Self::tracing_field_fmt(
+                            f,
+                            self.front_lines,
+                            fields,
+                            #[cfg(not(feature = "heap_buffer"))]
+                            self.scratch_fill,
+                        );
+                    }
+
+                    if let Some((file, line)) = metadata
+                        .file()
+                        .and_then(|file| metadata.line().map(|line| (file, line)))
+                    {
+                        let _ = Self::write_front_lines(
+                            self.front_lines,
+                            f,
+                            #[cfg(not(feature = "heap_buffer"))]
+                            self.scratch_fill,
+                        );
+                        let _ = write!(f, "│        at {}:{}", file, line);
+                    };
+                };
+
+                depth = depth.saturating_add(1);
+                if pos_unique {
+                    last_unique = depth;
+                }
+
+                true
+            });
+
+            if last_unique < depth {
+                let _ = Self::write_front_lines(
+                    self.front_lines,
+                    f,
+                    #[cfg(not(feature = "heap_buffer"))]
+                    self.scratch_fill,
+                );
+                let _ = write!(f, "├─ {} duplicate tracing frame(s)", depth - last_unique);
+            }
+        };
+
+        Ok(())
+    }
+
+    fn fmt(mut self, f: &mut Formatter<'_>) -> fmt::Result {
+        Display::fmt(self.tree.inner, f)?;
+
+        #[cfg_attr(
+            not(any(feature = "source_line", feature = "tracing")),
+            expect(unused_variables, reason = "only used to track for a tracing line")
+        )]
+        let tracing_after = self.tracing_after();
+
+        #[cfg(feature = "source_line")]
+        self.source_line(f, tracing_after)?;
+
+        #[cfg(feature = "tracing")]
+        self.tracing(f, tracing_after)?;
+
         let mut source_fmt = |this: &mut Self, source: ErrTree, last: bool| {
-            this.write_front_lines(
+            Self::write_front_lines(
+                this.front_lines,
                 f,
                 #[cfg(not(feature = "heap_buffer"))]
                 this.scratch_fill,
             )?;
             write!(f, "│")?;
-            this.write_front_lines(
+            Self::write_front_lines(
+                this.front_lines,
                 f,
                 #[cfg(not(feature = "heap_buffer"))]
                 this.scratch_fill,
@@ -139,6 +396,9 @@ impl<const FRONT_MAX: usize> ErrTreeFmt<'_, FRONT_MAX> {
                 tree: source,
                 scratch_fill: this.scratch_fill + additional_scratch,
                 front_lines: this.front_lines,
+
+                #[cfg(feature = "tracing")]
+                found_traces: this.found_traces,
             }
             .fmt(f)
         };
@@ -152,13 +412,13 @@ impl<const FRONT_MAX: usize> ErrTreeFmt<'_, FRONT_MAX> {
         } else {
             // Normal operation
 
+            Self::add_front_line(
+                self.front_lines,
+                false,
+                #[cfg(not(feature = "heap_buffer"))]
+                self.scratch_fill,
+            );
             for _ in 0..sources_len.saturating_sub(1) {
-                self.add_front_line(
-                    false,
-                    #[cfg(not(feature = "heap_buffer"))]
-                    self.scratch_fill,
-                );
-
                 let mut res = Ok(());
                 sources_iter
                 .next()
@@ -171,8 +431,13 @@ impl<const FRONT_MAX: usize> ErrTreeFmt<'_, FRONT_MAX> {
                 res?
             }
 
+            // Clean up previous work when pushing to a String
+            #[cfg(feature = "heap_buffer")]
+            self.front_lines.truncate(self.scratch_fill);
+
             if sources_len > 0 {
-                self.add_front_line(
+                Self::add_front_line(
+                    self.front_lines,
                     true,
                     #[cfg(not(feature = "heap_buffer"))]
                     self.scratch_fill,

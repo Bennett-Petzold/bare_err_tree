@@ -20,7 +20,7 @@ use core::panic::Location;
 ///
 /// All instances of this are considered equal, to avoid infecting sort order
 /// or comparisons between the parent error types.
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct ErrTreePkg {
     #[cfg(feature = "source_line")]
     pub(crate) location: &'static Location<'static>,
@@ -44,6 +44,12 @@ impl Default for ErrTreePkg {
     #[track_caller]
     fn default() -> Self {
         Self::new()
+    }
+}
+
+impl Debug for ErrTreePkg {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        write!(f, "...")
     }
 }
 

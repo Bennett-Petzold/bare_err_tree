@@ -26,7 +26,8 @@ Usage of the [`err_tree`] macro incurs a compliation time cost.
     the stack aren't statically allocated for this purpose.
 #### Tracking Feature Flags
 * `source_line`: Tracks the source line of tree errors.
-* `tracing`: Produces a `tracing` backtrace with [`tracing_error`].
+* `tracing`: Produces a `tracing` backtrace with [`tracing_error`]. Uses
+    allocation to format prints.
 
 # Adding [`ErrTree`] Support (Library or Bin)
 Both libraries and binaries can add type support for [`ErrTree`] prints.
@@ -68,7 +69,7 @@ Contributions are welcome at
 
 #![no_std]
 
-#[cfg(feature = "heap_buffer")]
+#[cfg(any(feature = "heap_buffer", feature = "tracing"))]
 extern crate alloc;
 
 #[cfg(feature = "source_line")]
@@ -184,7 +185,7 @@ where
 ///         let source = &(&self.source as &dyn Error) as &dyn AsErrTree;
 ///
 ///         // Call the formatting function
-///         (func)(ErrTree::with_pkg(self, &[&[source]], self._pkg));
+///         (func)(ErrTree::with_pkg(self, &[&[source]], self._pkg.clone()));
 ///     }
 /// }
 ///
