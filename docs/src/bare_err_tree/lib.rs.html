@@ -279,7 +279,25 @@
 <a href="#278" id="278">278</a>
 <a href="#279" id="279">279</a>
 <a href="#280" id="280">280</a>
-<a href="#281" id="281">281</a></pre></div><pre class="rust"><code><span class="comment">/*
+<a href="#281" id="281">281</a>
+<a href="#282" id="282">282</a>
+<a href="#283" id="283">283</a>
+<a href="#284" id="284">284</a>
+<a href="#285" id="285">285</a>
+<a href="#286" id="286">286</a>
+<a href="#287" id="287">287</a>
+<a href="#288" id="288">288</a>
+<a href="#289" id="289">289</a>
+<a href="#290" id="290">290</a>
+<a href="#291" id="291">291</a>
+<a href="#292" id="292">292</a>
+<a href="#293" id="293">293</a>
+<a href="#294" id="294">294</a>
+<a href="#295" id="295">295</a>
+<a href="#296" id="296">296</a>
+<a href="#297" id="297">297</a>
+<a href="#298" id="298">298</a>
+<a href="#299" id="299">299</a></pre></div><pre class="rust"><code><span class="comment">/*
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
@@ -305,6 +323,8 @@ Usage of the [`err_tree`] macro incurs a compliation time cost.
     sources).
 * `heap_buffer`: Uses heap to store leading arrows so that `FRONT_MAX` bytes of
     the stack aren't statically allocated for this purpose.
+* `anyhow`: Adds implementation for [`anyhow::Error`].
+* `eyre`: Adds implementation for [`eyre::Report`].
 #### Tracking Feature Flags
 * `source_line`: Tracks the source line of tree errors.
 * `tracing`: Produces a `tracing` backtrace with [`tracing_error`]. Uses
@@ -537,7 +557,7 @@ Contributions are welcome at
 /// This can be defined with [`err_tree`], manually (see [`ErrTree`]), or with
 /// the default `dyn` implementation. The `dyn` implementation does not track
 /// any more information than standard library errors or track multiple sources.
-</span><span class="kw">pub trait </span>AsErrTree: Error {
+</span><span class="kw">pub trait </span>AsErrTree {
     <span class="doccomment">/// Constructs the [`ErrTree`] internally and calls `func` on it.
     </span><span class="kw">fn </span>as_err_tree(<span class="kw-2">&amp;</span><span class="self">self</span>, func: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>FnMut(ErrTree&lt;<span class="lifetime">'_</span>&gt;));
 }
@@ -552,6 +572,22 @@ Contributions are welcome at
             <span class="prelude-val">Some</span>(e) =&gt; (func)(ErrTree::no_pkg(<span class="self">self</span>, <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>e <span class="kw">as </span><span class="kw-2">&amp;</span><span class="kw">dyn </span>AsErrTree]])),
             <span class="prelude-val">None </span>=&gt; (func)(ErrTree::no_pkg(<span class="self">self</span>, <span class="kw-2">&amp;</span>[])),
         }
+    }
+}
+
+<span class="attr">#[cfg(feature = <span class="string">"anyhow"</span>)]
+</span><span class="kw">impl </span>AsErrTree <span class="kw">for </span>anyhow::Error {
+    <span class="kw">fn </span>as_err_tree(<span class="kw-2">&amp;</span><span class="self">self</span>, func: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>FnMut(ErrTree&lt;<span class="lifetime">'_</span>&gt;)) {
+        <span class="kw">let </span>this: <span class="kw-2">&amp;</span><span class="kw">dyn </span>Error = <span class="self">self</span>.as_ref();
+        this.as_err_tree(func)
+    }
+}
+
+<span class="attr">#[cfg(feature = <span class="string">"eyre"</span>)]
+</span><span class="kw">impl </span>AsErrTree <span class="kw">for </span>eyre::Report {
+    <span class="kw">fn </span>as_err_tree(<span class="kw-2">&amp;</span><span class="self">self</span>, func: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>FnMut(ErrTree&lt;<span class="lifetime">'_</span>&gt;)) {
+        <span class="kw">let </span>this: <span class="kw-2">&amp;</span><span class="kw">dyn </span>Error = <span class="self">self</span>.as_ref();
+        this.as_err_tree(func)
     }
 }
 
