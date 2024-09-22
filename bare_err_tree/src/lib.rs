@@ -80,7 +80,7 @@ use core::panic::Location;
 use core::{
     borrow::Borrow,
     error::Error,
-    fmt::{self, Debug},
+    fmt::{self},
 };
 
 mod pkg;

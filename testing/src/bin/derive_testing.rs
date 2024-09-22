@@ -6,7 +6,7 @@
 
 use std::{
     error::Error,
-    fmt::{self, Display, Formatter},
+    fmt::{self, Debug, Display, Formatter},
     marker::PhantomData,
 };
 
@@ -31,7 +31,7 @@ impl Display for InnerErrStruct {
 struct ErrStruct<
     'a,
     'b: 'a,
-    Tree: AsErrTree,
+    Tree: AsErrTree + Debug,
     const C: usize = 5,
     Err: Error + 'static = std::io::Error,
 > {
@@ -53,8 +53,13 @@ struct ErrStruct<
 
 const THREE: usize = 3;
 
-impl<const C: usize, Tree: AsErrTree, Err: Error> Error for ErrStruct<'_, '_, Tree, C, Err> {}
-impl<const C: usize, Tree: AsErrTree, Err: Error> Display for ErrStruct<'_, '_, Tree, C, Err> {
+impl<const C: usize, Tree: AsErrTree + Debug, Err: Error> Error
+    for ErrStruct<'_, '_, Tree, C, Err>
+{
+}
+impl<const C: usize, Tree: AsErrTree + Debug, Err: Error> Display
+    for ErrStruct<'_, '_, Tree, C, Err>
+{
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         Display::fmt(&self.err, f)
     }

@@ -12,7 +12,7 @@ use std::{
 use bare_err_tree::{err_tree, print_tree};
 use thiserror::Error;
 use tracing_error::ErrorLayer;
-use tracing_subscriber::{field::MakeExt, fmt::format::Pretty, layer::SubscriberExt};
+use tracing_subscriber::{field::MakeExt, layer::SubscriberExt};
 
 fn main() {
     let subscriber = tracing_subscriber::registry()

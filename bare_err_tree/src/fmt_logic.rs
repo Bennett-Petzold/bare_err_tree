@@ -273,7 +273,7 @@ impl<const FRONT_MAX: usize> ErrTreeFmt<'_, FRONT_MAX> {
     }
 
     #[cfg(feature = "tracing")]
-    fn tracing(&mut self, f: &mut Formatter<'_>, tracing_after: bool) -> fmt::Result {
+    fn tracing(&mut self, f: &mut Formatter<'_>) -> fmt::Result {
         if let Some(trace) = &self.tree.trace {
             Self::write_front_lines(
                 self.front_lines,
@@ -371,7 +371,7 @@ impl<const FRONT_MAX: usize> ErrTreeFmt<'_, FRONT_MAX> {
         self.source_line(f, tracing_after)?;
 
         #[cfg(feature = "tracing")]
-        self.tracing(f, tracing_after)?;
+        self.tracing(f)?;
 
         let mut source_fmt = |this: &mut Self, source: ErrTree, last: bool| {
             Self::write_front_lines(
