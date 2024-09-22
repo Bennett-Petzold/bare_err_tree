@@ -1,2 +1,2 @@
-window.ALL_CRATES = ["bare_err_tree","bare_err_tree_proc","proc_macro2","quote","syn","unicode_ident"];
-//{"start":21,"fragment_lengths":[15,21,14,8,6,16]}
+window.ALL_CRATES = ["bare_err_tree","bare_err_tree_proc","cfg_if","lazy_static","once_cell","pin_project_lite","proc_macro2","quote","sharded_slab","syn","thread_local","tracing","tracing_core","tracing_error","tracing_subscriber","unicode_ident"];
+//{"start":21,"fragment_lengths":[15,21,9,14,12,19,14,8,15,6,15,10,15,16,21,16]}
