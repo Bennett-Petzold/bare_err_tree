@@ -504,7 +504,7 @@ Contributions are welcome at
 ///     # }
 /// }
 /// ```
-</span><span class="attr">#[derive(Debug, Clone)]
+</span><span class="attr">#[derive(Clone)]
 </span><span class="kw">pub struct </span>ErrTree&lt;<span class="lifetime">'a</span>&gt; {
     inner: <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw">dyn </span>Error,
     sources: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>[<span class="kw-2">&amp;</span><span class="lifetime">'a </span>[<span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw">dyn </span>AsErrTree]],
