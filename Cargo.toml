@@ -11,3 +11,4 @@ repository = "https://github.com/Bennett-Petzold/bare_err_tree"
 license = "MPL-2.0"
 categories = ["no-std::no-alloc", "development-tools::debugging", "rust-patterns"]
 keywords = ["error", "tree", "printing"]
+readme = "README.md"
