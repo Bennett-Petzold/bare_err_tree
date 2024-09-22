@@ -205,7 +205,7 @@ where
 ///     # }
 /// }
 /// ```
-#[derive(Debug, Clone)]
+#[derive(Clone)]
 pub struct ErrTree<'a> {
     inner: &'a dyn Error,
     sources: &'a [&'a [&'a dyn AsErrTree]],
