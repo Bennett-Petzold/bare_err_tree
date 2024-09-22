@@ -180,8 +180,6 @@ impl<const FRONT_MAX: usize> ErrTreeFmt<'_, FRONT_MAX> {
                         && before(last_search_char, comma)
                         && before(last_search_char, quote)
                     {
-                        //*depth = depth.saturating_sub(1);
-
                         if last_search_char == 0 {
                             let _ = search_chars.pop();
                             *depth = depth.saturating_sub(1);

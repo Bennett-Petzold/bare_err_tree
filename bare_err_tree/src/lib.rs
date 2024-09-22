@@ -24,6 +24,8 @@ Usage of the [`err_tree`] macro incurs a compliation time cost.
     sources).
 * `heap_buffer`: Uses heap to store leading arrows so that `FRONT_MAX` bytes of
     the stack aren't statically allocated for this purpose.
+* `anyhow`: Adds implementation for [`anyhow::Error`].
+* `eyre`: Adds implementation for [`eyre::Report`].
 #### Tracking Feature Flags
 * `source_line`: Tracks the source line of tree errors.
 * `tracing`: Produces a `tracing` backtrace with [`tracing_error`]. Uses
@@ -256,7 +258,7 @@ impl<'a> ErrTree<'a> {
 /// This can be defined with [`err_tree`], manually (see [`ErrTree`]), or with
 /// the default `dyn` implementation. The `dyn` implementation does not track
 /// any more information than standard library errors or track multiple sources.
-pub trait AsErrTree: Error {
+pub trait AsErrTree {
     /// Constructs the [`ErrTree`] internally and calls `func` on it.
     fn as_err_tree(&self, func: &mut dyn FnMut(ErrTree<'_>));
 }
@@ -271,6 +273,22 @@ impl AsErrTree for dyn Error {
             Some(e) => (func)(ErrTree::no_pkg(self, &[&[&e as &dyn AsErrTree]])),
             None => (func)(ErrTree::no_pkg(self, &[])),
         }
+    }
+}
+
+#[cfg(feature = "anyhow")]
+impl AsErrTree for anyhow::Error {
+    fn as_err_tree(&self, func: &mut dyn FnMut(ErrTree<'_>)) {
+        let this: &dyn Error = self.as_ref();
+        this.as_err_tree(func)
+    }
+}
+
+#[cfg(feature = "eyre")]
+impl AsErrTree for eyre::Report {
+    fn as_err_tree(&self, func: &mut dyn FnMut(ErrTree<'_>)) {
+        let this: &dyn Error = self.as_ref();
+        this.as_err_tree(func)
     }
 }
 

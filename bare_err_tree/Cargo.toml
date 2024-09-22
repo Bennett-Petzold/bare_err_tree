@@ -17,8 +17,12 @@ derive_alloc = ["derive", "bare_err_tree_proc/alloc"]
 heap_buffer = []
 source_line = []
 tracing = ["dep:tracing-error", "dep:tracing-core"]
+anyhow = ["dep:anyhow"]
+eyre = ["dep:eyre"]
 
 [dependencies]
 bare_err_tree_proc = { version = "0.2", path = "../bare_err_tree_proc", optional = true }
 tracing-error = { version = "0.2", optional = true, default-features = false }
 tracing-core = { version = "0.1", optional = true, default-features = false }
+anyhow = { version = "1", optional = true, default-features = false }
+eyre = { version = "0.6", optional = true, default-features = false }
