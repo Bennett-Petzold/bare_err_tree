@@ -278,7 +278,8 @@
 <a href="#277" id="277">277</a>
 <a href="#278" id="278">278</a>
 <a href="#279" id="279">279</a>
-<a href="#280" id="280">280</a></pre></div><pre class="rust"><code><span class="comment">/*
+<a href="#280" id="280">280</a>
+<a href="#281" id="281">281</a></pre></div><pre class="rust"><code><span class="comment">/*
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
@@ -306,7 +307,8 @@ Usage of the [`err_tree`] macro incurs a compliation time cost.
     the stack aren't statically allocated for this purpose.
 #### Tracking Feature Flags
 * `source_line`: Tracks the source line of tree errors.
-* `tracing`: Produces a `tracing` backtrace with [`tracing_error`].
+* `tracing`: Produces a `tracing` backtrace with [`tracing_error`]. Uses
+    allocation to format prints.
 
 # Adding [`ErrTree`] Support (Library or Bin)
 Both libraries and binaries can add type support for [`ErrTree`] prints.
@@ -348,7 +350,7 @@ Contributions are welcome at
 
 </span><span class="attr">#![no_std]
 
-#[cfg(feature = <span class="string">"heap_buffer"</span>)]
+#[cfg(any(feature = <span class="string">"heap_buffer"</span>, feature = <span class="string">"tracing"</span>))]
 </span><span class="kw">extern crate </span>alloc;
 
 <span class="attr">#[cfg(feature = <span class="string">"source_line"</span>)]
@@ -464,7 +466,7 @@ Contributions are welcome at
 ///         let source = &amp;(&amp;self.source as &amp;dyn Error) as &amp;dyn AsErrTree;
 ///
 ///         // Call the formatting function
-///         (func)(ErrTree::with_pkg(self, &amp;[&amp;[source]], self._pkg));
+///         (func)(ErrTree::with_pkg(self, &amp;[&amp;[source]], self._pkg.clone()));
 ///     }
 /// }
 ///
