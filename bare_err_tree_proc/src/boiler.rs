@@ -21,7 +21,7 @@ pub fn wrapper_boilerplate(
     let universal: TokenStream = quote! {
         #[automatically_derived]
         impl #impl_generics core::error::Error for #name_attribute #ty_generics #where_clause {
-            fn source(&self) -> Option<&(dyn Error + 'static)> {
+            fn source(&self) -> Option<&(dyn core::error::Error + 'static)> {
                 core::error::Error::source(&self.inner)
             }
         }
