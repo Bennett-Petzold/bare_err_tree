@@ -4,8 +4,6 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-use core::panic;
-
 use quote::format_ident;
 use syn::{punctuated::Punctuated, token::Comma, Field, Fields, Ident, Meta, Visibility};
 
