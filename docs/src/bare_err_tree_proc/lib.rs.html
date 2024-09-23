@@ -501,7 +501,38 @@
 <a href="#500" id="500">500</a>
 <a href="#501" id="501">501</a>
 <a href="#502" id="502">502</a>
-<a href="#503" id="503">503</a></pre></div><pre class="rust"><code><span class="comment">/*
+<a href="#503" id="503">503</a>
+<a href="#504" id="504">504</a>
+<a href="#505" id="505">505</a>
+<a href="#506" id="506">506</a>
+<a href="#507" id="507">507</a>
+<a href="#508" id="508">508</a>
+<a href="#509" id="509">509</a>
+<a href="#510" id="510">510</a>
+<a href="#511" id="511">511</a>
+<a href="#512" id="512">512</a>
+<a href="#513" id="513">513</a>
+<a href="#514" id="514">514</a>
+<a href="#515" id="515">515</a>
+<a href="#516" id="516">516</a>
+<a href="#517" id="517">517</a>
+<a href="#518" id="518">518</a>
+<a href="#519" id="519">519</a>
+<a href="#520" id="520">520</a>
+<a href="#521" id="521">521</a>
+<a href="#522" id="522">522</a>
+<a href="#523" id="523">523</a>
+<a href="#524" id="524">524</a>
+<a href="#525" id="525">525</a>
+<a href="#526" id="526">526</a>
+<a href="#527" id="527">527</a>
+<a href="#528" id="528">528</a>
+<a href="#529" id="529">529</a>
+<a href="#530" id="530">530</a>
+<a href="#531" id="531">531</a>
+<a href="#532" id="532">532</a>
+<a href="#533" id="533">533</a>
+<a href="#534" id="534">534</a></pre></div><pre class="rust"><code><span class="comment">/*
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
@@ -515,8 +546,8 @@
 <span class="kw">use </span>proc_macro::{Span, TokenStream};
 <span class="kw">use </span>quote::{quote, ToTokens};
 <span class="kw">use </span>syn::{
-    parse::Parser, parse_macro_input, punctuated::Punctuated, Attribute, Data, DataStruct,
-    DeriveInput, Error, Field, Fields, Generics, Ident, Meta, Visibility,
+    parse::Parser, parse_macro_input, punctuated::Punctuated, token::Brace, Attribute, Data,
+    DataStruct, DeriveInput, Error, Field, Fields, FieldsNamed, Generics, Ident, Meta, Visibility,
 };
 
 <span class="kw">mod </span>errtype;
@@ -995,13 +1026,44 @@
             }
             .into()
         }
-        Fields::Unit =&gt; TokenStream::from(
-            Error::new(
-                Span::call_site().into(),
-                <span class="string">"err_tree cannot implement directly on a unit type. Use empty struct fields (Foo; =&gt; Foo {})."</span>,
-            )
-            .into_compile_error(),
-        ),
+        Fields::Unit =&gt; {
+            <span class="kw">let </span>field_ident = proc_macro2::Ident::new(<span class="string">"_err_tree_pkg"</span>, Span::call_site().into());
+            <span class="kw">let </span><span class="kw-2">mut </span>named = Punctuated::default();
+            named.push(
+                Field::parse_named
+                    .parse2(<span class="macro">quote!</span> { #field_ident: bare_err_tree::ErrTreePkg })
+                    .unwrap(),
+            );
+            <span class="kw">let </span>field_ident = field_ident.into_token_stream();
+            data.fields = Fields::Named(FieldsNamed {
+                brace_token: Brace::default(),
+                named,
+            });
+
+            <span class="macro">quote!</span> {
+                <span class="attr">#[automatically_derived]
+                </span><span class="kw">impl </span>#impl_generics bare_err_tree::AsErrTree <span class="kw">for </span>#ident #ty_generics #where_clause {
+                    <span class="attr">#[track_caller]
+                    </span><span class="kw">fn </span>as_err_tree(<span class="kw-2">&amp;</span><span class="self">self</span>, func: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>FnMut(bare_err_tree::ErrTree&lt;<span class="lifetime">'_</span>&gt;)) {
+                        <span class="kw">let </span>_err_tree_pkg = <span class="self">self</span>.#field_ident .clone();
+                        #sources
+                    }
+                }
+
+                <span class="attr">#[automatically_derived]
+                </span><span class="kw">impl </span>#impl_generics #ident #ty_generics #where_clause {
+                    <span class="attr">#[track_caller]
+                    #[allow(clippy::too_many_arguments)]
+                    </span><span class="kw">fn </span>_tree() -&gt; <span class="self">Self </span>{
+                        <span class="kw">let </span>#field_ident = bare_err_tree::ErrTreePkg::new();
+                        <span class="self">Self </span>{
+                            #field_ident
+                        }
+                    }
+                }
+            }
+            .into()
+        }
     }
 }
 </code></pre></div></section></main></body></html>
