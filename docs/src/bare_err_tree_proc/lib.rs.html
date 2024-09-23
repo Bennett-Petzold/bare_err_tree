@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `bare_err_tree_proc/src/lib.rs`."><title>lib.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-9d5ec5f3536319c6.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="bare_err_tree_proc" data-themes="" data-resource-suffix="" data-rustdoc-version="1.83.0-nightly (1d68e6dd1 2024-09-21)" data-channel="nightly" data-search-js="search-0cfde64e8ad3a7fe.js" data-settings-js="settings-7e3bb6c46e92e77c.js" ><script src="../../static.files/storage-29b1d5a9048d38fe.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-59a36e46ca746814.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-40f72c9259523cb3.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `bare_err_tree_proc/src/lib.rs`."><title>lib.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-9d5ec5f3536319c6.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="bare_err_tree_proc" data-themes="" data-resource-suffix="" data-rustdoc-version="1.83.0-nightly (6c6d21008 2024-09-22)" data-channel="nightly" data-search-js="search-0cfde64e8ad3a7fe.js" data-settings-js="settings-7e3bb6c46e92e77c.js" ><script src="../../static.files/storage-29b1d5a9048d38fe.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-2a73ac97dd39bfde.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-40f72c9259523cb3.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
 <a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
@@ -501,9 +501,7 @@
 <a href="#500" id="500">500</a>
 <a href="#501" id="501">501</a>
 <a href="#502" id="502">502</a>
-<a href="#503" id="503">503</a>
-<a href="#504" id="504">504</a>
-<a href="#505" id="505">505</a></pre></div><pre class="rust"><code><span class="comment">/*
+<a href="#503" id="503">503</a></pre></div><pre class="rust"><code><span class="comment">/*
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
@@ -878,12 +876,10 @@
         })
         .collect();
 
-    <span class="kw">let </span>ident_link = <span class="macro">format!</span>(<span class="string">"[`{ident}`]"</span>);
+    <span class="kw">let </span>ident_link = <span class="macro">format!</span>(<span class="string">"Wrapper for [`{ident}`] generated by [`bare_err_tree`]."</span>);
     <span class="kw">let </span>wrapper_struct: TokenStream = <span class="macro">quote!</span> {
-        <span class="doccomment">/// Wrapper for
-        </span><span class="attr">#[doc = #ident_link]
-        </span><span class="doccomment">/// generated by [`bare_err_tree`].
-        ///
+        <span class="attr">#[doc = #ident_link]
+        </span><span class="doccomment">///
         </span>#(#doc_attrs)*
         #vis <span class="kw">struct </span>#name_attribute #generics {
             inner: #ident #ty_generics,
@@ -967,7 +963,7 @@
             .into()
         }
         Fields::Unnamed(fields) =&gt; {
-            <span class="kw">let </span>prev_len = fields.unnamed.len();
+            <span class="kw">let </span>prev_len = syn::Index::from(fields.unnamed.len());
             fields.unnamed.push(
                 Field::parse_unnamed
                     .parse2(<span class="macro">quote!</span> { bare_err_tree::ErrTreePkg })
@@ -989,10 +985,10 @@
                     <span class="attr">#[track_caller]
                     #[allow(clippy::too_many_arguments)]
                     </span><span class="kw">fn </span>_tree(#field_bounds) -&gt; <span class="self">Self </span>{
-                        <span class="kw">let </span>err_tree_pkg = bare_err_tree::ErrTreePkg::new();
+                        <span class="kw">let </span>_err_tree_pkg = bare_err_tree::ErrTreePkg::new();
                         <span class="self">Self </span>(
                             #(#field_names,)*
-                            err_tree_pkg
+                            _err_tree_pkg
                         )
                     }
                 }
@@ -1002,7 +998,7 @@
         Fields::Unit =&gt; TokenStream::from(
             Error::new(
                 Span::call_site().into(),
-                <span class="string">"err_tree cannot implement directly on a unit type. Use '#[err_tree(WRAPPER)]'"</span>,
+                <span class="string">"err_tree cannot implement directly on a unit type. Use empty struct fields (Foo; =&gt; Foo {})."</span>,
             )
             .into_compile_error(),
         ),
