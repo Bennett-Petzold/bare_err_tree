@@ -156,6 +156,8 @@ where
 /// to allow for maximum type and size flexibility without generics or heap
 /// allocation.
 ///
+/// See [`tree`] to reduce [`Self::with_pkg`] boilerplate.
+///
 /// # Manual Implementation Example
 /// ```
 /// # use std::{
@@ -258,6 +260,8 @@ impl<'a> ErrTree<'a> {
 /// This can be defined with [`err_tree`], manually (see [`ErrTree`]), or with
 /// the default `dyn` implementation. The `dyn` implementation does not track
 /// any more information than standard library errors or track multiple sources.
+///
+/// Implementors must call `func` with a properly constructed [`ErrTree`].
 pub trait AsErrTree {
     /// Constructs the [`ErrTree`] internally and calls `func` on it.
     fn as_err_tree(&self, func: &mut dyn FnMut(ErrTree<'_>));
@@ -296,4 +300,64 @@ impl<T: ?Sized + AsErrTree> AsErrTree for &T {
     fn as_err_tree(&self, func: &mut dyn FnMut(ErrTree<'_>)) {
         T::as_err_tree(self, func)
     }
+}
+
+/// Boilerplate reducer for manual [`ErrTree`].
+///
+/// Expands out to [`ErrTree::with_pkg`] with `$x` as source(s).
+/// Preface with `dyn` to use the generic `dyn` [`Error`] rendering.
+///
+/// ```
+/// # use std::{
+/// #   panic::Location,
+/// #   error::Error,
+/// #   fmt::{Display, Formatter},
+/// # };
+/// use bare_err_tree::{tree, ErrTree, ErrTreePkg, AsErrTree};
+///
+/// #[derive(Debug)]
+/// struct Foo(std::io::Error, ErrTreePkg);
+///
+/// impl AsErrTree for Foo {
+///     fn as_err_tree(&self, func: &mut dyn FnMut(ErrTree<'_>)) {
+///         // Equivalent to:
+///         // (func)(bare_err_tree::ErrTree::with_pkg(
+///         //     &self,
+///         //     &[&[&(&self.0 as &dyn Error) as &dyn AsErrTree,]]
+///         //     self.1.clone()
+///         // )
+///         tree!(dyn, func, self, self.1, &self.0)
+///     }
+/// }
+///
+/// impl Error for Foo {
+///     fn source(&self) -> Option<&(dyn Error + 'static)> {
+///         Some(&self.0)
+///     }
+/// }
+/// impl Display for Foo {
+///     # /*
+///     ...
+///     # */
+///     # fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), std::fmt::Error> {
+///         # write!(f, "")
+///     # }
+/// }
+/// ```
+#[macro_export]
+macro_rules! tree {
+    (dyn, $func:expr, $inner:expr, $pkg:expr, $( $x:expr ),* ) => {
+        ($func)(bare_err_tree::ErrTree::with_pkg(
+            &$inner,
+            &[&[ $( &( $x as &dyn Error ) as &dyn AsErrTree , )* ]],
+            $pkg.clone(),
+        ))
+    };
+    ($func:expr, $inner:expr, $pkg:expr, $( $x:expr ),* ) => {
+        ($func)(bare_err_tree::ErrTree::with_pkg(
+            &$inner,
+            &[&[ $( $x as &dyn AsErrTree , )* ]],
+            $pkg.clone(),
+        ))
+    };
 }
