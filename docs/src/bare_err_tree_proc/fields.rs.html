@@ -50,17 +50,13 @@
 <a href="#49" id="49">49</a>
 <a href="#50" id="50">50</a>
 <a href="#51" id="51">51</a>
-<a href="#52" id="52">52</a>
-<a href="#53" id="53">53</a>
-<a href="#54" id="54">54</a></pre></div><pre class="rust"><code><span class="comment">/*
+<a href="#52" id="52">52</a></pre></div><pre class="rust"><code><span class="comment">/*
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-</span><span class="kw">use </span>core::panic;
-
-<span class="kw">use </span>quote::format_ident;
+</span><span class="kw">use </span>quote::format_ident;
 <span class="kw">use </span>syn::{punctuated::Punctuated, token::Comma, Field, Fields, Ident, Meta, Visibility};
 
 <span class="kw">pub fn </span>name_attribute(args: <span class="kw-2">&amp;</span>Punctuated&lt;Meta, Comma&gt;) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>proc_macro2::Ident&gt; {
