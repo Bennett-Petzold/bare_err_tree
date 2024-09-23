@@ -1,0 +1,33 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Boilerplate reducer for manual `ErrTree`."><title>tree in bare_err_tree - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../static.files/rustdoc-9d5ec5f3536319c6.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="bare_err_tree" data-themes="" data-resource-suffix="" data-rustdoc-version="1.83.0-nightly (6c6d21008 2024-09-22)" data-channel="nightly" data-search-js="search-0cfde64e8ad3a7fe.js" data-settings-js="settings-7e3bb6c46e92e77c.js" ><script src="../static.files/storage-29b1d5a9048d38fe.js"></script><script defer src="sidebar-items.js"></script><script defer src="../static.files/main-2a73ac97dd39bfde.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-40f72c9259523cb3.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-2c020d218678b618.svg"></head><body class="rustdoc macro"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../bare_err_tree/index.html">bare_<wbr>err_<wbr>tree</a><span class="version">0.2.2</span></h2></div><div class="sidebar-elems"><div id="rustdoc-modnav"></div></div></nav><div class="sidebar-resizer"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1>Macro <a href="index.html">bare_err_tree</a>::<wbr><a class="macro" href="#">tree</a><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><span class="out-of-band"><a class="src" href="../src/bare_err_tree/lib.rs.html#348-363">source</a> · <button id="toggle-all-docs" title="collapse all docs">[<span>&#x2212;</span>]</button></span></div><pre class="rust item-decl"><span class="macro">macro_rules!</span> tree {
+    (<span class="kw">dyn</span>, <span class="macro-nonterminal">$func</span>:expr, <span class="macro-nonterminal">$inner</span>:expr, <span class="macro-nonterminal">$pkg</span>:expr, $( <span class="macro-nonterminal">$x</span>:expr ),* ) =&gt; { ... };
+    (<span class="macro-nonterminal">$func</span>:expr, <span class="macro-nonterminal">$inner</span>:expr, <span class="macro-nonterminal">$pkg</span>:expr, $( <span class="macro-nonterminal">$x</span>:expr ),* ) =&gt; { ... };
+}</pre><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Boilerplate reducer for manual <a href="struct.ErrTree.html" title="struct bare_err_tree::ErrTree"><code>ErrTree</code></a>.</p>
+<p>Expands out to <a href="struct.ErrTree.html#method.with_pkg" title="associated function bare_err_tree::ErrTree::with_pkg"><code>ErrTree::with_pkg</code></a> with <code>$x</code> as source(s).
+Preface with <code>dyn</code> to use the generic <code>dyn</code> <a href="https://doc.rust-lang.org/nightly/core/error/trait.Error.html" title="trait core::error::Error"><code>Error</code></a> rendering.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>bare_err_tree::{tree, ErrTree, ErrTreePkg, AsErrTree};
+
+<span class="attr">#[derive(Debug)]
+</span><span class="kw">struct </span>Foo(std::io::Error, ErrTreePkg);
+
+<span class="kw">impl </span>AsErrTree <span class="kw">for </span>Foo {
+    <span class="kw">fn </span>as_err_tree(<span class="kw-2">&amp;</span><span class="self">self</span>, func: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>FnMut(ErrTree&lt;<span class="lifetime">'_</span>&gt;)) {
+        <span class="comment">// Equivalent to:
+        // (func)(bare_err_tree::ErrTree::with_pkg(
+        //     &amp;self,
+        //     &amp;[&amp;[&amp;(&amp;self.0 as &amp;dyn Error) as &amp;dyn AsErrTree,]]
+        //     self.1.clone()
+        // )
+        </span><span class="macro">tree!</span>(<span class="kw">dyn</span>, func, <span class="self">self</span>, <span class="self">self</span>.<span class="number">1</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0</span>)
+    }
+}
+
+<span class="kw">impl </span>Error <span class="kw">for </span>Foo {
+    <span class="kw">fn </span>source(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>(<span class="kw">dyn </span>Error + <span class="lifetime">'static</span>)&gt; {
+        <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0</span>)
+    }
+}
+<span class="kw">impl </span>Display <span class="kw">for </span>Foo {
+    ...
+}</code></pre></div>
+</div></details></section></div></main></body></html>

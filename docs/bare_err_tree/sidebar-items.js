@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"attr":["err_tree"],"fn":["print_tree","tree_unwrap"],"struct":["ErrTree","ErrTreePkg"],"trait":["AsErrTree"]};
+window.SIDEBAR_ITEMS = {"attr":["err_tree"],"fn":["print_tree","tree_unwrap"],"macro":["tree"],"struct":["ErrTree","ErrTreePkg"],"trait":["AsErrTree"]};
