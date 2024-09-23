@@ -12,8 +12,8 @@ use core::panic;
 use proc_macro::{Span, TokenStream};
 use quote::{quote, ToTokens};
 use syn::{
-    parse::Parser, parse_macro_input, punctuated::Punctuated, Attribute, Data, DataStruct,
-    DeriveInput, Error, Field, Fields, Generics, Ident, Meta, Visibility,
+    parse::Parser, parse_macro_input, punctuated::Punctuated, token::Brace, Attribute, Data,
+    DataStruct, DeriveInput, Error, Field, Fields, FieldsNamed, Generics, Ident, Meta, Visibility,
 };
 
 mod errtype;
@@ -492,12 +492,43 @@ fn err_tree_struct(
             }
             .into()
         }
-        Fields::Unit => TokenStream::from(
-            Error::new(
-                Span::call_site().into(),
-                "err_tree cannot implement directly on a unit type. Use empty struct fields (Foo; => Foo {}).",
-            )
-            .into_compile_error(),
-        ),
+        Fields::Unit => {
+            let field_ident = proc_macro2::Ident::new("_err_tree_pkg", Span::call_site().into());
+            let mut named = Punctuated::default();
+            named.push(
+                Field::parse_named
+                    .parse2(quote! { #field_ident: bare_err_tree::ErrTreePkg })
+                    .unwrap(),
+            );
+            let field_ident = field_ident.into_token_stream();
+            data.fields = Fields::Named(FieldsNamed {
+                brace_token: Brace::default(),
+                named,
+            });
+
+            quote! {
+                #[automatically_derived]
+                impl #impl_generics bare_err_tree::AsErrTree for #ident #ty_generics #where_clause {
+                    #[track_caller]
+                    fn as_err_tree(&self, func: &mut dyn FnMut(bare_err_tree::ErrTree<'_>)) {
+                        let _err_tree_pkg = self.#field_ident .clone();
+                        #sources
+                    }
+                }
+
+                #[automatically_derived]
+                impl #impl_generics #ident #ty_generics #where_clause {
+                    #[track_caller]
+                    #[allow(clippy::too_many_arguments)]
+                    fn _tree() -> Self {
+                        let #field_ident = bare_err_tree::ErrTreePkg::new();
+                        Self {
+                            #field_ident
+                        }
+                    }
+                }
+            }
+            .into()
+        }
     }
 }
