@@ -712,14 +712,14 @@ Contributions are welcome at
     (<span class="kw">dyn</span>, <span class="macro-nonterminal">$func</span>:expr, <span class="macro-nonterminal">$inner</span>:expr, <span class="macro-nonterminal">$pkg</span>:expr, $( <span class="macro-nonterminal">$x</span>:expr ),* ) =&gt; {
         (<span class="macro-nonterminal">$func</span>)(bare_err_tree::ErrTree::with_pkg(
             <span class="kw-2">&amp;</span><span class="macro-nonterminal">$inner</span>,
-            <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>[ $( <span class="kw-2">&amp;</span>( <span class="macro-nonterminal">$x </span><span class="kw">as </span><span class="kw-2">&amp;</span><span class="kw">dyn </span>Error ) <span class="kw">as </span><span class="kw-2">&amp;</span><span class="kw">dyn </span>AsErrTree , )* ]],
+            <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>[ $( <span class="kw-2">&amp;</span>( <span class="macro-nonterminal">$x </span><span class="kw">as </span><span class="kw-2">&amp;</span><span class="kw">dyn </span>core::error::Error ) <span class="kw">as </span><span class="kw-2">&amp;</span><span class="kw">dyn </span>bare_err_tree::AsErrTree , )* ]],
             <span class="macro-nonterminal">$pkg</span>.clone(),
         ))
     };
     (<span class="macro-nonterminal">$func</span>:expr, <span class="macro-nonterminal">$inner</span>:expr, <span class="macro-nonterminal">$pkg</span>:expr, $( <span class="macro-nonterminal">$x</span>:expr ),* ) =&gt; {
         (<span class="macro-nonterminal">$func</span>)(bare_err_tree::ErrTree::with_pkg(
             <span class="kw-2">&amp;</span><span class="macro-nonterminal">$inner</span>,
-            <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>[ $( <span class="macro-nonterminal">$x </span><span class="kw">as </span><span class="kw-2">&amp;</span><span class="kw">dyn </span>AsErrTree , )* ]],
+            <span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span>[ $( <span class="macro-nonterminal">$x </span><span class="kw">as </span><span class="kw-2">&amp;</span><span class="kw">dyn </span>bare_err_tree::AsErrTree , )* ]],
             <span class="macro-nonterminal">$pkg</span>.clone(),
         ))
     };
