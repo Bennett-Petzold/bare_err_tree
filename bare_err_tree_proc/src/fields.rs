@@ -6,6 +6,7 @@
 
 use core::panic;
 
+use quote::format_ident;
 use syn::{punctuated::Punctuated, token::Comma, Field, Fields, Ident, Meta, Visibility};
 
 pub fn name_attribute(args: &Punctuated<Meta, Comma>) -> Option<&proc_macro2::Ident> {
@@ -21,8 +22,17 @@ pub struct FieldsStrip {
 pub fn strip_fields(fields: &Fields) -> FieldsStrip {
     let mut field_bounds = match fields.clone() {
         Fields::Named(f) => f.named,
-        Fields::Unnamed(f) => f.unnamed,
-        Fields::Unit => panic!("Prior checks make this impossible!"),
+        Fields::Unnamed(f) => {
+            // Add placeholder identifiers for unnamed, since anonymous
+            // ident generated arguments are not supported.
+            let mut bounds = f.unnamed;
+            bounds.iter_mut().enumerate().for_each(|(idx, f)| {
+                let idx = format_ident!("_{idx}");
+                f.ident = Some(idx);
+            });
+            bounds
+        }
+        Fields::Unit => Punctuated::default(),
     };
 
     field_bounds.iter_mut().for_each(|f| {
