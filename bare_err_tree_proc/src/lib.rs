@@ -286,7 +286,7 @@ pub fn err_tree(args: TokenStream, input: TokenStream) -> TokenStream {
                         Foreign::Struct,
                     )
                 } else {
-                    err_tree_struct(&ident, &generics, data, errs, Foreign::Not)
+                    err_tree_struct(&ident, &vis, &generics, data, errs, Foreign::Not)
                 }
             }
             Err(e) => return e,
@@ -390,6 +390,7 @@ fn foreign_err_tree(
         let boilerplate = wrapper_boilerplate(ident, generics, attrs, name_attribute);
         let generated_impl = err_tree_struct(
             name_attribute,
+            vis,
             &wrapper_struct.generics,
             wrapper_struct_data,
             errs,
@@ -407,6 +408,7 @@ fn foreign_err_tree(
 
 fn err_tree_struct(
     ident: &Ident,
+    vis: &Visibility,
     generics: &Generics,
     data: &mut DataStruct,
     errs: CollectedErrType,
@@ -525,6 +527,22 @@ fn err_tree_struct(
                         Self {
                             #field_ident
                         }
+                    }
+                }
+
+                #[automatically_derived]
+                impl #impl_generics core::default::Default for #ident #ty_generics #where_clause {
+                    #[track_caller]
+                    fn default() -> Self {
+                        Self::_tree()
+                    }
+                }
+
+                #[automatically_derived]
+                impl #impl_generics #ident #ty_generics #where_clause {
+                    #[track_caller]
+                    #vis fn new() -> Self {
+                        Self::_tree()
                     }
                 }
             }
