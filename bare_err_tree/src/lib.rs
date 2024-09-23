@@ -349,14 +349,14 @@ macro_rules! tree {
     (dyn, $func:expr, $inner:expr, $pkg:expr, $( $x:expr ),* ) => {
         ($func)(bare_err_tree::ErrTree::with_pkg(
             &$inner,
-            &[&[ $( &( $x as &dyn Error ) as &dyn AsErrTree , )* ]],
+            &[&[ $( &( $x as &dyn core::error::Error ) as &dyn bare_err_tree::AsErrTree , )* ]],
             $pkg.clone(),
         ))
     };
     ($func:expr, $inner:expr, $pkg:expr, $( $x:expr ),* ) => {
         ($func)(bare_err_tree::ErrTree::with_pkg(
             &$inner,
-            &[&[ $( $x as &dyn AsErrTree , )* ]],
+            &[&[ $( $x as &dyn bare_err_tree::AsErrTree , )* ]],
             $pkg.clone(),
         ))
     };
