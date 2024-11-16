@@ -9,6 +9,9 @@ use core::{cmp::Ordering, fmt::Debug};
 #[cfg(feature = "source_line")]
 use core::panic::Location;
 
+#[cfg(feature = "boxed_tracing")]
+use alloc::boxed::Box;
+
 /// Captures extra information for [`ErrTree`][`crate::ErrTree`]
 /// automatically.
 ///
@@ -24,8 +27,10 @@ use core::panic::Location;
 pub struct ErrTreePkg {
     #[cfg(feature = "source_line")]
     pub(crate) location: &'static Location<'static>,
-    #[cfg(feature = "tracing")]
+    #[cfg(all(feature = "tracing", not(feature = "boxed_tracing")))]
     pub(crate) trace: tracing_error::SpanTrace,
+    #[cfg(feature = "boxed_tracing")]
+    pub(crate) trace: Box<tracing_error::SpanTrace>,
 }
 
 impl ErrTreePkg {
@@ -34,8 +39,10 @@ impl ErrTreePkg {
         Self {
             #[cfg(feature = "source_line")]
             location: Location::caller(),
-            #[cfg(feature = "tracing")]
+            #[cfg(all(feature = "tracing", not(feature = "boxed_tracing")))]
             trace: tracing_error::SpanTrace::capture(),
+            #[cfg(feature = "boxed_tracing")]
+            trace: Box::new(tracing_error::SpanTrace::capture()),
         }
     }
 }

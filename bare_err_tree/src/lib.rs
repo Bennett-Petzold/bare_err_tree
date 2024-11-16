@@ -30,6 +30,7 @@ Usage of the [`err_tree`] macro incurs a compliation time cost.
 * `source_line`: Tracks the source line of tree errors.
 * `tracing`: Produces a `tracing` backtrace with [`tracing_error`]. Uses
     allocation to format prints.
+* `boxed_tracing`: Same as `tracing`, but boxes the trace.
 
 # Adding [`ErrTree`] Support (Library or Bin)
 Both libraries and binaries can add type support for [`ErrTree`] prints.
@@ -239,8 +240,10 @@ impl<'a> ErrTree<'a> {
             sources,
             #[cfg(feature = "source_line")]
             location: Some(pkg.location),
-            #[cfg(feature = "tracing")]
+            #[cfg(all(feature = "tracing", not(feature = "boxed_tracing")))]
             trace: Some(pkg.trace),
+            #[cfg(feature = "boxed_tracing")]
+            trace: Some(*pkg.trace),
         }
     }
 
