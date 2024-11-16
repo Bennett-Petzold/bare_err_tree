@@ -12,3 +12,10 @@ name = "derive_testing"
 
 [[bin]]
 name = "example"
+
+[[bin]]
+name = "empty"
+
+
+[[bin]]
+name = "near-empty"

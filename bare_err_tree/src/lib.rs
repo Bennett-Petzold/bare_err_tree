@@ -112,8 +112,14 @@ where
     match res {
         Ok(x) => x,
         Err(tree) => {
-            tree.borrow()
-                .as_err_tree(&mut |tree| panic!("{}", ErrTreeFmtWrap::<FRONT_MAX> { tree }));
+            let loc = core::panic::Location::caller();
+            tree.borrow().as_err_tree(&mut |tree| {
+                panic!(
+                    "Panic origin at: {:#?}\n{}",
+                    loc,
+                    ErrTreeFmtWrap::<FRONT_MAX> { tree }
+                )
+            });
             unreachable!()
         }
     }

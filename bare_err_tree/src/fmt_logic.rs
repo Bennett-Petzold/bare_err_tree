@@ -131,7 +131,7 @@ impl<const FRONT_MAX: usize> ErrTreeFmt<'_, FRONT_MAX> {
                 self.scratch_fill,
             )?;
 
-            if !tracing_after && self.tree.sources.is_empty() {
+            if !tracing_after && self.tree.sources.iter().all(|x| x.is_empty()) {
                 write!(f, "╰─ ")?;
             } else {
                 write!(f, "├─ ")?;
