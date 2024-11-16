@@ -72,7 +72,14 @@
 <a href="#71" id="71">71</a>
 <a href="#72" id="72">72</a>
 <a href="#73" id="73">73</a>
-<a href="#74" id="74">74</a></pre></div><pre class="rust"><code><span class="comment">/*
+<a href="#74" id="74">74</a>
+<a href="#75" id="75">75</a>
+<a href="#76" id="76">76</a>
+<a href="#77" id="77">77</a>
+<a href="#78" id="78">78</a>
+<a href="#79" id="79">79</a>
+<a href="#80" id="80">80</a>
+<a href="#81" id="81">81</a></pre></div><pre class="rust"><code><span class="comment">/*
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
@@ -82,6 +89,9 @@
 
 <span class="attr">#[cfg(feature = <span class="string">"source_line"</span>)]
 </span><span class="kw">use </span>core::panic::Location;
+
+<span class="attr">#[cfg(feature = <span class="string">"boxed_tracing"</span>)]
+</span><span class="kw">use </span>alloc::boxed::Box;
 
 <span class="doccomment">/// Captures extra information for [`ErrTree`][`crate::ErrTree`]
 /// automatically.
@@ -98,8 +108,10 @@
 </span><span class="kw">pub struct </span>ErrTreePkg {
     <span class="attr">#[cfg(feature = <span class="string">"source_line"</span>)]
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) location: <span class="kw-2">&amp;</span><span class="lifetime">'static </span>Location&lt;<span class="lifetime">'static</span>&gt;,
-    <span class="attr">#[cfg(feature = <span class="string">"tracing"</span>)]
+    <span class="attr">#[cfg(all(feature = <span class="string">"tracing"</span>, not(feature = <span class="string">"boxed_tracing"</span>)))]
     </span><span class="kw">pub</span>(<span class="kw">crate</span>) trace: tracing_error::SpanTrace,
+    <span class="attr">#[cfg(feature = <span class="string">"boxed_tracing"</span>)]
+    </span><span class="kw">pub</span>(<span class="kw">crate</span>) trace: Box&lt;tracing_error::SpanTrace&gt;,
 }
 
 <span class="kw">impl </span>ErrTreePkg {
@@ -108,8 +120,10 @@
         <span class="self">Self </span>{
             <span class="attr">#[cfg(feature = <span class="string">"source_line"</span>)]
             </span>location: Location::caller(),
-            <span class="attr">#[cfg(feature = <span class="string">"tracing"</span>)]
+            <span class="attr">#[cfg(all(feature = <span class="string">"tracing"</span>, not(feature = <span class="string">"boxed_tracing"</span>)))]
             </span>trace: tracing_error::SpanTrace::capture(),
+            <span class="attr">#[cfg(feature = <span class="string">"boxed_tracing"</span>)]
+            </span>trace: Box::new(tracing_error::SpanTrace::capture()),
         }
     }
 }
