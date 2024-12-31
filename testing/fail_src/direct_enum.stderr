@@ -1,0 +1,7 @@
+error: err_tree cannot implement directly on an enum type. Use '#[err_tree(WRAPPER)]'
+  --> ../testing/fail_src/direct_enum.rs:17:1
+   |
+17 | #[err_tree]
+   | ^^^^^^^^^^^
+   |
+   = note: this error originates in the attribute macro `err_tree` (in Nightly builds, run with -Z macro-backtrace for more info)

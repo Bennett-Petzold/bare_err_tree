@@ -7,7 +7,9 @@
 /*!
 `bare_err_tree` is a `no_std` library to print an [`Error`] with a tree of sources.
 
-The functionality introduced by this library does not change the type or public API (besides a hidden field or deref).
+The functionality introduced by this library does not change the type or public
+API beyond a hidden field (when implemented on structs) or deref (when
+implemented via a wrapper).
 It is added via macro or manual implementation of [`AsErrTree`].
 End users can then use [`tree_unwrap`] or [`print_tree`] to get better error output.
 

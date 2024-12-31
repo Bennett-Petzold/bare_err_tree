@@ -25,7 +25,7 @@ impl Display for InnerErrStruct {
     }
 }
 
-#[expect(dead_code)]
+#[allow(dead_code)]
 #[err_tree]
 #[derive(Debug)]
 struct ErrStruct<
@@ -65,8 +65,8 @@ impl<const C: usize, Tree: AsErrTree + Debug, Err: Error> Display
     }
 }
 
-#[expect(dead_code)]
 #[err_tree(ErrEnumWrap)]
+#[allow(dead_code)]
 #[derive(Debug)]
 enum ErrEnum {
     #[dyn_err]

@@ -5,7 +5,7 @@ edition = "2021"
 
 [dependencies]
 bare_err_tree = { path = "../bare_err_tree", features = ["derive_alloc", "source_line"] }
-thiserror = "2.0.7"
+thiserror = "2"
 
 [[bin]]
 name = "derive_testing"
@@ -15,7 +15,6 @@ name = "example"
 
 [[bin]]
 name = "empty"
-
 
 [[bin]]
 name = "near-empty"

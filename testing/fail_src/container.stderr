@@ -1,0 +1,5 @@
+error[E0599]: no method named `iter` found for struct `std::io::Error` in the current scope
+  --> ../testing/fail_src/container.rs:20:5
+   |
+20 |     #[dyn_iter_err]
+   |     ^ method not found in `Error`

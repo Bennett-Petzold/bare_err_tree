@@ -1,0 +1,8 @@
+error[E0277]: the trait bound `[std::io::Error; 1]: std::error::Error` is not satisfied
+  --> ../testing/fail_src/single.rs:20:5
+   |
+20 | /     #[dyn_err]
+21 | |     err: [std::io::Error; 1],
+   | |_______^ the trait `std::error::Error` is not implemented for `[std::io::Error; 1]`
+   |
+   = note: required for the cast from `&[std::io::Error; 1]` to `&dyn std::error::Error`

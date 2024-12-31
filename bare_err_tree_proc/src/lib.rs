@@ -30,6 +30,10 @@ use fields::*;
 /// internally constructed with `Self::_tree` to capture extra error
 /// information in a hidden field.
 ///
+/// Any derive such as [`Clone`] that relies on all fields being present must
+/// occur after the `#[err_tree]` macro. The `_err_tree_pkg` field will
+/// otherwise be added late and break the derivation.
+///
 /// # `Self::_tree`
 /// This is an internal-use constructor that takes all struct fields in order.
 /// Use `#[track_caller]` on any functions calling `Self::_tree` to store the
