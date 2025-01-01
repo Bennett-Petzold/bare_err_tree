@@ -10,18 +10,25 @@ use syn::{spanned::Spanned, DataEnum, DataStruct, Expr, Field, Ident, Type};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 enum Sizing {
+    /// [TYPE; N]
     Static(Expr),
+    /// Anything that can be collected from an iter to a vec
     Dynamic,
 }
 
 #[derive(Debug)]
 enum ErrType {
+    /// &dyn ErrTree, not in a collection
     Dyn((Ident, proc_macro2::Span)),
+    /// Known ErrTree, not in a collection
     Tree((Ident, proc_macro2::Span)),
+    /// &dyn ErrTree, in a collection
     DynSlice((Ident, proc_macro2::Span, Sizing)),
+    /// Known ErrTree, in a collection
     TreeSlice((Ident, proc_macro2::Span, Sizing)),
 }
 
+/// Sorted collection of [`ErrType`]s
 pub struct CollectedErrType {
     r#dyn: Vec<(Ident, proc_macro2::Span)>,
     tree: Vec<(Ident, proc_macro2::Span)>,
@@ -53,7 +60,11 @@ impl FromIterator<ErrType> for CollectedErrType {
 }
 
 impl CollectedErrType {
+    /// Generate the `with_pkg` call on all notated sources in a struct.
+    ///
+    /// Avoids any allocation on iterators of static arrays.
     pub fn gen_sources_struct(&self, foreign: bool) -> proc_macro2::TokenStream {
+        // Trivial name change covers both foreign and direct impl
         let parent = if foreign {
             quote! { self.inner }
         } else {
@@ -114,6 +125,7 @@ impl CollectedErrType {
             .chain(self.treeiter.iter())
             .map(|x| &x.0);
 
+        // Only put alloc in the prelude if a Vec is actually needed
         let any_dyn = self
             .dyniter
             .iter()
@@ -143,6 +155,9 @@ impl CollectedErrType {
         }
     }
 
+    /// Generate the `with_pkg` call on all notated sources in a enum.
+    ///
+    /// Avoids any allocation on iterators of static arrays.
     pub fn gen_sources_enum(&self, ident: &Ident) -> proc_macro2::TokenStream {
         let conv = |x, span, y| {
             quote_spanned! {
@@ -159,6 +174,8 @@ impl CollectedErrType {
             Sizing::Dynamic => {
                 quote_spanned! {
                     span=> #ident :: #x (x) => {
+                        extern crate alloc;
+
                         let x = x.iter().map(|z|
                             z #y
                         ).collect::<alloc::vec::Vec<_>>();
@@ -219,6 +236,10 @@ impl CollectedErrType {
     }
 }
 
+/// Parse iterator types.
+///
+/// Distinguishes between sized and unsized arrays to generate the
+/// correct identity name and sizing types.
 fn iter_parse(
     f: &Field,
     ident: Ident,
@@ -235,8 +256,9 @@ fn iter_parse(
     } else {
         Some(Err(syn::Error::new(
             f.span(),
+            // Waffling is necessary, because non-array and non-alloc are not differentiated
             format!(
-                "{} is dynamically sized, but the \"derive_alloc\" feature is not enabled.",
+                "{} may be a dynamically sized collection, but the \"derive_alloc\" feature is not enabled.",
                 ident
             ),
         )
@@ -245,6 +267,7 @@ fn iter_parse(
     }
 }
 
+/// Finds all child error annotations on a struct.
 pub fn get_struct_macros(data: &DataStruct) -> Result<CollectedErrType, TokenStream> {
     data.fields
         .iter()
@@ -272,6 +295,7 @@ pub fn get_struct_macros(data: &DataStruct) -> Result<CollectedErrType, TokenStr
         .collect()
 }
 
+/// Finds all child error annotations on an enum.
 pub fn get_enum_macros(data: &DataEnum) -> Result<CollectedErrType, TokenStream> {
     data.variants
         .iter()
@@ -319,6 +343,7 @@ pub fn get_enum_macros(data: &DataEnum) -> Result<CollectedErrType, TokenStream>
         .collect()
 }
 
+/// Remove this library's annotation, as they aren't actually valid macros.
 pub fn clean_struct_macros(data: &mut DataStruct) {
     data.fields.iter_mut().for_each(|f| {
         f.attrs = f
@@ -344,6 +369,7 @@ pub fn clean_struct_macros(data: &mut DataStruct) {
     });
 }
 
+/// Remove this library's annotation, as they aren't actually valid macros.
 pub fn clean_enum_macros(data: &mut DataEnum) {
     data.variants.iter_mut().for_each(|f| {
         f.attrs = f

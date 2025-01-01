@@ -8,40 +8,26 @@ use std::fmt::{self, Display, Formatter};
 
 use bare_err_tree::{err_tree, print_tree};
 use thiserror::Error;
-use tracing_error::ErrorLayer;
-use tracing_subscriber::{field::MakeExt, layer::SubscriberExt};
 
+#[allow(dead_code)]
 fn main() {
-    let subscriber = tracing_subscriber::registry()
-        .with(tracing_subscriber::fmt::layer().pretty())
-        .with(tracing_subscriber::fmt::layer().map_fmt_fields(|f| f.debug_alt()))
-        // any number of other subscriber layers may be added before or
-        // after the `ErrorLayer`...
-        .with(ErrorLayer::default());
-
-    // set the subscriber as the default for the application
-    tracing::subscriber::set_global_default(subscriber).unwrap();
-
-    run_fatal()
+    let formatted = gen_print();
+    println!("{formatted}")
 }
 
-#[tracing::instrument]
-fn run_fatal() {
-    let fatal: MissedClassTree = MissedClass::Overslept(Overslept::new(
-        BedTime::new(
-            2,
-            vec![
-                ClassProject::new("proving 1 == 2".to_string()).into(),
-                BedTimeReasons::ExamStressed,
-                BedTimeReasons::PlayingGames,
-            ],
-        ),
-        5,
-    ))
+fn gen_print() -> String {
+    let fatal: MissedClassTree = MissedClass::Overslept(Overslept::new(BedTime::new(
+        2,
+        vec![
+            ClassProject::new("proving 1 == 2".to_string()).into(),
+            BedTimeReasons::ExamStressed,
+            BedTimeReasons::PlayingGames,
+        ],
+    )))
     .into();
     let mut formatted = String::new();
     print_tree::<60, _, _, _>(fatal, &mut formatted).unwrap();
-    println!("{formatted}")
+    formatted
 }
 
 #[derive(Debug, Error)]
@@ -66,9 +52,8 @@ enum BedTimeReasons {
     PlayingGames,
 }
 
-#[derive(Debug)]
 #[err_tree]
-#[derive(Default, Error)]
+#[derive(Debug, Default, Error)]
 struct BedTime {
     hour: u8,
     #[dyn_iter_err]
@@ -111,8 +96,7 @@ struct Overslept {
 
 impl Overslept {
     #[track_caller]
-    #[tracing::instrument]
-    fn new(bed_time: BedTime, _garbage: usize) -> Self {
+    fn new(bed_time: BedTime) -> Self {
         Overslept::_tree(bed_time, BedComfy)
     }
 }

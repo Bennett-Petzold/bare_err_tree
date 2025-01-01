@@ -7,7 +7,13 @@
 use bare_err_tree::print_tree;
 use thiserror::Error;
 
+#[allow(dead_code)]
 fn main() {
+    let formatted = gen_print();
+    println!("{formatted}")
+}
+
+fn gen_print() -> String {
     let fatal = Empty;
     let mut formatted = String::new();
     print_tree::<60, &dyn std::error::Error, _, _>(
@@ -15,7 +21,7 @@ fn main() {
         &mut formatted,
     )
     .unwrap();
-    println!("{formatted}")
+    formatted
 }
 
 #[derive(Debug, Error)]

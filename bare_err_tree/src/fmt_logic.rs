@@ -21,9 +21,9 @@ impl<const FRONT_MAX: usize> Display for ErrTreeFmtWrap<'_, FRONT_MAX> {
         let mut front_lines = [0; FRONT_MAX];
 
         #[cfg(feature = "heap_buffer")]
-        let mut front_lines = alloc::string::String::new();
+        let mut front_lines = alloc::vec![0; FRONT_MAX].into_boxed_slice();
 
-        #[cfg(any(feature = "tracing", feature = "boxed_tracing"))]
+        #[cfg(feature = "tracing")]
         let mut found_traces = alloc::vec::Vec::new();
 
         ErrTreeFmt::<FRONT_MAX> {
@@ -31,7 +31,7 @@ impl<const FRONT_MAX: usize> Display for ErrTreeFmtWrap<'_, FRONT_MAX> {
             scratch_fill: 0,
             front_lines: &mut front_lines,
 
-            #[cfg(any(feature = "tracing", feature = "boxed_tracing"))]
+            #[cfg(feature = "tracing")]
             found_traces: &mut found_traces,
         }
         .fmt(f)
@@ -42,12 +42,9 @@ pub(crate) struct ErrTreeFmt<'a, const FRONT_MAX: usize> {
     tree: ErrTree<'a>,
     scratch_fill: usize,
     /// Most be initialized large enough to fit 6 x (max depth) bytes
-    #[cfg(not(feature = "heap_buffer"))]
     front_lines: &'a mut [u8],
-    #[cfg(feature = "heap_buffer")]
-    front_lines: &'a mut alloc::string::String,
 
-    #[cfg(any(feature = "tracing", feature = "boxed_tracing"))]
+    #[cfg(feature = "tracing")]
     found_traces: &'a mut alloc::vec::Vec<tracing_core::callsite::Identifier>,
 }
 
@@ -68,12 +65,10 @@ impl<const FRONT_MAX: usize> ErrTreeFmt<'_, FRONT_MAX> {
     /// Preamble arrow connections
     #[inline]
     fn write_front_lines(
-        #[cfg(not(feature = "heap_buffer"))] front_lines: &[u8],
-        #[cfg(feature = "heap_buffer")] front_lines: &alloc::string::String,
+        front_lines: &[u8],
         f: &mut Formatter<'_>,
-        #[cfg(not(feature = "heap_buffer"))] scratch_fill: usize,
+        scratch_fill: usize,
     ) -> fmt::Result {
-        #[cfg(not(feature = "heap_buffer"))]
         let front_lines = str::from_utf8(&front_lines[..scratch_fill])
             .expect("All characters are static and guaranteed to be valid UTF-8");
 
@@ -82,24 +77,15 @@ impl<const FRONT_MAX: usize> ErrTreeFmt<'_, FRONT_MAX> {
 
     /// Push in the correct fill characters
     #[inline]
-    fn add_front_line(
-        #[cfg(not(feature = "heap_buffer"))] front_lines: &mut [u8],
-        #[cfg(feature = "heap_buffer")] front_lines: &mut alloc::string::String,
-        last: bool,
-        #[cfg(not(feature = "heap_buffer"))] scratch_fill: usize,
-    ) {
+    fn add_front_line(front_lines: &mut [u8], last: bool, scratch_fill: usize) {
         let chars: &str = if last { DANGLING } else { CONTINUING };
 
-        #[cfg(not(feature = "heap_buffer"))]
         front_lines[scratch_fill..scratch_fill + chars.len()].copy_from_slice(chars.as_bytes());
-
-        #[cfg(feature = "heap_buffer")]
-        front_lines.push_str(chars);
     }
 }
 
 impl<const FRONT_MAX: usize> ErrTreeFmt<'_, FRONT_MAX> {
-    #[cfg(any(feature = "tracing", feature = "boxed_tracing"))]
+    #[cfg(feature = "tracing")]
     /// Check for a unique trace by searching found traces
     fn tracing_after(&self) -> bool {
         if let Some(trace) = &self.tree.trace {
@@ -124,32 +110,30 @@ impl<const FRONT_MAX: usize> ErrTreeFmt<'_, FRONT_MAX> {
     #[cfg(feature = "source_line")]
     fn source_line(&self, f: &mut Formatter<'_>, tracing_after: bool) -> fmt::Result {
         if let Some(location) = self.tree.location {
-            Self::write_front_lines(
-                self.front_lines,
-                f,
-                #[cfg(not(feature = "heap_buffer"))]
-                self.scratch_fill,
-            )?;
+            Self::write_front_lines(self.front_lines, f, self.scratch_fill)?;
 
             if !tracing_after && self.tree.sources.iter().all(|x| x.is_empty()) {
                 write!(f, "╰─ ")?;
             } else {
                 write!(f, "├─ ")?;
             }
-            write!(f, "at \x1b[3m{}\x1b[0m", location)?;
+            if cfg!(feature = "unix_color") {
+                write!(f, "at \x1b[3m{}\x1b[0m", location)?;
+            } else {
+                write!(f, "at {}", location)?;
+            }
         }
 
         Ok(())
     }
 
-    #[cfg(any(feature = "tracing", feature = "boxed_tracing"))]
+    #[cfg(feature = "tracing")]
     /// Simple implementation of pretty formatting
     fn tracing_field_fmt(
         f: &mut Formatter<'_>,
-        #[cfg(not(feature = "heap_buffer"))] front_lines: &[u8],
-        #[cfg(feature = "heap_buffer")] front_lines: &alloc::string::String,
+        front_lines: &[u8],
         mut fields: &str,
-        #[cfg(not(feature = "heap_buffer"))] scratch_fill: usize,
+        scratch_fill: usize,
     ) {
         let mut next_slice = |search_chars: &mut alloc::vec::Vec<_>, depth: &mut usize| {
             fields = fields.trim();
@@ -255,12 +239,7 @@ impl<const FRONT_MAX: usize> ErrTreeFmt<'_, FRONT_MAX> {
 
         let mut next = next_slice(&mut search_chars, &mut depth);
         while !next.is_empty() {
-            let _ = Self::write_front_lines(
-                front_lines,
-                f,
-                #[cfg(not(feature = "heap_buffer"))]
-                scratch_fill,
-            );
+            let _ = Self::write_front_lines(front_lines, f, scratch_fill);
             let _ = write!(f, "│    ");
             for _ in 0..core::cmp::min(prev_depth, depth) {
                 let _ = write!(f, "  ");
@@ -272,7 +251,7 @@ impl<const FRONT_MAX: usize> ErrTreeFmt<'_, FRONT_MAX> {
         }
     }
 
-    #[cfg(any(feature = "tracing", feature = "boxed_tracing"))]
+    #[cfg(feature = "tracing")]
     fn tracing(&mut self, f: &mut Formatter<'_>) -> fmt::Result {
         if let Some(trace) = &self.tree.trace {
             let mut nonempty = false;
@@ -281,14 +260,8 @@ impl<const FRONT_MAX: usize> ErrTreeFmt<'_, FRONT_MAX> {
                 false
             });
 
-            Self::write_front_lines(
-                self.front_lines,
-                f,
-                #[cfg(not(feature = "heap_buffer"))]
-                self.scratch_fill,
-            )?;
-
             if nonempty {
+                Self::write_front_lines(self.front_lines, f, self.scratch_fill)?;
                 write!(f, "│")?;
 
                 let mut repeated = alloc::vec::Vec::<usize>::new();
@@ -305,12 +278,7 @@ impl<const FRONT_MAX: usize> ErrTreeFmt<'_, FRONT_MAX> {
                         let depth = self.found_traces.len();
                         self.found_traces.push(metadata.callsite());
 
-                        let _ = Self::write_front_lines(
-                            self.front_lines,
-                            f,
-                            #[cfg(not(feature = "heap_buffer"))]
-                            self.scratch_fill,
-                        );
+                        let _ = Self::write_front_lines(self.front_lines, f, self.scratch_fill);
                         let _ = write!(
                             f,
                             "├─ tracing frame {} => {}::{}",
@@ -321,25 +289,14 @@ impl<const FRONT_MAX: usize> ErrTreeFmt<'_, FRONT_MAX> {
 
                         if !fields.is_empty() {
                             let _ = write!(f, " with");
-                            Self::tracing_field_fmt(
-                                f,
-                                self.front_lines,
-                                fields,
-                                #[cfg(not(feature = "heap_buffer"))]
-                                self.scratch_fill,
-                            );
+                            Self::tracing_field_fmt(f, self.front_lines, fields, self.scratch_fill);
                         }
 
                         if let Some((file, line)) = metadata
                             .file()
                             .and_then(|file| metadata.line().map(|line| (file, line)))
                         {
-                            let _ = Self::write_front_lines(
-                                self.front_lines,
-                                f,
-                                #[cfg(not(feature = "heap_buffer"))]
-                                self.scratch_fill,
-                            );
+                            let _ = Self::write_front_lines(self.front_lines, f, self.scratch_fill);
                             let _ = write!(f, "│        at {}:{}", file, line);
                         };
                     };
@@ -348,12 +305,7 @@ impl<const FRONT_MAX: usize> ErrTreeFmt<'_, FRONT_MAX> {
                 });
 
                 if !repeated.is_empty() {
-                    let _ = Self::write_front_lines(
-                        self.front_lines,
-                        f,
-                        #[cfg(not(feature = "heap_buffer"))]
-                        self.scratch_fill,
-                    );
+                    let _ = Self::write_front_lines(self.front_lines, f, self.scratch_fill);
                     let _ = write!(
                         f,
                         "├─ {} duplicate tracing frame(s): {:?}",
@@ -379,23 +331,13 @@ impl<const FRONT_MAX: usize> ErrTreeFmt<'_, FRONT_MAX> {
         #[cfg(feature = "source_line")]
         self.source_line(f, tracing_after)?;
 
-        #[cfg(any(feature = "tracing", feature = "boxed_tracing"))]
+        #[cfg(feature = "tracing")]
         self.tracing(f)?;
 
         let mut source_fmt = |this: &mut Self, source: ErrTree, last: bool| {
-            Self::write_front_lines(
-                this.front_lines,
-                f,
-                #[cfg(not(feature = "heap_buffer"))]
-                this.scratch_fill,
-            )?;
+            Self::write_front_lines(this.front_lines, f, this.scratch_fill)?;
             write!(f, "│")?;
-            Self::write_front_lines(
-                this.front_lines,
-                f,
-                #[cfg(not(feature = "heap_buffer"))]
-                this.scratch_fill,
-            )?;
+            Self::write_front_lines(this.front_lines, f, this.scratch_fill)?;
 
             if last {
                 write!(f, "╰─▶ ")?;
@@ -414,7 +356,7 @@ impl<const FRONT_MAX: usize> ErrTreeFmt<'_, FRONT_MAX> {
                 scratch_fill: this.scratch_fill + additional_scratch,
                 front_lines: this.front_lines,
 
-                #[cfg(any(feature = "tracing", feature = "boxed_tracing"))]
+                #[cfg(feature = "tracing")]
                 found_traces: this.found_traces,
             }
             .fmt(f)
@@ -429,12 +371,7 @@ impl<const FRONT_MAX: usize> ErrTreeFmt<'_, FRONT_MAX> {
         } else {
             // Normal operation
 
-            Self::add_front_line(
-                self.front_lines,
-                false,
-                #[cfg(not(feature = "heap_buffer"))]
-                self.scratch_fill,
-            );
+            Self::add_front_line(self.front_lines, false, self.scratch_fill);
             for _ in 0..sources_len.saturating_sub(1) {
                 let mut res = Ok(());
                 sources_iter
@@ -448,17 +385,8 @@ impl<const FRONT_MAX: usize> ErrTreeFmt<'_, FRONT_MAX> {
                 res?
             }
 
-            // Clean up previous work when pushing to a String
-            #[cfg(feature = "heap_buffer")]
-            self.front_lines.truncate(self.scratch_fill);
-
             if sources_len > 0 {
-                Self::add_front_line(
-                    self.front_lines,
-                    true,
-                    #[cfg(not(feature = "heap_buffer"))]
-                    self.scratch_fill,
-                );
+                Self::add_front_line(self.front_lines, true, self.scratch_fill);
 
                 let mut res = Ok(());
                 sources_iter

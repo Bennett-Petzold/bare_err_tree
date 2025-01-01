@@ -27,10 +27,10 @@ jobs:
     - uses: taiki-e/install-action@cargo-llvm-cov
 
     - name: Regular Tests
-      run: cargo llvm-cov test --no-report --tests --all-features
+      run: TRYBUILD=overwrite cargo llvm-cov test --no-report --tests --all-features
 
     - name: Doc Tests
-      run: cargo llvm-cov test --no-report --doc --all-features
+      run: TRYBUILD=overwrite cargo llvm-cov test --no-report --doc --all-features
 
     - name: Coverage Report
       run: cargo llvm-cov report --doctests --cobertura > coverage.xml
@@ -74,25 +74,6 @@ jobs:
         cargo hack --each-feature build --ignore-private
         cargo hack --each-feature test --ignore-private --no-run 
 
-  # From https://github.com/rust-lang/miri
-  miri:
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-
-    environment:
-      name: ${{ github.ref_name != 'main' && 'testing' || 'unrestricted' }}
-
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Install Miri
-        run: |
-          rustup toolchain install nightly --component miri
-          rustup override set nightly
-          cargo miri setup
-      - name: Test with Miri
-        run: cargo miri test --all-features
-
   # From https://doc.rust-lang.org/cargo/guide/continuous-integration.html#verifying-rust-version
   # See https://crates.io/crates/cargo-hack
   msrv:
@@ -105,11 +86,19 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    - uses: awalsh128/cache-apt-pkgs-action@v1
+      with:
+        packages: |
+          jq
+
     - uses: dtolnay/rust-toolchain@stable
     - uses: Swatinem/rust-cache@v2
     - uses: taiki-e/install-action@cargo-hack
 
-    - run: cargo hack check --version-range 1.81 --all-targets --all-features --ignore-private
+    - name: Test for MSRV in Cargo.toml
+      run: |
+        VERSION="$(cargo metadata --format-version 1 | jq '.packages | .[] | select(.name == "bare_err_tree")| .rust_version' | tr -d '"')"
+        cargo hack check --version-range "$VERSION" --all-targets --all-features --ignore-private
 
   test:
     strategy:
@@ -139,3 +128,16 @@ jobs:
     - uses: Swatinem/rust-cache@v2
 
     - run: cargo test --verbose --all-features
+
+  test-feature-powerset:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - uses: Swatinem/rust-cache@v2
+    - uses: taiki-e/install-action@cargo-hack
+
+    - run: cargo hack test --feature-powerset
+

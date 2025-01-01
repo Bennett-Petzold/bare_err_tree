@@ -1,6 +1,6 @@
 [package]
 name = "bare_err_tree"
-version = "0.3.1"
+version = "0.3.2"
 authors.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -21,6 +21,7 @@ tracing = ["dep:tracing-error", "dep:tracing-core"]
 boxed_tracing = ["tracing"]
 anyhow = ["dep:anyhow"]
 eyre = ["dep:eyre"]
+unix_color = []
 
 [dependencies]
 bare_err_tree_proc = { version = "0.2", path = "../bare_err_tree_proc", optional = true }
@@ -28,3 +29,10 @@ tracing-error = { version = "0.2", optional = true, default-features = false }
 tracing-core = { version = "0.1", optional = true, default-features = false }
 anyhow = { version = "1", optional = true, default-features = false }
 eyre = { version = "0.6", optional = true, default-features = false }
+
+[dev-dependencies]
+thiserror = "2"
+trybuild = "1"
+tracing = "0.1"
+tracing-error = "0.2"
+tracing-subscriber = "0.3"

@@ -7,6 +7,7 @@
 use quote::format_ident;
 use syn::{punctuated::Punctuated, token::Comma, Field, Fields, Ident, Meta, Visibility};
 
+/// Dig out the struct/enum name.
 pub fn name_attribute(args: &Punctuated<Meta, Comma>) -> Option<&proc_macro2::Ident> {
     args.iter().find_map(|arg| arg.path().get_ident())
 }
@@ -17,6 +18,7 @@ pub struct FieldsStrip {
     pub idents: Vec<Ident>,
 }
 
+/// Put struct fields into a standard format.
 pub fn strip_fields(fields: &Fields) -> FieldsStrip {
     let mut field_bounds = match fields.clone() {
         Fields::Named(f) => f.named,

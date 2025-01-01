@@ -30,6 +30,10 @@ use fields::*;
 /// internally constructed with `Self::_tree` to capture extra error
 /// information in a hidden field.
 ///
+/// Any derive such as [`Clone`] that relies on all fields being present must
+/// occur after the `#[err_tree]` macro. The `_err_tree_pkg` field will
+/// otherwise be added late and break the derivation.
+///
 /// # `Self::_tree`
 /// This is an internal-use constructor that takes all struct fields in order.
 /// Use `#[track_caller]` on any functions calling `Self::_tree` to store the
@@ -271,6 +275,7 @@ pub fn err_tree(args: TokenStream, input: TokenStream) -> TokenStream {
     } = parse_macro_input!(input as DeriveInput);
 
     let generated = match data {
+        // Only structs are directly valid for injecting the hidden field
         Data::Struct(ref mut data) => match get_struct_macros(data) {
             Ok(errs) => {
                 clean_struct_macros(data);
@@ -291,6 +296,7 @@ pub fn err_tree(args: TokenStream, input: TokenStream) -> TokenStream {
             }
             Err(e) => return e,
         },
+        // Enums can be handled by a generated wrapping struct
         Data::Enum(ref mut data) => match get_enum_macros(data) {
             Ok(errs) => {
                 clean_enum_macros(data);
@@ -317,6 +323,8 @@ pub fn err_tree(args: TokenStream, input: TokenStream) -> TokenStream {
             }
             Err(e) => return e,
         },
+        // This datatype is barely used -- mostly C interop -- so the lack of
+        // functionality doesn't really matter. I've never seen a Union Error.
         Data::Union(_) => TokenStream::from(
             Error::new(
                 Span::call_site().into(),
@@ -342,11 +350,20 @@ pub fn err_tree(args: TokenStream, input: TokenStream) -> TokenStream {
 
 #[derive(Debug)]
 enum Foreign<'a> {
+    /// Direct struct generation
     Not,
+    /// Wrapper around a struct, doesn't need a defined ident
     Struct,
+    /// Wrapper around an enum, needs an enum ident for pattern matching
     Enum(&'a Ident),
 }
 
+/// Generate a foreign wrapper.
+///
+/// Boilerplates a wrapper notice into docs, copies all struct docs, creates
+/// automatic Deref and From impls, and re-derives known trivial methods.
+///
+/// Concludes with a call to [`err_tree_struct`].
 fn foreign_err_tree(
     ident: &Ident,
     vis: &Visibility,
@@ -406,6 +423,8 @@ fn foreign_err_tree(
     }
 }
 
+/// Injects `_err_tree_pkg`, the `_tree` constructor, and the `_as_err_tree`
+/// impl.
 fn err_tree_struct(
     ident: &Ident,
     vis: &Visibility,
@@ -419,6 +438,7 @@ fn err_tree_struct(
         idents: field_names,
     } = strip_fields(&data.fields);
 
+    // Generate the with_pkg call on all notated sources
     let sources = match foreign {
         Foreign::Not => errs.gen_sources_struct(false),
         Foreign::Struct => errs.gen_sources_struct(true),
@@ -427,7 +447,9 @@ fn err_tree_struct(
     let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
 
     match &mut data.fields {
+        // Struct with fields like { a: usize, b: usize }
         Fields::Named(fields) => {
+            // Insert the pkg field
             let field_ident = proc_macro2::Ident::new("_err_tree_pkg", Span::call_site().into());
             fields.named.push(
                 Field::parse_named
@@ -461,7 +483,9 @@ fn err_tree_struct(
             }
             .into()
         }
+        // Struct with fields like ( usize, usize )
         Fields::Unnamed(fields) => {
+            // Insert the pkg field
             let prev_len = syn::Index::from(fields.unnamed.len());
             fields.unnamed.push(
                 Field::parse_unnamed
@@ -494,7 +518,10 @@ fn err_tree_struct(
             }
             .into()
         }
+        // Transmutes a unit struct into a named struct for pkg injection
+        // Adds new and default methods for easy construction
         Fields::Unit => {
+            // Insert the pkg field
             let field_ident = proc_macro2::Ident::new("_err_tree_pkg", Span::call_site().into());
             let mut named = Punctuated::default();
             named.push(
@@ -521,7 +548,6 @@ fn err_tree_struct(
                 #[automatically_derived]
                 impl #impl_generics #ident #ty_generics #where_clause {
                     #[track_caller]
-                    #[allow(clippy::too_many_arguments)]
                     fn _tree() -> Self {
                         let #field_ident = bare_err_tree::ErrTreePkg::new();
                         Self {
