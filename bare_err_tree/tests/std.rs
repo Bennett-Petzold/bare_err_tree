@@ -13,15 +13,15 @@ mod example {
     #[test]
     fn readme_example() {
         let expected_lines = "missed class
-├─ at bare_err_tree/tests/../test_cases/std/src/bin/example.rs:26:6
+├─ at bare_err_tree/tests/../test_cases/std/src/bin/example.rs:27:6
 │
 ╰─▶ stayed in bed too long
-    ├─ at bare_err_tree/tests/../test_cases/std/src/bin/example.rs:18:57
+    ├─ at bare_err_tree/tests/../test_cases/std/src/bin/example.rs:19:57
     │
     ├─▶ bed is comfortable
     │
     ╰─▶ went to sleep at 2 A.M.
-        ├─ at bare_err_tree/tests/../test_cases/std/src/bin/example.rs:18:72
+        ├─ at bare_err_tree/tests/../test_cases/std/src/bin/example.rs:19:72
         │
         ├─▶ finishing a project
         │   │
@@ -41,7 +41,7 @@ mod near_empty {
     #[test]
     fn near_empty() {
         let expected_lines = "EMPTY
-╰─ at bare_err_tree/tests/../test_cases/std/src/bin/near-empty.rs:16:17";
+╰─ at bare_err_tree/tests/../test_cases/std/src/bin/near-empty.rs:17:17";
 
         assert_eq!(gen_print(), expected_lines);
     }
