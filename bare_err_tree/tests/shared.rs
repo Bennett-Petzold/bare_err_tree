@@ -10,6 +10,7 @@ mod empty {
     }
 }
 
+#[cfg(feature = "source_line")]
 mod near_empty {
     include!("../test_cases/std/src/bin/near-empty.rs");
 
