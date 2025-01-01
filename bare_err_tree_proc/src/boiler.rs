@@ -10,6 +10,10 @@ use proc_macro::TokenStream;
 use quote::quote;
 use syn::{Attribute, Generics, Ident, Meta};
 
+/// Derives intended to minimize friction introduced by the wrapper.
+///
+/// Derives transparent Error, Debug, From (both ways), and Deref(Mut).
+/// If known derivable traits are in scope, re-derives those as well.
 pub fn wrapper_boilerplate(
     ident: &Ident,
     generics: &Generics,
@@ -18,6 +22,7 @@ pub fn wrapper_boilerplate(
 ) -> TokenStream {
     let (impl_generics, ty_generics, where_clause) = generics.split_for_impl();
 
+    // Core set
     let universal: TokenStream = quote! {
         #[automatically_derived]
         impl #impl_generics core::error::Error for #name_attribute #ty_generics #where_clause {
@@ -72,6 +77,7 @@ pub fn wrapper_boilerplate(
     }
     .into();
 
+    // Look for viable extra derives
     let mut extra_derive = Vec::new();
     attrs.iter().for_each(|x| {
         if let Meta::List(list) = &x.meta {
@@ -86,6 +92,7 @@ pub fn wrapper_boilerplate(
         }
     });
 
+    // Optimistically added extra derives
     let extra_derive_tokens =
         extra_derive
             .into_iter()
