@@ -1,4 +1,9 @@
-#![cfg(all(feature = "tracing", feature = "derive_alloc", feature = "source_line"))]
+#![cfg(all(
+    feature = "tracing",
+    feature = "derive_alloc",
+    feature = "source_line",
+    not(feature = "unix_color")
+))]
 
 mod example {
     include!("../test_cases/trace/src/bin/trace_example.rs");

@@ -1,4 +1,4 @@
-#![cfg(feature = "derive_alloc")]
+#![cfg(all(feature = "derive_alloc", not(feature = "unix_color")))]
 
 mod empty {
     include!("../test_cases/std/src/bin/empty.rs");

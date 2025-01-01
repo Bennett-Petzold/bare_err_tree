@@ -1,7 +1,8 @@
 #![cfg(all(
     not(feature = "tracing"),
     feature = "derive_alloc",
-    feature = "source_line"
+    feature = "source_line",
+    not(feature = "unix_color")
 ))]
 
 use std::println;
