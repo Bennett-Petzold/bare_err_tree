@@ -1,5 +1,5 @@
 error[E0277]: the trait bound `[std::io::Error; 1]: std::error::Error` is not satisfied
-  --> ../testing/fail_src/single.rs:20:5
+  --> test_cases/std/fail_src/single.rs:20:5
    |
 20 | /     #[dyn_err]
 21 | |     err: [std::io::Error; 1],

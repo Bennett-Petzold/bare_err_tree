@@ -1,5 +1,5 @@
 error: err_tree cannot implement directly on an enum type. Use '#[err_tree(WRAPPER)]'
-  --> ../testing/fail_src/direct_enum.rs:17:1
+  --> test_cases/std/fail_src/direct_enum.rs:17:1
    |
 17 | #[err_tree]
    | ^^^^^^^^^^^

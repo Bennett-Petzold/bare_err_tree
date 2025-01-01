@@ -1,15 +1,15 @@
 #![cfg(all(feature = "tracing", feature = "derive_alloc", feature = "source_line"))]
 
 mod example {
-    include!("../../testing_trace/src/bin/trace_example.rs");
+    include!("../test_cases/trace/src/bin/trace_example.rs");
 
     #[test]
     fn readme_example() {
         let expected_lines = r#"missed class
-├─ at bare_err_tree/tests/../../testing_trace/src/bin/trace_example.rs:46:6
+├─ at bare_err_tree/tests/../test_cases/trace/src/bin/trace_example.rs:46:6
 │
 ╰─▶ stayed in bed too long
-    ├─ at bare_err_tree/tests/../../testing_trace/src/bin/trace_example.rs:35:57
+    ├─ at bare_err_tree/tests/../test_cases/trace/src/bin/trace_example.rs:35:57
     │
     ├─ tracing frame 0 => tracing::example::new with
     │    bed_time=BedTime {
@@ -25,12 +25,12 @@ mod example {
     │      ]
     │    }
     │    _garbage=5
-    │        at bare_err_tree/tests/../../testing_trace/src/bin/trace_example.rs:119
+    │        at bare_err_tree/tests/../test_cases/trace/src/bin/trace_example.rs:119
     │
     ├─▶ bed is comfortable
     │
     ╰─▶ went to sleep at 2 A.M.
-        ├─ at bare_err_tree/tests/../../testing_trace/src/bin/trace_example.rs:36:9
+        ├─ at bare_err_tree/tests/../test_cases/trace/src/bin/trace_example.rs:36:9
         │
         ├─▶ finishing a project
         │   │
@@ -45,12 +45,12 @@ mod example {
 }
 
 mod near_empty {
-    include!("../../testing_trace/src/bin/near-empty.rs");
+    include!("../test_cases/trace/src/bin/near-empty.rs");
 
     #[test]
     fn near_empty() {
         let expected_lines = "EMPTY
-╰─ at bare_err_tree/tests/../../testing_trace/src/bin/near-empty.rs:33:17";
+╰─ at bare_err_tree/tests/../test_cases/trace/src/bin/near-empty.rs:33:17";
 
         assert_eq!(gen_print(), expected_lines);
     }

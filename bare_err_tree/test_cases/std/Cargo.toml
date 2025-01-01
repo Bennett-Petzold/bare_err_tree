@@ -1,11 +1,13 @@
 [package]
-name = "testing"
+name = "std"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-bare_err_tree = { path = "../bare_err_tree", features = ["derive_alloc", "source_line"] }
+bare_err_tree = { path = "../../", features = ["derive_alloc", "source_line"] }
 thiserror = "2"
+
+[workspace]
 
 [[bin]]
 name = "derive_testing"

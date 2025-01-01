@@ -1,5 +1,5 @@
 error: err_tree cannot be annotated on union types
-  --> ../testing/fail_src/direct_union.rs:17:1
+  --> test_cases/std/fail_src/direct_union.rs:17:1
    |
 17 | #[err_tree]
    | ^^^^^^^^^^^

@@ -3,7 +3,7 @@
 use std::println;
 
 mod empty {
-    include!("../../testing/src/bin/empty.rs");
+    include!("../test_cases/std/src/bin/empty.rs");
 
     #[test]
     fn empty() {
@@ -13,12 +13,12 @@ mod empty {
 }
 
 mod near_empty {
-    include!("../../testing/src/bin/near-empty.rs");
+    include!("../test_cases/std/src/bin/near-empty.rs");
 
     #[test]
     fn near_empty() {
         let expected_lines = "EMPTY
-╰─ at bare_err_tree/tests/../../testing/src/bin/near-empty.rs:16:17";
+╰─ at bare_err_tree/tests/../test_cases/std/src/bin/near-empty.rs:16:17";
 
         assert_eq!(gen_print(), expected_lines);
     }

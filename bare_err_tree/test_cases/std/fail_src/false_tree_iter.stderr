@@ -1,5 +1,5 @@
 error[E0277]: the trait bound `std::io::Error: AsErrTree` is not satisfied
-  --> ../testing/fail_src/false_tree_iter.rs:20:5
+  --> test_cases/std/fail_src/false_tree_iter.rs:20:5
    |
 20 | /     #[tree_iter_err]
 21 | |     err: &'a [std::io::Error; 1],

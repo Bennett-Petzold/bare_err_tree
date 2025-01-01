@@ -28,18 +28,18 @@ The formatting is borrowed from from [error-stack][ErrorStack].
 Please see the [contributors page](https://github.com/hashintel/hash/graphs/contributors) for appropriate credit.
 
 # Example Output (source\_line)
-Generate with `cd testing; cargo run --bin example`.
+Generate with `cd bare_err_tree/test_cases/std; cargo run --bin example`.
 ```
 missed class
-├─ at testing/src/bin/example.rs:26:6
+├─ at src/bin/example.rs:26:6
 │
 ╰─▶ stayed in bed too long
-    ├─ at testing/src/bin/example.rs:18:57
+    ├─ at src/bin/example.rs:18:57
     │
     ├─▶ bed is comfortable
     │
     ╰─▶ went to sleep at 2 A.M.
-        ├─ at testing/src/bin/example.rs:18:72
+        ├─ at src/bin/example.rs:18:72
         │
         ├─▶ finishing a project
         │   │
@@ -51,18 +51,15 @@ missed class
 ```
 
 # Example Output (source\_line + tracing)
-Generate with `cd testing_trace; cargo run --bin trace_example`.
+Generate with `cd bare_err_tree/test_cases/trace; cargo run --bin trace_example`.
 ```
 missed class
-├─ at testing_trace/src/bin/trace_example.rs:46:6
-│
-├─ tracing frame 0 => trace_example::gen_print
-│        at testing_trace/src/bin/trace_example.rs:33
+├─ at src/bin/trace_example.rs:46:6
 │
 ╰─▶ stayed in bed too long
-    ├─ at testing_trace/src/bin/trace_example.rs:35:57
+    ├─ at src/bin/trace_example.rs:35:57
     │
-    ├─ tracing frame 1 => trace_example::new with
+    ├─ tracing frame 0 => trace_example::new with
     │    bed_time=BedTime {
     │      hour: 2,
     │      reasons: [
@@ -76,15 +73,12 @@ missed class
     │      ]
     │    }
     │    _garbage=5
-    │        at testing_trace/src/bin/trace_example.rs:119
-    ├─ 1 duplicate tracing frame(s): [0]
+    │        at src/bin/trace_example.rs:119
     │
     ├─▶ bed is comfortable
     │
     ╰─▶ went to sleep at 2 A.M.
-        ├─ at testing_trace/src/bin/trace_example.rs:36:9
-        │
-        ├─ 1 duplicate tracing frame(s): [0]
+        ├─ at src/bin/trace_example.rs:36:9
         │
         ├─▶ finishing a project
         │   │

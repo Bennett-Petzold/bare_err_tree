@@ -1,5 +1,5 @@
 error[E0063]: missing field `_err_tree_pkg` in initializer of `ErrStruct`
-  --> ../testing/fail_src/early_clone_derive.rs:17:10
+  --> test_cases/std/fail_src/early_clone_derive.rs:17:10
    |
 17 | #[derive(Clone)]
    |          ^ missing `_err_tree_pkg`
