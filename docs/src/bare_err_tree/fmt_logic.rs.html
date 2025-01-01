@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `bare_err_tree/src/fmt_logic.rs`."><title>fmt_logic.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-46132b98.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="bare_err_tree" data-themes="" data-resource-suffix="" data-rustdoc-version="1.85.0-nightly (7f75bfa1a 2024-12-30)" data-channel="nightly" data-search-js="search-036cda7a.js" data-settings-js="settings-0f613d39.js" ><script src="../../static.files/storage-59e33391.js"></script><script defer src="../../static.files/src-script-56102188.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-5f194d8c.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">bare_err_tree/</div>fmt_logic.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `bare_err_tree/src/fmt_logic.rs`."><title>fmt_logic.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-46132b98.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="bare_err_tree" data-themes="" data-resource-suffix="" data-rustdoc-version="1.85.0-nightly (d117b7f21 2024-12-31)" data-channel="nightly" data-search-js="search-036cda7a.js" data-settings-js="settings-0f613d39.js" ><script src="../../static.files/storage-59e33391.js"></script><script defer src="../../static.files/src-script-56102188.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-5f194d8c.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">bare_err_tree/</div>fmt_logic.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
 <a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
@@ -404,79 +404,7 @@
 <a href="#403" id="403">403</a>
 <a href="#404" id="404">404</a>
 <a href="#405" id="405">405</a>
-<a href="#406" id="406">406</a>
-<a href="#407" id="407">407</a>
-<a href="#408" id="408">408</a>
-<a href="#409" id="409">409</a>
-<a href="#410" id="410">410</a>
-<a href="#411" id="411">411</a>
-<a href="#412" id="412">412</a>
-<a href="#413" id="413">413</a>
-<a href="#414" id="414">414</a>
-<a href="#415" id="415">415</a>
-<a href="#416" id="416">416</a>
-<a href="#417" id="417">417</a>
-<a href="#418" id="418">418</a>
-<a href="#419" id="419">419</a>
-<a href="#420" id="420">420</a>
-<a href="#421" id="421">421</a>
-<a href="#422" id="422">422</a>
-<a href="#423" id="423">423</a>
-<a href="#424" id="424">424</a>
-<a href="#425" id="425">425</a>
-<a href="#426" id="426">426</a>
-<a href="#427" id="427">427</a>
-<a href="#428" id="428">428</a>
-<a href="#429" id="429">429</a>
-<a href="#430" id="430">430</a>
-<a href="#431" id="431">431</a>
-<a href="#432" id="432">432</a>
-<a href="#433" id="433">433</a>
-<a href="#434" id="434">434</a>
-<a href="#435" id="435">435</a>
-<a href="#436" id="436">436</a>
-<a href="#437" id="437">437</a>
-<a href="#438" id="438">438</a>
-<a href="#439" id="439">439</a>
-<a href="#440" id="440">440</a>
-<a href="#441" id="441">441</a>
-<a href="#442" id="442">442</a>
-<a href="#443" id="443">443</a>
-<a href="#444" id="444">444</a>
-<a href="#445" id="445">445</a>
-<a href="#446" id="446">446</a>
-<a href="#447" id="447">447</a>
-<a href="#448" id="448">448</a>
-<a href="#449" id="449">449</a>
-<a href="#450" id="450">450</a>
-<a href="#451" id="451">451</a>
-<a href="#452" id="452">452</a>
-<a href="#453" id="453">453</a>
-<a href="#454" id="454">454</a>
-<a href="#455" id="455">455</a>
-<a href="#456" id="456">456</a>
-<a href="#457" id="457">457</a>
-<a href="#458" id="458">458</a>
-<a href="#459" id="459">459</a>
-<a href="#460" id="460">460</a>
-<a href="#461" id="461">461</a>
-<a href="#462" id="462">462</a>
-<a href="#463" id="463">463</a>
-<a href="#464" id="464">464</a>
-<a href="#465" id="465">465</a>
-<a href="#466" id="466">466</a>
-<a href="#467" id="467">467</a>
-<a href="#468" id="468">468</a>
-<a href="#469" id="469">469</a>
-<a href="#470" id="470">470</a>
-<a href="#471" id="471">471</a>
-<a href="#472" id="472">472</a>
-<a href="#473" id="473">473</a>
-<a href="#474" id="474">474</a>
-<a href="#475" id="475">475</a>
-<a href="#476" id="476">476</a>
-<a href="#477" id="477">477</a>
-<a href="#478" id="478">478</a></pre></div><pre class="rust"><code><span class="comment">/*
+<a href="#406" id="406">406</a></pre></div><pre class="rust"><code><span class="comment">/*
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
@@ -499,9 +427,9 @@
         </span><span class="kw">let </span><span class="kw-2">mut </span>front_lines = [<span class="number">0</span>; FRONT_MAX];
 
         <span class="attr">#[cfg(feature = <span class="string">"heap_buffer"</span>)]
-        </span><span class="kw">let </span><span class="kw-2">mut </span>front_lines = alloc::string::String::new();
+        </span><span class="kw">let </span><span class="kw-2">mut </span>front_lines = <span class="macro">alloc::vec!</span>[<span class="number">0</span>; FRONT_MAX].into_boxed_slice();
 
-        <span class="attr">#[cfg(any(feature = <span class="string">"tracing"</span>, feature = <span class="string">"boxed_tracing"</span>))]
+        <span class="attr">#[cfg(feature = <span class="string">"tracing"</span>)]
         </span><span class="kw">let </span><span class="kw-2">mut </span>found_traces = alloc::vec::Vec::new();
 
         ErrTreeFmt::&lt;FRONT_MAX&gt; {
@@ -509,7 +437,7 @@
             scratch_fill: <span class="number">0</span>,
             front_lines: <span class="kw-2">&amp;mut </span>front_lines,
 
-            <span class="attr">#[cfg(any(feature = <span class="string">"tracing"</span>, feature = <span class="string">"boxed_tracing"</span>))]
+            <span class="attr">#[cfg(feature = <span class="string">"tracing"</span>)]
             </span>found_traces: <span class="kw-2">&amp;mut </span>found_traces,
         }
         .fmt(f)
@@ -520,12 +448,9 @@
     tree: ErrTree&lt;<span class="lifetime">'a</span>&gt;,
     scratch_fill: usize,
     <span class="doccomment">/// Most be initialized large enough to fit 6 x (max depth) bytes
-    </span><span class="attr">#[cfg(not(feature = <span class="string">"heap_buffer"</span>))]
     </span>front_lines: <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>[u8],
-    <span class="attr">#[cfg(feature = <span class="string">"heap_buffer"</span>)]
-    </span>front_lines: <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>alloc::string::String,
 
-    <span class="attr">#[cfg(any(feature = <span class="string">"tracing"</span>, feature = <span class="string">"boxed_tracing"</span>))]
+    <span class="attr">#[cfg(feature = <span class="string">"tracing"</span>)]
     </span>found_traces: <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>alloc::vec::Vec&lt;tracing_core::callsite::Identifier&gt;,
 }
 
@@ -546,13 +471,11 @@
     <span class="doccomment">/// Preamble arrow connections
     </span><span class="attr">#[inline]
     </span><span class="kw">fn </span>write_front_lines(
-        <span class="attr">#[cfg(not(feature = <span class="string">"heap_buffer"</span>))] </span>front_lines: <span class="kw-2">&amp;</span>[u8],
-        <span class="attr">#[cfg(feature = <span class="string">"heap_buffer"</span>)] </span>front_lines: <span class="kw-2">&amp;</span>alloc::string::String,
+        front_lines: <span class="kw-2">&amp;</span>[u8],
         f: <span class="kw-2">&amp;mut </span>Formatter&lt;<span class="lifetime">'_</span>&gt;,
-        <span class="attr">#[cfg(not(feature = <span class="string">"heap_buffer"</span>))] </span>scratch_fill: usize,
+        scratch_fill: usize,
     ) -&gt; fmt::Result {
-        <span class="attr">#[cfg(not(feature = <span class="string">"heap_buffer"</span>))]
-        </span><span class="kw">let </span>front_lines = str::from_utf8(<span class="kw-2">&amp;</span>front_lines[..scratch_fill])
+        <span class="kw">let </span>front_lines = str::from_utf8(<span class="kw-2">&amp;</span>front_lines[..scratch_fill])
             .expect(<span class="string">"All characters are static and guaranteed to be valid UTF-8"</span>);
 
         <span class="macro">write!</span>(f, <span class="string">"\n{0}"</span>, front_lines)
@@ -560,24 +483,15 @@
 
     <span class="doccomment">/// Push in the correct fill characters
     </span><span class="attr">#[inline]
-    </span><span class="kw">fn </span>add_front_line(
-        <span class="attr">#[cfg(not(feature = <span class="string">"heap_buffer"</span>))] </span>front_lines: <span class="kw-2">&amp;mut </span>[u8],
-        <span class="attr">#[cfg(feature = <span class="string">"heap_buffer"</span>)] </span>front_lines: <span class="kw-2">&amp;mut </span>alloc::string::String,
-        last: bool,
-        <span class="attr">#[cfg(not(feature = <span class="string">"heap_buffer"</span>))] </span>scratch_fill: usize,
-    ) {
+    </span><span class="kw">fn </span>add_front_line(front_lines: <span class="kw-2">&amp;mut </span>[u8], last: bool, scratch_fill: usize) {
         <span class="kw">let </span>chars: <span class="kw-2">&amp;</span>str = <span class="kw">if </span>last { DANGLING } <span class="kw">else </span>{ CONTINUING };
 
-        <span class="attr">#[cfg(not(feature = <span class="string">"heap_buffer"</span>))]
-        </span>front_lines[scratch_fill..scratch_fill + chars.len()].copy_from_slice(chars.as_bytes());
-
-        <span class="attr">#[cfg(feature = <span class="string">"heap_buffer"</span>)]
-        </span>front_lines.push_str(chars);
+        front_lines[scratch_fill..scratch_fill + chars.len()].copy_from_slice(chars.as_bytes());
     }
 }
 
 <span class="kw">impl</span>&lt;<span class="kw">const </span>FRONT_MAX: usize&gt; ErrTreeFmt&lt;<span class="lifetime">'_</span>, FRONT_MAX&gt; {
-    <span class="attr">#[cfg(any(feature = <span class="string">"tracing"</span>, feature = <span class="string">"boxed_tracing"</span>))]
+    <span class="attr">#[cfg(feature = <span class="string">"tracing"</span>)]
     </span><span class="doccomment">/// Check for a unique trace by searching found traces
     </span><span class="kw">fn </span>tracing_after(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
         <span class="kw">if let </span><span class="prelude-val">Some</span>(trace) = <span class="kw-2">&amp;</span><span class="self">self</span>.tree.trace {
@@ -602,32 +516,30 @@
     <span class="attr">#[cfg(feature = <span class="string">"source_line"</span>)]
     </span><span class="kw">fn </span>source_line(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>Formatter&lt;<span class="lifetime">'_</span>&gt;, tracing_after: bool) -&gt; fmt::Result {
         <span class="kw">if let </span><span class="prelude-val">Some</span>(location) = <span class="self">self</span>.tree.location {
-            <span class="self">Self</span>::write_front_lines(
-                <span class="self">self</span>.front_lines,
-                f,
-                <span class="attr">#[cfg(not(feature = <span class="string">"heap_buffer"</span>))]
-                </span><span class="self">self</span>.scratch_fill,
-            )<span class="question-mark">?</span>;
+            <span class="self">Self</span>::write_front_lines(<span class="self">self</span>.front_lines, f, <span class="self">self</span>.scratch_fill)<span class="question-mark">?</span>;
 
             <span class="kw">if </span>!tracing_after &amp;&amp; <span class="self">self</span>.tree.sources.iter().all(|x| x.is_empty()) {
                 <span class="macro">write!</span>(f, <span class="string">"╰─ "</span>)<span class="question-mark">?</span>;
             } <span class="kw">else </span>{
                 <span class="macro">write!</span>(f, <span class="string">"├─ "</span>)<span class="question-mark">?</span>;
             }
-            <span class="macro">write!</span>(f, <span class="string">"at \x1b[3m{}\x1b[0m"</span>, location)<span class="question-mark">?</span>;
+            <span class="kw">if </span><span class="macro">cfg!</span>(feature = <span class="string">"unix_color"</span>) {
+                <span class="macro">write!</span>(f, <span class="string">"at \x1b[3m{}\x1b[0m"</span>, location)<span class="question-mark">?</span>;
+            } <span class="kw">else </span>{
+                <span class="macro">write!</span>(f, <span class="string">"at {}"</span>, location)<span class="question-mark">?</span>;
+            }
         }
 
         <span class="prelude-val">Ok</span>(())
     }
 
-    <span class="attr">#[cfg(any(feature = <span class="string">"tracing"</span>, feature = <span class="string">"boxed_tracing"</span>))]
+    <span class="attr">#[cfg(feature = <span class="string">"tracing"</span>)]
     </span><span class="doccomment">/// Simple implementation of pretty formatting
     </span><span class="kw">fn </span>tracing_field_fmt(
         f: <span class="kw-2">&amp;mut </span>Formatter&lt;<span class="lifetime">'_</span>&gt;,
-        <span class="attr">#[cfg(not(feature = <span class="string">"heap_buffer"</span>))] </span>front_lines: <span class="kw-2">&amp;</span>[u8],
-        <span class="attr">#[cfg(feature = <span class="string">"heap_buffer"</span>)] </span>front_lines: <span class="kw-2">&amp;</span>alloc::string::String,
+        front_lines: <span class="kw-2">&amp;</span>[u8],
         <span class="kw-2">mut </span>fields: <span class="kw-2">&amp;</span>str,
-        <span class="attr">#[cfg(not(feature = <span class="string">"heap_buffer"</span>))] </span>scratch_fill: usize,
+        scratch_fill: usize,
     ) {
         <span class="kw">let </span><span class="kw-2">mut </span>next_slice = |search_chars: <span class="kw-2">&amp;mut </span>alloc::vec::Vec&lt;<span class="kw">_</span>&gt;, depth: <span class="kw-2">&amp;mut </span>usize| {
             fields = fields.trim();
@@ -733,12 +645,7 @@
 
         <span class="kw">let </span><span class="kw-2">mut </span>next = next_slice(<span class="kw-2">&amp;mut </span>search_chars, <span class="kw-2">&amp;mut </span>depth);
         <span class="kw">while </span>!next.is_empty() {
-            <span class="kw">let _ </span>= <span class="self">Self</span>::write_front_lines(
-                front_lines,
-                f,
-                <span class="attr">#[cfg(not(feature = <span class="string">"heap_buffer"</span>))]
-                </span>scratch_fill,
-            );
+            <span class="kw">let _ </span>= <span class="self">Self</span>::write_front_lines(front_lines, f, scratch_fill);
             <span class="kw">let _ </span>= <span class="macro">write!</span>(f, <span class="string">"│    "</span>);
             <span class="kw">for _ in </span><span class="number">0</span>..core::cmp::min(prev_depth, depth) {
                 <span class="kw">let _ </span>= <span class="macro">write!</span>(f, <span class="string">"  "</span>);
@@ -750,7 +657,7 @@
         }
     }
 
-    <span class="attr">#[cfg(any(feature = <span class="string">"tracing"</span>, feature = <span class="string">"boxed_tracing"</span>))]
+    <span class="attr">#[cfg(feature = <span class="string">"tracing"</span>)]
     </span><span class="kw">fn </span>tracing(<span class="kw-2">&amp;mut </span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
         <span class="kw">if let </span><span class="prelude-val">Some</span>(trace) = <span class="kw-2">&amp;</span><span class="self">self</span>.tree.trace {
             <span class="kw">let </span><span class="kw-2">mut </span>nonempty = <span class="bool-val">false</span>;
@@ -759,14 +666,8 @@
                 <span class="bool-val">false
             </span>});
 
-            <span class="self">Self</span>::write_front_lines(
-                <span class="self">self</span>.front_lines,
-                f,
-                <span class="attr">#[cfg(not(feature = <span class="string">"heap_buffer"</span>))]
-                </span><span class="self">self</span>.scratch_fill,
-            )<span class="question-mark">?</span>;
-
             <span class="kw">if </span>nonempty {
+                <span class="self">Self</span>::write_front_lines(<span class="self">self</span>.front_lines, f, <span class="self">self</span>.scratch_fill)<span class="question-mark">?</span>;
                 <span class="macro">write!</span>(f, <span class="string">"│"</span>)<span class="question-mark">?</span>;
 
                 <span class="kw">let </span><span class="kw-2">mut </span>repeated = alloc::vec::Vec::&lt;usize&gt;::new();
@@ -783,12 +684,7 @@
                         <span class="kw">let </span>depth = <span class="self">self</span>.found_traces.len();
                         <span class="self">self</span>.found_traces.push(metadata.callsite());
 
-                        <span class="kw">let _ </span>= <span class="self">Self</span>::write_front_lines(
-                            <span class="self">self</span>.front_lines,
-                            f,
-                            <span class="attr">#[cfg(not(feature = <span class="string">"heap_buffer"</span>))]
-                            </span><span class="self">self</span>.scratch_fill,
-                        );
+                        <span class="kw">let _ </span>= <span class="self">Self</span>::write_front_lines(<span class="self">self</span>.front_lines, f, <span class="self">self</span>.scratch_fill);
                         <span class="kw">let _ </span>= <span class="macro">write!</span>(
                             f,
                             <span class="string">"├─ tracing frame {} =&gt; {}::{}"</span>,
@@ -799,25 +695,14 @@
 
                         <span class="kw">if </span>!fields.is_empty() {
                             <span class="kw">let _ </span>= <span class="macro">write!</span>(f, <span class="string">" with"</span>);
-                            <span class="self">Self</span>::tracing_field_fmt(
-                                f,
-                                <span class="self">self</span>.front_lines,
-                                fields,
-                                <span class="attr">#[cfg(not(feature = <span class="string">"heap_buffer"</span>))]
-                                </span><span class="self">self</span>.scratch_fill,
-                            );
+                            <span class="self">Self</span>::tracing_field_fmt(f, <span class="self">self</span>.front_lines, fields, <span class="self">self</span>.scratch_fill);
                         }
 
                         <span class="kw">if let </span><span class="prelude-val">Some</span>((file, line)) = metadata
                             .file()
                             .and_then(|file| metadata.line().map(|line| (file, line)))
                         {
-                            <span class="kw">let _ </span>= <span class="self">Self</span>::write_front_lines(
-                                <span class="self">self</span>.front_lines,
-                                f,
-                                <span class="attr">#[cfg(not(feature = <span class="string">"heap_buffer"</span>))]
-                                </span><span class="self">self</span>.scratch_fill,
-                            );
+                            <span class="kw">let _ </span>= <span class="self">Self</span>::write_front_lines(<span class="self">self</span>.front_lines, f, <span class="self">self</span>.scratch_fill);
                             <span class="kw">let _ </span>= <span class="macro">write!</span>(f, <span class="string">"│        at {}:{}"</span>, file, line);
                         };
                     };
@@ -826,12 +711,7 @@
                 </span>});
 
                 <span class="kw">if </span>!repeated.is_empty() {
-                    <span class="kw">let _ </span>= <span class="self">Self</span>::write_front_lines(
-                        <span class="self">self</span>.front_lines,
-                        f,
-                        <span class="attr">#[cfg(not(feature = <span class="string">"heap_buffer"</span>))]
-                        </span><span class="self">self</span>.scratch_fill,
-                    );
+                    <span class="kw">let _ </span>= <span class="self">Self</span>::write_front_lines(<span class="self">self</span>.front_lines, f, <span class="self">self</span>.scratch_fill);
                     <span class="kw">let _ </span>= <span class="macro">write!</span>(
                         f,
                         <span class="string">"├─ {} duplicate tracing frame(s): {:?}"</span>,
@@ -857,23 +737,13 @@
         <span class="attr">#[cfg(feature = <span class="string">"source_line"</span>)]
         </span><span class="self">self</span>.source_line(f, tracing_after)<span class="question-mark">?</span>;
 
-        <span class="attr">#[cfg(any(feature = <span class="string">"tracing"</span>, feature = <span class="string">"boxed_tracing"</span>))]
+        <span class="attr">#[cfg(feature = <span class="string">"tracing"</span>)]
         </span><span class="self">self</span>.tracing(f)<span class="question-mark">?</span>;
 
         <span class="kw">let </span><span class="kw-2">mut </span>source_fmt = |this: <span class="kw-2">&amp;mut </span><span class="self">Self</span>, source: ErrTree, last: bool| {
-            <span class="self">Self</span>::write_front_lines(
-                this.front_lines,
-                f,
-                <span class="attr">#[cfg(not(feature = <span class="string">"heap_buffer"</span>))]
-                </span>this.scratch_fill,
-            )<span class="question-mark">?</span>;
+            <span class="self">Self</span>::write_front_lines(this.front_lines, f, this.scratch_fill)<span class="question-mark">?</span>;
             <span class="macro">write!</span>(f, <span class="string">"│"</span>)<span class="question-mark">?</span>;
-            <span class="self">Self</span>::write_front_lines(
-                this.front_lines,
-                f,
-                <span class="attr">#[cfg(not(feature = <span class="string">"heap_buffer"</span>))]
-                </span>this.scratch_fill,
-            )<span class="question-mark">?</span>;
+            <span class="self">Self</span>::write_front_lines(this.front_lines, f, this.scratch_fill)<span class="question-mark">?</span>;
 
             <span class="kw">if </span>last {
                 <span class="macro">write!</span>(f, <span class="string">"╰─▶ "</span>)<span class="question-mark">?</span>;
@@ -892,7 +762,7 @@
                 scratch_fill: this.scratch_fill + additional_scratch,
                 front_lines: this.front_lines,
 
-                <span class="attr">#[cfg(any(feature = <span class="string">"tracing"</span>, feature = <span class="string">"boxed_tracing"</span>))]
+                <span class="attr">#[cfg(feature = <span class="string">"tracing"</span>)]
                 </span>found_traces: this.found_traces,
             }
             .fmt(f)
@@ -907,12 +777,7 @@
         } <span class="kw">else </span>{
             <span class="comment">// Normal operation
 
-            </span><span class="self">Self</span>::add_front_line(
-                <span class="self">self</span>.front_lines,
-                <span class="bool-val">false</span>,
-                <span class="attr">#[cfg(not(feature = <span class="string">"heap_buffer"</span>))]
-                </span><span class="self">self</span>.scratch_fill,
-            );
+            </span><span class="self">Self</span>::add_front_line(<span class="self">self</span>.front_lines, <span class="bool-val">false</span>, <span class="self">self</span>.scratch_fill);
             <span class="kw">for _ in </span><span class="number">0</span>..sources_len.saturating_sub(<span class="number">1</span>) {
                 <span class="kw">let </span><span class="kw-2">mut </span>res = <span class="prelude-val">Ok</span>(());
                 sources_iter
@@ -926,17 +791,8 @@
                 res<span class="question-mark">?
             </span>}
 
-            <span class="comment">// Clean up previous work when pushing to a String
-            </span><span class="attr">#[cfg(feature = <span class="string">"heap_buffer"</span>)]
-            </span><span class="self">self</span>.front_lines.truncate(<span class="self">self</span>.scratch_fill);
-
             <span class="kw">if </span>sources_len &gt; <span class="number">0 </span>{
-                <span class="self">Self</span>::add_front_line(
-                    <span class="self">self</span>.front_lines,
-                    <span class="bool-val">true</span>,
-                    <span class="attr">#[cfg(not(feature = <span class="string">"heap_buffer"</span>))]
-                    </span><span class="self">self</span>.scratch_fill,
-                );
+                <span class="self">Self</span>::add_front_line(<span class="self">self</span>.front_lines, <span class="bool-val">true</span>, <span class="self">self</span>.scratch_fill);
 
                 <span class="kw">let </span><span class="kw-2">mut </span>res = <span class="prelude-val">Ok</span>(());
                 sources_iter

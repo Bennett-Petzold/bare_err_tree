@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `bare_err_tree_proc/src/errtype.rs`."><title>errtype.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-46132b98.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="bare_err_tree_proc" data-themes="" data-resource-suffix="" data-rustdoc-version="1.85.0-nightly (7f75bfa1a 2024-12-30)" data-channel="nightly" data-search-js="search-036cda7a.js" data-settings-js="settings-0f613d39.js" ><script src="../../static.files/storage-59e33391.js"></script><script defer src="../../static.files/src-script-56102188.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-5f194d8c.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">bare_err_tree_proc/</div>errtype.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `bare_err_tree_proc/src/errtype.rs`."><title>errtype.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-46132b98.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="bare_err_tree_proc" data-themes="" data-resource-suffix="" data-rustdoc-version="1.85.0-nightly (d117b7f21 2024-12-31)" data-channel="nightly" data-search-js="search-036cda7a.js" data-settings-js="settings-0f613d39.js" ><script src="../../static.files/storage-59e33391.js"></script><script defer src="../../static.files/src-script-56102188.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-5f194d8c.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">bare_err_tree_proc/</div>errtype.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
 <a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
@@ -368,7 +368,33 @@
 <a href="#367" id="367">367</a>
 <a href="#368" id="368">368</a>
 <a href="#369" id="369">369</a>
-<a href="#370" id="370">370</a></pre></div><pre class="rust"><code><span class="comment">/*
+<a href="#370" id="370">370</a>
+<a href="#371" id="371">371</a>
+<a href="#372" id="372">372</a>
+<a href="#373" id="373">373</a>
+<a href="#374" id="374">374</a>
+<a href="#375" id="375">375</a>
+<a href="#376" id="376">376</a>
+<a href="#377" id="377">377</a>
+<a href="#378" id="378">378</a>
+<a href="#379" id="379">379</a>
+<a href="#380" id="380">380</a>
+<a href="#381" id="381">381</a>
+<a href="#382" id="382">382</a>
+<a href="#383" id="383">383</a>
+<a href="#384" id="384">384</a>
+<a href="#385" id="385">385</a>
+<a href="#386" id="386">386</a>
+<a href="#387" id="387">387</a>
+<a href="#388" id="388">388</a>
+<a href="#389" id="389">389</a>
+<a href="#390" id="390">390</a>
+<a href="#391" id="391">391</a>
+<a href="#392" id="392">392</a>
+<a href="#393" id="393">393</a>
+<a href="#394" id="394">394</a>
+<a href="#395" id="395">395</a>
+<a href="#396" id="396">396</a></pre></div><pre class="rust"><code><span class="comment">/*
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
@@ -380,19 +406,26 @@
 
 <span class="attr">#[derive(Debug, Clone, PartialEq, Eq)]
 </span><span class="kw">enum </span>Sizing {
-    Static(Expr),
-    Dynamic,
+    <span class="doccomment">/// [TYPE; N]
+    </span>Static(Expr),
+    <span class="doccomment">/// Anything that can be collected from an iter to a vec
+    </span>Dynamic,
 }
 
 <span class="attr">#[derive(Debug)]
 </span><span class="kw">enum </span>ErrType {
-    Dyn((Ident, proc_macro2::Span)),
-    Tree((Ident, proc_macro2::Span)),
-    DynSlice((Ident, proc_macro2::Span, Sizing)),
-    TreeSlice((Ident, proc_macro2::Span, Sizing)),
+    <span class="doccomment">/// &amp;dyn ErrTree, not in a collection
+    </span>Dyn((Ident, proc_macro2::Span)),
+    <span class="doccomment">/// Known ErrTree, not in a collection
+    </span>Tree((Ident, proc_macro2::Span)),
+    <span class="doccomment">/// &amp;dyn ErrTree, in a collection
+    </span>DynSlice((Ident, proc_macro2::Span, Sizing)),
+    <span class="doccomment">/// Known ErrTree, in a collection
+    </span>TreeSlice((Ident, proc_macro2::Span, Sizing)),
 }
 
-<span class="kw">pub struct </span>CollectedErrType {
+<span class="doccomment">/// Sorted collection of [`ErrType`]s
+</span><span class="kw">pub struct </span>CollectedErrType {
     r#dyn: Vec&lt;(Ident, proc_macro2::Span)&gt;,
     tree: Vec&lt;(Ident, proc_macro2::Span)&gt;,
     dyniter: Vec&lt;(Ident, proc_macro2::Span, Sizing)&gt;,
@@ -423,8 +456,12 @@
 }
 
 <span class="kw">impl </span>CollectedErrType {
-    <span class="kw">pub fn </span>gen_sources_struct(<span class="kw-2">&amp;</span><span class="self">self</span>, foreign: bool) -&gt; proc_macro2::TokenStream {
-        <span class="kw">let </span>parent = <span class="kw">if </span>foreign {
+    <span class="doccomment">/// Generate the `with_pkg` call on all notated sources in a struct.
+    ///
+    /// Avoids any allocation on iterators of static arrays.
+    </span><span class="kw">pub fn </span>gen_sources_struct(<span class="kw-2">&amp;</span><span class="self">self</span>, foreign: bool) -&gt; proc_macro2::TokenStream {
+        <span class="comment">// Trivial name change covers both foreign and direct impl
+        </span><span class="kw">let </span>parent = <span class="kw">if </span>foreign {
             <span class="macro">quote!</span> { <span class="self">self</span>.inner }
         } <span class="kw">else </span>{
             <span class="macro">quote!</span> { <span class="self">self </span>}
@@ -484,7 +521,8 @@
             .chain(<span class="self">self</span>.treeiter.iter())
             .map(|x| <span class="kw-2">&amp;</span>x.<span class="number">0</span>);
 
-        <span class="kw">let </span>any_dyn = <span class="self">self
+        <span class="comment">// Only put alloc in the prelude if a Vec is actually needed
+        </span><span class="kw">let </span>any_dyn = <span class="self">self
             </span>.dyniter
             .iter()
             .chain(<span class="self">self</span>.treeiter.iter())
@@ -513,7 +551,10 @@
         }
     }
 
-    <span class="kw">pub fn </span>gen_sources_enum(<span class="kw-2">&amp;</span><span class="self">self</span>, ident: <span class="kw-2">&amp;</span>Ident) -&gt; proc_macro2::TokenStream {
+    <span class="doccomment">/// Generate the `with_pkg` call on all notated sources in a enum.
+    ///
+    /// Avoids any allocation on iterators of static arrays.
+    </span><span class="kw">pub fn </span>gen_sources_enum(<span class="kw-2">&amp;</span><span class="self">self</span>, ident: <span class="kw-2">&amp;</span>Ident) -&gt; proc_macro2::TokenStream {
         <span class="kw">let </span>conv = |x, span, y| {
             <span class="macro">quote_spanned!</span> {
                 span=&gt; #ident :: #x (x) =&gt; {
@@ -529,6 +570,8 @@
             Sizing::Dynamic =&gt; {
                 <span class="macro">quote_spanned!</span> {
                     span=&gt; #ident :: #x (x) =&gt; {
+                        <span class="kw">extern crate </span>alloc;
+
                         <span class="kw">let </span>x = x.iter().map(|z|
                             z #y
                         ).collect::&lt;alloc::vec::Vec&lt;<span class="kw">_</span>&gt;&gt;();
@@ -589,7 +632,11 @@
     }
 }
 
-<span class="kw">fn </span>iter_parse(
+<span class="doccomment">/// Parse iterator types.
+///
+/// Distinguishes between sized and unsized arrays to generate the
+/// correct identity name and sizing types.
+</span><span class="kw">fn </span>iter_parse(
     f: <span class="kw-2">&amp;</span>Field,
     ident: Ident,
 ) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="prelude-ty">Result</span>&lt;(Ident, proc_macro2::Span, Sizing), TokenStream&gt;&gt; {
@@ -605,8 +652,9 @@
     } <span class="kw">else </span>{
         <span class="prelude-val">Some</span>(<span class="prelude-val">Err</span>(syn::Error::new(
             f.span(),
-            <span class="macro">format!</span>(
-                <span class="string">"{} is dynamically sized, but the \"derive_alloc\" feature is not enabled."</span>,
+            <span class="comment">// Waffling is necessary, because non-array and non-alloc are not differentiated
+            </span><span class="macro">format!</span>(
+                <span class="string">"{} may be a dynamically sized collection, but the \"derive_alloc\" feature is not enabled."</span>,
                 ident
             ),
         )
@@ -615,7 +663,8 @@
     }
 }
 
-<span class="kw">pub fn </span>get_struct_macros(data: <span class="kw-2">&amp;</span>DataStruct) -&gt; <span class="prelude-ty">Result</span>&lt;CollectedErrType, TokenStream&gt; {
+<span class="doccomment">/// Finds all child error annotations on a struct.
+</span><span class="kw">pub fn </span>get_struct_macros(data: <span class="kw-2">&amp;</span>DataStruct) -&gt; <span class="prelude-ty">Result</span>&lt;CollectedErrType, TokenStream&gt; {
     data.fields
         .iter()
         .flat_map(|f| {
@@ -642,7 +691,8 @@
         .collect()
 }
 
-<span class="kw">pub fn </span>get_enum_macros(data: <span class="kw-2">&amp;</span>DataEnum) -&gt; <span class="prelude-ty">Result</span>&lt;CollectedErrType, TokenStream&gt; {
+<span class="doccomment">/// Finds all child error annotations on an enum.
+</span><span class="kw">pub fn </span>get_enum_macros(data: <span class="kw-2">&amp;</span>DataEnum) -&gt; <span class="prelude-ty">Result</span>&lt;CollectedErrType, TokenStream&gt; {
     data.variants
         .iter()
         .flat_map(|f| {
@@ -689,7 +739,8 @@
         .collect()
 }
 
-<span class="kw">pub fn </span>clean_struct_macros(data: <span class="kw-2">&amp;mut </span>DataStruct) {
+<span class="doccomment">/// Remove this library's annotation, as they aren't actually valid macros.
+</span><span class="kw">pub fn </span>clean_struct_macros(data: <span class="kw-2">&amp;mut </span>DataStruct) {
     data.fields.iter_mut().for_each(|f| {
         f.attrs = f
             .attrs
@@ -714,7 +765,8 @@
     });
 }
 
-<span class="kw">pub fn </span>clean_enum_macros(data: <span class="kw-2">&amp;mut </span>DataEnum) {
+<span class="doccomment">/// Remove this library's annotation, as they aren't actually valid macros.
+</span><span class="kw">pub fn </span>clean_enum_macros(data: <span class="kw-2">&amp;mut </span>DataEnum) {
     data.variants.iter_mut().for_each(|f| {
         f.attrs = f
             .attrs

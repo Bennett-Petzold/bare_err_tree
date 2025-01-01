@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `bare_err_tree_proc/src/lib.rs`."><title>lib.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-46132b98.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="bare_err_tree_proc" data-themes="" data-resource-suffix="" data-rustdoc-version="1.85.0-nightly (7f75bfa1a 2024-12-30)" data-channel="nightly" data-search-js="search-036cda7a.js" data-settings-js="settings-0f613d39.js" ><script src="../../static.files/storage-59e33391.js"></script><script defer src="../../static.files/src-script-56102188.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-5f194d8c.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">bare_err_tree_proc/</div>lib.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `bare_err_tree_proc/src/lib.rs`."><title>lib.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-46132b98.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="bare_err_tree_proc" data-themes="" data-resource-suffix="" data-rustdoc-version="1.85.0-nightly (d117b7f21 2024-12-31)" data-channel="nightly" data-search-js="search-036cda7a.js" data-settings-js="settings-0f613d39.js" ><script src="../../static.files/storage-59e33391.js"></script><script defer src="../../static.files/src-script-56102188.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-5f194d8c.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">bare_err_tree_proc/</div>lib.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
 <a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
@@ -550,7 +550,33 @@
 <a href="#549" id="549">549</a>
 <a href="#550" id="550">550</a>
 <a href="#551" id="551">551</a>
-<a href="#552" id="552">552</a></pre></div><pre class="rust"><code><span class="comment">/*
+<a href="#552" id="552">552</a>
+<a href="#553" id="553">553</a>
+<a href="#554" id="554">554</a>
+<a href="#555" id="555">555</a>
+<a href="#556" id="556">556</a>
+<a href="#557" id="557">557</a>
+<a href="#558" id="558">558</a>
+<a href="#559" id="559">559</a>
+<a href="#560" id="560">560</a>
+<a href="#561" id="561">561</a>
+<a href="#562" id="562">562</a>
+<a href="#563" id="563">563</a>
+<a href="#564" id="564">564</a>
+<a href="#565" id="565">565</a>
+<a href="#566" id="566">566</a>
+<a href="#567" id="567">567</a>
+<a href="#568" id="568">568</a>
+<a href="#569" id="569">569</a>
+<a href="#570" id="570">570</a>
+<a href="#571" id="571">571</a>
+<a href="#572" id="572">572</a>
+<a href="#573" id="573">573</a>
+<a href="#574" id="574">574</a>
+<a href="#575" id="575">575</a>
+<a href="#576" id="576">576</a>
+<a href="#577" id="577">577</a>
+<a href="#578" id="578">578</a></pre></div><pre class="rust"><code><span class="comment">/*
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
@@ -581,6 +607,10 @@
 /// any attributes relying on a full field definition. The type must then be
 /// internally constructed with `Self::_tree` to capture extra error
 /// information in a hidden field.
+///
+/// Any derive such as [`Clone`] that relies on all fields being present must
+/// occur after the `#[err_tree]` macro. The `_err_tree_pkg` field will
+/// otherwise be added late and break the derivation.
 ///
 /// # `Self::_tree`
 /// This is an internal-use constructor that takes all struct fields in order.
@@ -823,7 +853,8 @@
     } = <span class="macro">parse_macro_input!</span>(input <span class="kw">as </span>DeriveInput);
 
     <span class="kw">let </span>generated = <span class="kw">match </span>data {
-        Data::Struct(<span class="kw-2">ref mut </span>data) =&gt; <span class="kw">match </span>get_struct_macros(data) {
+        <span class="comment">// Only structs are directly valid for injecting the hidden field
+        </span>Data::Struct(<span class="kw-2">ref mut </span>data) =&gt; <span class="kw">match </span>get_struct_macros(data) {
             <span class="prelude-val">Ok</span>(errs) =&gt; {
                 clean_struct_macros(data);
 
@@ -843,7 +874,8 @@
             }
             <span class="prelude-val">Err</span>(e) =&gt; <span class="kw">return </span>e,
         },
-        Data::Enum(<span class="kw-2">ref mut </span>data) =&gt; <span class="kw">match </span>get_enum_macros(data) {
+        <span class="comment">// Enums can be handled by a generated wrapping struct
+        </span>Data::Enum(<span class="kw-2">ref mut </span>data) =&gt; <span class="kw">match </span>get_enum_macros(data) {
             <span class="prelude-val">Ok</span>(errs) =&gt; {
                 clean_enum_macros(data);
 
@@ -869,7 +901,9 @@
             }
             <span class="prelude-val">Err</span>(e) =&gt; <span class="kw">return </span>e,
         },
-        Data::Union(<span class="kw">_</span>) =&gt; TokenStream::from(
+        <span class="comment">// This datatype is barely used -- mostly C interop -- so the lack of
+        // functionality doesn't really matter. I've never seen a Union Error.
+        </span>Data::Union(<span class="kw">_</span>) =&gt; TokenStream::from(
             Error::new(
                 Span::call_site().into(),
                 <span class="string">"err_tree cannot be annotated on union types"</span>,
@@ -894,12 +928,21 @@
 
 <span class="attr">#[derive(Debug)]
 </span><span class="kw">enum </span>Foreign&lt;<span class="lifetime">'a</span>&gt; {
-    Not,
-    Struct,
-    Enum(<span class="kw-2">&amp;</span><span class="lifetime">'a </span>Ident),
+    <span class="doccomment">/// Direct struct generation
+    </span>Not,
+    <span class="doccomment">/// Wrapper around a struct, doesn't need a defined ident
+    </span>Struct,
+    <span class="doccomment">/// Wrapper around an enum, needs an enum ident for pattern matching
+    </span>Enum(<span class="kw-2">&amp;</span><span class="lifetime">'a </span>Ident),
 }
 
-<span class="kw">fn </span>foreign_err_tree(
+<span class="doccomment">/// Generate a foreign wrapper.
+///
+/// Boilerplates a wrapper notice into docs, copies all struct docs, creates
+/// automatic Deref and From impls, and re-derives known trivial methods.
+///
+/// Concludes with a call to [`err_tree_struct`].
+</span><span class="kw">fn </span>foreign_err_tree(
     ident: <span class="kw-2">&amp;</span>Ident,
     vis: <span class="kw-2">&amp;</span>Visibility,
     attrs: <span class="kw-2">&amp;</span>[Attribute],
@@ -958,7 +1001,9 @@
     }
 }
 
-<span class="kw">fn </span>err_tree_struct(
+<span class="doccomment">/// Injects `_err_tree_pkg`, the `_tree` constructor, and the `_as_err_tree`
+/// impl.
+</span><span class="kw">fn </span>err_tree_struct(
     ident: <span class="kw-2">&amp;</span>Ident,
     vis: <span class="kw-2">&amp;</span>Visibility,
     generics: <span class="kw-2">&amp;</span>Generics,
@@ -971,7 +1016,8 @@
         idents: field_names,
     } = strip_fields(<span class="kw-2">&amp;</span>data.fields);
 
-    <span class="kw">let </span>sources = <span class="kw">match </span>foreign {
+    <span class="comment">// Generate the with_pkg call on all notated sources
+    </span><span class="kw">let </span>sources = <span class="kw">match </span>foreign {
         Foreign::Not =&gt; errs.gen_sources_struct(<span class="bool-val">false</span>),
         Foreign::Struct =&gt; errs.gen_sources_struct(<span class="bool-val">true</span>),
         Foreign::Enum(ident) =&gt; errs.gen_sources_enum(ident),
@@ -979,8 +1025,10 @@
     <span class="kw">let </span>(impl_generics, ty_generics, where_clause) = generics.split_for_impl();
 
     <span class="kw">match </span><span class="kw-2">&amp;mut </span>data.fields {
-        Fields::Named(fields) =&gt; {
-            <span class="kw">let </span>field_ident = proc_macro2::Ident::new(<span class="string">"_err_tree_pkg"</span>, Span::call_site().into());
+        <span class="comment">// Struct with fields like { a: usize, b: usize }
+        </span>Fields::Named(fields) =&gt; {
+            <span class="comment">// Insert the pkg field
+            </span><span class="kw">let </span>field_ident = proc_macro2::Ident::new(<span class="string">"_err_tree_pkg"</span>, Span::call_site().into());
             fields.named.push(
                 Field::parse_named
                     .parse2(<span class="macro">quote!</span> { #field_ident: bare_err_tree::ErrTreePkg })
@@ -1013,8 +1061,10 @@
             }
             .into()
         }
-        Fields::Unnamed(fields) =&gt; {
-            <span class="kw">let </span>prev_len = syn::Index::from(fields.unnamed.len());
+        <span class="comment">// Struct with fields like ( usize, usize )
+        </span>Fields::Unnamed(fields) =&gt; {
+            <span class="comment">// Insert the pkg field
+            </span><span class="kw">let </span>prev_len = syn::Index::from(fields.unnamed.len());
             fields.unnamed.push(
                 Field::parse_unnamed
                     .parse2(<span class="macro">quote!</span> { bare_err_tree::ErrTreePkg })
@@ -1046,8 +1096,11 @@
             }
             .into()
         }
-        Fields::Unit =&gt; {
-            <span class="kw">let </span>field_ident = proc_macro2::Ident::new(<span class="string">"_err_tree_pkg"</span>, Span::call_site().into());
+        <span class="comment">// Transmutes a unit struct into a named struct for pkg injection
+        // Adds new and default methods for easy construction
+        </span>Fields::Unit =&gt; {
+            <span class="comment">// Insert the pkg field
+            </span><span class="kw">let </span>field_ident = proc_macro2::Ident::new(<span class="string">"_err_tree_pkg"</span>, Span::call_site().into());
             <span class="kw">let </span><span class="kw-2">mut </span>named = Punctuated::default();
             named.push(
                 Field::parse_named
@@ -1073,7 +1126,6 @@
                 <span class="attr">#[automatically_derived]
                 </span><span class="kw">impl </span>#impl_generics #ident #ty_generics #where_clause {
                     <span class="attr">#[track_caller]
-                    #[allow(clippy::too_many_arguments)]
                     </span><span class="kw">fn </span>_tree() -&gt; <span class="self">Self </span>{
                         <span class="kw">let </span>#field_ident = bare_err_tree::ErrTreePkg::new();
                         <span class="self">Self </span>{
