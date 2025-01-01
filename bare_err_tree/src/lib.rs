@@ -26,6 +26,7 @@ Usage of the [`err_tree`] macro incurs a compliation time cost.
     sources).
 * `heap_buffer`: Uses heap to store leading arrows so that `FRONT_MAX` bytes of
     the stack aren't statically allocated for this purpose.
+* `unix_color`: Outputs UNIX console codes for emphasis.
 * `anyhow`: Adds implementation for [`anyhow::Error`].
 * `eyre`: Adds implementation for [`eyre::Report`].
 #### Tracking Feature Flags
