@@ -11,6 +11,7 @@ use thiserror::Error;
 use tracing_error::ErrorLayer;
 use tracing_subscriber::{field::MakeExt, layer::SubscriberExt};
 
+#[allow(dead_code)]
 fn main() {
     run_fatal()
 }

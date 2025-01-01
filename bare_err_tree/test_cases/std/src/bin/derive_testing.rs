@@ -12,6 +12,7 @@ use std::{
 
 use bare_err_tree::{err_tree, AsErrTree};
 
+#[allow(dead_code)]
 fn main() {}
 
 #[err_tree(InnerErrWrap)]

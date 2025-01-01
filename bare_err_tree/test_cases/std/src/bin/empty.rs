@@ -7,6 +7,7 @@
 use bare_err_tree::print_tree;
 use thiserror::Error;
 
+#[allow(dead_code)]
 fn main() {
     let formatted = gen_print();
     println!("{formatted}")

@@ -1,7 +1,5 @@
 #![cfg(feature = "derive_alloc")]
 
-use std::println;
-
 mod empty {
     include!("../test_cases/std/src/bin/empty.rs");
 
