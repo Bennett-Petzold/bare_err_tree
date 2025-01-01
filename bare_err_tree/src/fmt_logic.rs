@@ -260,9 +260,8 @@ impl<const FRONT_MAX: usize> ErrTreeFmt<'_, FRONT_MAX> {
                 false
             });
 
-            Self::write_front_lines(self.front_lines, f, self.scratch_fill)?;
-
             if nonempty {
+                Self::write_front_lines(self.front_lines, f, self.scratch_fill)?;
                 write!(f, "│")?;
 
                 let mut repeated = alloc::vec::Vec::<usize>::new();

@@ -6,11 +6,12 @@
 
 use std::println;
 
-include!("../../testing/src/bin/example.rs");
+mod example {
+    include!("../../testing/src/bin/example.rs");
 
-#[test]
-fn readme_example() {
-    let expected_lines = "missed class
+    #[test]
+    fn readme_example() {
+        let expected_lines = "missed class
 ├─ at bare_err_tree/tests/../../testing/src/bin/example.rs:26:6
 │
 ╰─▶ stayed in bed too long
@@ -29,5 +30,18 @@ fn readme_example() {
         │
         ╰─▶ playing video games";
 
-    assert_eq!(gen_print(), expected_lines);
+        assert_eq!(gen_print(), expected_lines);
+    }
+}
+
+mod near_empty {
+    include!("../../testing/src/bin/near-empty.rs");
+
+    #[test]
+    fn near_empty() {
+        let expected_lines = "EMPTY
+╰─ at bare_err_tree/tests/../../testing/src/bin/near-empty.rs:16:17";
+
+        assert_eq!(gen_print(), expected_lines);
+    }
 }

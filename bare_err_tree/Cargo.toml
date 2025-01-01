@@ -33,3 +33,6 @@ eyre = { version = "0.6", optional = true, default-features = false }
 [dev-dependencies]
 thiserror = "2"
 trybuild = "1"
+tracing = "0.1"
+tracing-error = "0.2"
+tracing-subscriber = "0.3"
