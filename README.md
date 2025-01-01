@@ -88,11 +88,6 @@ missed class
         ╰─▶ playing video games
 ```
 
-# TODO
-* Clean up proc macro code
-    * Add more internal documentation
-    * Write tests to make sure the proc macro is fully correct
-
 [CrateStatus]: https://img.shields.io/crates/v/bare_err_tree.svg
 [Crate]: https://crates.io/crates/bare_err_tree
 [TestsStatus]: https://github.com/Bennett-Petzold/bare_err_tree/actions/workflows/all-tests.yml/badge.svg?branch=main

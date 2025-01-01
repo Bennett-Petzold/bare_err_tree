@@ -25,5 +25,3 @@ syn = { version = "2", features = ["extra-traits"] }
 
 [dev-dependencies]
 bare_err_tree = { path = "../bare_err_tree" }
-thiserror = "2"
-trybuild = "1"

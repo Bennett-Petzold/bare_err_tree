@@ -28,3 +28,7 @@ tracing-error = { version = "0.2", optional = true, default-features = false }
 tracing-core = { version = "0.1", optional = true, default-features = false }
 anyhow = { version = "1", optional = true, default-features = false }
 eyre = { version = "0.6", optional = true, default-features = false }
+
+[dev-dependencies]
+thiserror = "2"
+trybuild = "1"

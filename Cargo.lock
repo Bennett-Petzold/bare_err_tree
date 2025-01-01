@@ -15,8 +15,10 @@ dependencies = [
  "anyhow",
  "bare_err_tree_proc",
  "eyre",
+ "thiserror",
  "tracing-core",
  "tracing-error",
+ "trybuild",
 ]
 
 [[package]]
@@ -27,8 +29,6 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
- "thiserror",
- "trybuild",
 ]
 
 [[package]]

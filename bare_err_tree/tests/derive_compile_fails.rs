@@ -1,15 +1,20 @@
+#![cfg(feature = "derive")]
+
 use trybuild::TestCases;
 
+#[cfg(feature = "derive_alloc")]
 #[test]
 fn derive_example() {
     TestCases::new().pass("../testing/src/bin/derive_testing.rs");
 }
 
+#[cfg(not(any(feature = "anyhow", feature = "eyre")))]
 #[test]
 fn false_tree_defs() {
     TestCases::new().compile_fail("../testing/fail_src/false_tree*.rs");
 }
 
+#[cfg(feature = "derive_alloc")]
 #[test]
 fn container_as_err() {
     TestCases::new().compile_fail("../testing/fail_src/container.rs");

@@ -236,7 +236,7 @@ fn iter_parse(
         Some(Err(syn::Error::new(
             f.span(),
             format!(
-                "{} is dynamically sized, but the \"derive_alloc\" feature is not enabled.",
+                "{} may be a dynamically sized collection, but the \"derive_alloc\" feature is not enabled.",
                 ident
             ),
         )
