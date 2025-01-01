@@ -10,6 +10,11 @@ use bare_err_tree::{err_tree, print_tree};
 use thiserror::Error;
 
 fn main() {
+    let formatted = gen_print();
+    println!("{formatted}")
+}
+
+fn gen_print() -> String {
     let fatal: MissedClassTree = MissedClass::Overslept(Overslept::new(BedTime::new(
         2,
         vec![
@@ -21,7 +26,7 @@ fn main() {
     .into();
     let mut formatted = String::new();
     print_tree::<60, _, _, _>(fatal, &mut formatted).unwrap();
-    println!("{formatted}")
+    formatted
 }
 
 #[derive(Debug, Error)]

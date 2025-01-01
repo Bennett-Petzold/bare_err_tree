@@ -24,15 +24,15 @@ Please see the [contributors page](https://github.com/hashintel/hash/graphs/cont
 Generate with `cd testing; cargo run --bin example`.
 ```
 missed class
-├─ at testing/src/bin/example.rs:25:6
+├─ at testing/src/bin/example.rs:26:6
 │
 ╰─▶ stayed in bed too long
-    ├─ at testing/src/bin/example.rs:17:57
+    ├─ at testing/src/bin/example.rs:18:57
     │
     ├─▶ bed is comfortable
     │
     ╰─▶ went to sleep at 2 A.M.
-        ├─ at testing/src/bin/example.rs:17:72
+        ├─ at testing/src/bin/example.rs:18:72
         │
         ├─▶ finishing a project
         │   │

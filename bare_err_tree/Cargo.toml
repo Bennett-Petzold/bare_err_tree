@@ -21,6 +21,7 @@ tracing = ["dep:tracing-error", "dep:tracing-core"]
 boxed_tracing = ["tracing"]
 anyhow = ["dep:anyhow"]
 eyre = ["dep:eyre"]
+unix_color = []
 
 [dependencies]
 bare_err_tree_proc = { version = "0.2", path = "../bare_err_tree_proc", optional = true }
