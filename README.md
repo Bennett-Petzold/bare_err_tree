@@ -54,13 +54,13 @@ missed class
 Generate with `cd testing_trace; cargo run --bin trace_example`.
 ```
 missed class
-├─ at testing_trace/src/bin/trace_example.rs:44:6
+├─ at testing_trace/src/bin/trace_example.rs:46:6
 │
-├─ tracing frame 0 => trace_example::run_fatal
-│        at testing_trace/src/bin/trace_example.rs:31
+├─ tracing frame 0 => trace_example::gen_print
+│        at testing_trace/src/bin/trace_example.rs:33
 │
 ╰─▶ stayed in bed too long
-    ├─ at testing_trace/src/bin/trace_example.rs:33:57
+    ├─ at testing_trace/src/bin/trace_example.rs:35:57
     │
     ├─ tracing frame 1 => trace_example::new with
     │    bed_time=BedTime {
@@ -76,13 +76,13 @@ missed class
     │      ]
     │    }
     │    _garbage=5
-    │        at testing_trace/src/bin/trace_example.rs:117
+    │        at testing_trace/src/bin/trace_example.rs:119
     ├─ 1 duplicate tracing frame(s): [0]
     │
     ├─▶ bed is comfortable
     │
     ╰─▶ went to sleep at 2 A.M.
-        ├─ at testing_trace/src/bin/trace_example.rs:34:9
+        ├─ at testing_trace/src/bin/trace_example.rs:36:9
         │
         ├─ 1 duplicate tracing frame(s): [0]
         │

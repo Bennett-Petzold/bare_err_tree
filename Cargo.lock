@@ -16,8 +16,10 @@ dependencies = [
  "bare_err_tree_proc",
  "eyre",
  "thiserror",
+ "tracing",
  "tracing-core",
  "tracing-error",
+ "tracing-subscriber",
  "trybuild",
 ]
 
