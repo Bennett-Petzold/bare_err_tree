@@ -54,12 +54,15 @@ missed class
 Generate with `cd bare_err_tree/test_cases/trace; cargo run --bin trace_example`.
 ```
 missed class
-├─ at src/bin/trace_example.rs:46:6
+├─ at src/bin/trace_example.rs:51:6
+│
+├─ tracing frame 0 => trace_example::gen_print_inner
+│        at src/bin/trace_example.rs:38
 │
 ╰─▶ stayed in bed too long
-    ├─ at src/bin/trace_example.rs:35:57
+    ├─ at src/bin/trace_example.rs:40:57
     │
-    ├─ tracing frame 0 => trace_example::new with
+    ├─ tracing frame 1 => trace_example::new with
     │    bed_time=BedTime {
     │      hour: 2,
     │      reasons: [
@@ -73,12 +76,15 @@ missed class
     │      ]
     │    }
     │    _garbage=5
-    │        at src/bin/trace_example.rs:119
+    │        at src/bin/trace_example.rs:124
+    ├─ 1 duplicate tracing frame(s): [0]
     │
     ├─▶ bed is comfortable
     │
     ╰─▶ went to sleep at 2 A.M.
-        ├─ at src/bin/trace_example.rs:36:9
+        ├─ at src/bin/trace_example.rs:41:9
+        │
+        ├─ 1 duplicate tracing frame(s): [0]
         │
         ├─▶ finishing a project
         │   │

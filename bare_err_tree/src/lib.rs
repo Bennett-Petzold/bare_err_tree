@@ -92,6 +92,11 @@ pub use pkg::*;
 mod fmt_logic;
 use fmt_logic::*;
 
+#[cfg(feature = "json")]
+mod json;
+#[cfg(feature = "json")]
+pub use json::*;
+
 #[cfg(feature = "derive")]
 pub use bare_err_tree_proc::*;
 

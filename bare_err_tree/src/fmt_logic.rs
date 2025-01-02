@@ -39,13 +39,13 @@ impl<const FRONT_MAX: usize> Display for ErrTreeFmtWrap<'_, FRONT_MAX> {
 }
 
 pub(crate) struct ErrTreeFmt<'a, const FRONT_MAX: usize> {
-    tree: ErrTree<'a>,
-    scratch_fill: usize,
+    pub tree: ErrTree<'a>,
+    pub scratch_fill: usize,
     /// Most be initialized large enough to fit 6 x (max depth) bytes
-    front_lines: &'a mut [u8],
+    pub front_lines: &'a mut [u8],
 
     #[cfg(feature = "tracing")]
-    found_traces: &'a mut alloc::vec::Vec<tracing_core::callsite::Identifier>,
+    pub found_traces: &'a mut alloc::vec::Vec<tracing_core::callsite::Identifier>,
 }
 
 /// Workaround for lack of `const` in [`core::cmp::max`].
@@ -252,7 +252,7 @@ impl<const FRONT_MAX: usize> ErrTreeFmt<'_, FRONT_MAX> {
     }
 
     #[cfg(feature = "tracing")]
-    fn tracing(&mut self, f: &mut Formatter<'_>) -> fmt::Result {
+    pub(crate) fn tracing(&mut self, f: &mut Formatter<'_>) -> fmt::Result {
         if let Some(trace) = &self.tree.trace {
             let mut nonempty = false;
             trace.with_spans(|_, _| {
