@@ -199,7 +199,7 @@ where
 ///         let source = &(&self.source as &dyn Error) as &dyn AsErrTree;
 ///
 ///         // Call the formatting function
-///         (func)(ErrTree::with_pkg(self, &[&[source]], self._pkg.clone()));
+///         (func)(ErrTree::with_pkg(self, &[&[source]], &self._pkg));
 ///     }
 /// }
 ///
@@ -224,7 +224,7 @@ pub struct ErrTree<'a> {
     #[cfg(feature = "source_line")]
     location: Option<&'a Location<'a>>,
     #[cfg(feature = "tracing")]
-    trace: Option<tracing_error::SpanTrace>,
+    trace: Option<&'a tracing_error::SpanTrace>,
 }
 
 impl<'a> ErrTree<'a> {
@@ -236,7 +236,7 @@ impl<'a> ErrTree<'a> {
             not(feature = "source_line"),
             expect(unused, reason = "should be null when no tracking is enabled")
         )]
-        pkg: ErrTreePkg,
+        pkg: &'a ErrTreePkg,
     ) -> Self {
         Self {
             inner,
@@ -244,9 +244,9 @@ impl<'a> ErrTree<'a> {
             #[cfg(feature = "source_line")]
             location: Some(pkg.location),
             #[cfg(all(feature = "tracing", not(feature = "boxed_tracing")))]
-            trace: Some(pkg.trace),
+            trace: Some(&pkg.trace),
             #[cfg(feature = "boxed_tracing")]
-            trace: Some(*pkg.trace),
+            trace: Some(&*pkg.trace),
         }
     }
 
@@ -362,14 +362,14 @@ macro_rules! tree {
         ($func)(bare_err_tree::ErrTree::with_pkg(
             &$inner,
             &[&[ $( &( $x as &dyn core::error::Error ) as &dyn bare_err_tree::AsErrTree , )* ]],
-            $pkg.clone(),
+            &$pkg,
         ))
     };
     ($func:expr, $inner:expr, $pkg:expr, $( $x:expr ),* ) => {
         ($func)(bare_err_tree::ErrTree::with_pkg(
             &$inner,
             &[&[ $( $x as &dyn bare_err_tree::AsErrTree , )* ]],
-            $pkg.clone(),
+            &$pkg,
         ))
     };
 }

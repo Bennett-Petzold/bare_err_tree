@@ -4,7 +4,7 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-use core::{cmp::Ordering, fmt::Debug};
+use core::{cmp::Ordering, fmt::Debug, hash::Hash};
 
 #[cfg(feature = "source_line")]
 use core::panic::Location;
@@ -22,7 +22,7 @@ use alloc::boxed::Box;
 /// combinations via feature flags without changing the API.
 ///
 /// All instances of this are considered equal, to avoid infecting sort order
-/// or comparisons between the parent error types.
+/// or comparisons between the parent error types. Hashing is a no-op.
 #[derive(Clone)]
 pub struct ErrTreePkg {
     #[cfg(feature = "source_line")]
@@ -78,4 +78,8 @@ impl PartialOrd for ErrTreePkg {
     fn partial_cmp(&self, other: &Self) -> Option<core::cmp::Ordering> {
         Some(self.cmp(other))
     }
+}
+
+impl Hash for ErrTreePkg {
+    fn hash<H: core::hash::Hasher>(&self, _state: &mut H) {}
 }
