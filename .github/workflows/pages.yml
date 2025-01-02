@@ -71,10 +71,10 @@ jobs:
     - uses: taiki-e/install-action@cargo-llvm-cov
 
     - name: Regular Tests
-      run: cargo llvm-cov test --no-report --tests --all-features
+      run: TRYBUILD=overwrite cargo llvm-cov test --no-report --tests --all-features
 
     - name: Doc Tests
-      run: cargo llvm-cov test --no-report --doc --all-features
+      run: TRYBUILD=overwrite cargo llvm-cov test --no-report --doc --all-features
 
     - name: Coverage Shield
       run: |
