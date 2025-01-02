@@ -463,7 +463,7 @@ fn err_tree_struct(
                 impl #impl_generics bare_err_tree::AsErrTree for #ident #ty_generics #where_clause {
                     #[track_caller]
                     fn as_err_tree(&self, func: &mut dyn FnMut(bare_err_tree::ErrTree<'_>)) {
-                        let _err_tree_pkg = self.#field_ident .clone();
+                        let _err_tree_pkg = &self.#field_ident;
                         #sources
                     }
                 }
@@ -498,7 +498,7 @@ fn err_tree_struct(
                 impl #impl_generics bare_err_tree::AsErrTree for #ident #ty_generics #where_clause {
                     #[track_caller]
                     fn as_err_tree(&self, func: &mut dyn FnMut(bare_err_tree::ErrTree<'_>)) {
-                        let _err_tree_pkg = self.#prev_len .clone();
+                        let _err_tree_pkg = &self.#prev_len;
                         #sources
                     }
                 }
@@ -540,7 +540,7 @@ fn err_tree_struct(
                 impl #impl_generics bare_err_tree::AsErrTree for #ident #ty_generics #where_clause {
                     #[track_caller]
                     fn as_err_tree(&self, func: &mut dyn FnMut(bare_err_tree::ErrTree<'_>)) {
-                        let _err_tree_pkg = self.#field_ident .clone();
+                        let _err_tree_pkg = &self.#field_ident;
                         #sources
                     }
                 }
