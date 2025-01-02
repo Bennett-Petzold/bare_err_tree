@@ -12,12 +12,12 @@ End users can then use `tree_unwrap` or `print_tree` to get better error output.
 
 Unlike [anyhow][Anyhow], [eyre][Eyre], or [error-stack][ErrorStack], the extra
 functionality does not require exposing a special type in a library's API.
-A library can use `bare_err_tree` for its errors without changing any types[^waffle],
-and library users can ignore the the existence of this crate entirely[^waffle]. There is
+A library can use `bare_err_tree` for its errors without changing any types\*,
+and library users can ignore the the existence of this crate entirely\*. There is
 also support for including any implementor of `Error` in the tree with less
 information, so it works on top of std and other libraries.
 
-[^waffle]: Users will see this crate/types will be modified, minimally, when:
+\* Users will see this crate/types will be modified, minimally, when:
 * Struct fields are public
     * The necessary pkg field does not block any functionality. When derived it will be hidden.
 * The error is an enum
