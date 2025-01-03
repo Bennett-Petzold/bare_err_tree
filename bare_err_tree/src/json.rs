@@ -13,7 +13,6 @@ use alloc::{
     vec::Vec,
 };
 use serde::{
-    de::Visitor,
     ser::{SerializeSeq, SerializeStruct},
     Deserialize, Serialize,
 };
@@ -82,7 +81,7 @@ struct ErrTreeFmtTraceSerde<'a> {
 
 impl Display for ErrTreeFmtTraceSerde<'_> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        ErrTreeFmt::<0> {
+        ErrTreeFmt::<0, ErrTree> {
             tree: self.tree.clone(),
             scratch_fill: 0,
             front_lines: &mut [],

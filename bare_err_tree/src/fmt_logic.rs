@@ -5,11 +5,12 @@
  */
 
 use core::{
+    error::Error,
     fmt::{self, Display, Formatter},
     str,
 };
 
-use crate::ErrTree;
+use crate::{AsErrTree, ErrTree};
 
 pub(crate) struct ErrTreeFmtWrap<'a, const FRONT_MAX: usize> {
     pub tree: ErrTree<'a>,
@@ -26,7 +27,7 @@ impl<const FRONT_MAX: usize> Display for ErrTreeFmtWrap<'_, FRONT_MAX> {
         #[cfg(feature = "tracing")]
         let mut found_traces = alloc::vec::Vec::new();
 
-        ErrTreeFmt::<FRONT_MAX> {
+        ErrTreeFmt::<FRONT_MAX, _> {
             tree: self.tree.clone(),
             scratch_fill: 0,
             front_lines: &mut front_lines,
@@ -38,14 +39,160 @@ impl<const FRONT_MAX: usize> Display for ErrTreeFmtWrap<'_, FRONT_MAX> {
     }
 }
 
-pub(crate) struct ErrTreeFmt<'a, const FRONT_MAX: usize> {
-    pub tree: ErrTree<'a>,
+#[cfg(feature = "tracing")]
+pub(crate) struct TraceSpan<'a, T: Eq> {
+    identifier: T,
+    target: &'a str,
+    name: &'a str,
+    fields: &'a str,
+    location: Option<(&'a str, u32)>,
+}
+
+pub(crate) trait ErrTreeFormattable {
+    fn apply_msg(&self, f: &mut Formatter<'_>) -> fmt::Result;
+
+    type Source<'a>: ErrTreeFormattable<TraceSpanType = Self::TraceSpanType>;
+    fn sources_len(&self) -> usize;
+    fn apply_to_leading_sources<F>(&mut self, func: F) -> fmt::Result
+    where
+        F: FnMut(Self::Source<'_>) -> fmt::Result;
+    fn apply_to_last_source<F>(&mut self, func: F) -> fmt::Result
+    where
+        F: FnMut(Self::Source<'_>) -> fmt::Result;
+
+    #[cfg(feature = "source_line")]
+    fn has_source_line(&self) -> bool;
+    #[cfg(feature = "source_line")]
+    fn apply_source_line(&self, f: &mut Formatter<'_>) -> fmt::Result;
+
+    #[cfg(feature = "tracing")]
+    fn trace_empty(&self) -> bool;
+
+    #[cfg(feature = "tracing")]
+    fn trace_unique(&self, found_traces: &[Self::TraceSpanType]) -> bool;
+
+    type TraceSpanType: Eq;
+
+    #[cfg(feature = "tracing")]
+    fn apply_trace<F>(&self, func: F) -> fmt::Result
+    where
+        F: FnMut(TraceSpan<'_, Self::TraceSpanType>) -> fmt::Result;
+}
+
+impl ErrTreeFormattable for ErrTree<'_> {
+    fn apply_msg(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        <dyn Error as Display>::fmt(self.inner, f)
+    }
+
+    type Source<'a> = ErrTree<'a>;
+    fn sources_len(&self) -> usize {
+        self.sources.iter().map(|line| line.len()).sum()
+    }
+    fn apply_to_leading_sources<F>(&mut self, mut func: F) -> fmt::Result
+    where
+        F: FnMut(Self::Source<'_>) -> fmt::Result,
+    {
+        for source in self
+            .sources
+            .iter()
+            .flat_map(|line| line.iter())
+            .take(self.sources_len().saturating_sub(1))
+        {
+            let mut res = Ok(());
+            source.as_err_tree(&mut |tree| res = (func)(tree));
+            res?;
+        }
+        Ok(())
+    }
+    fn apply_to_last_source<F>(&mut self, mut func: F) -> fmt::Result
+    where
+        F: FnMut(Self::Source<'_>) -> fmt::Result,
+    {
+        if let Some(source) = self.sources.last().and_then(|line| line.last()) {
+            let mut res = Ok(());
+            source.as_err_tree(&mut |tree| res = (func)(tree));
+            res?;
+        }
+        Ok(())
+    }
+
+    #[cfg(feature = "source_line")]
+    fn has_source_line(&self) -> bool {
+        self.location.is_some()
+    }
+
+    #[cfg(feature = "source_line")]
+    fn apply_source_line(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        if let Some(loc) = self.location {
+            write!(f, "{}", loc)?;
+        }
+        Ok(())
+    }
+
+    #[cfg(feature = "tracing")]
+    fn trace_empty(&self) -> bool {
+        let mut empty = true;
+        if let Some(trace) = &self.trace {
+            trace.with_spans(|_, _| {
+                empty = false;
+                true
+            });
+        }
+        empty
+    }
+
+    #[cfg(feature = "tracing")]
+    fn trace_unique(&self, found_traces: &[Self::TraceSpanType]) -> bool {
+        let mut unique = false;
+        if let Some(trace) = &self.trace {
+            trace.with_spans(|metadata, _| {
+                unique = found_traces.contains(&metadata.callsite());
+                !unique
+            })
+        }
+        unique
+    }
+
+    #[cfg(not(feature = "tracing"))]
+    type TraceSpanType = ();
+
+    #[cfg(feature = "tracing")]
+    type TraceSpanType = tracing_core::callsite::Identifier;
+
+    #[cfg(feature = "tracing")]
+    fn apply_trace<F>(&self, mut func: F) -> fmt::Result
+    where
+        F: FnMut(TraceSpan<'_, Self::TraceSpanType>) -> fmt::Result,
+    {
+        if let Some(trace) = &self.trace {
+            let mut res = Ok(());
+            trace.with_spans(|metadata, fields| {
+                res = (func)(TraceSpan {
+                    identifier: metadata.callsite(),
+                    target: metadata.target(),
+                    name: metadata.name(),
+                    fields,
+                    location: metadata
+                        .file()
+                        .and_then(|file| metadata.line().map(|line| (file, line))),
+                });
+                res.is_ok()
+            });
+            res
+        } else {
+            Ok(())
+        }
+    }
+}
+
+pub(crate) struct ErrTreeFmt<'a, const FRONT_MAX: usize, T: ErrTreeFormattable> {
+    pub tree: T,
     pub scratch_fill: usize,
     /// Most be initialized large enough to fit 6 x (max depth) bytes
     pub front_lines: &'a mut [u8],
 
     #[cfg(feature = "tracing")]
-    pub found_traces: &'a mut alloc::vec::Vec<tracing_core::callsite::Identifier>,
+    pub found_traces: &'a mut alloc::vec::Vec<T::TraceSpanType>,
 }
 
 /// Workaround for lack of `const` in [`core::cmp::max`].
@@ -61,7 +208,7 @@ const CONTINUING: &str = "│   ";
 const DANGLING: &str = "    ";
 const MAX_CELL_LEN: usize = max_const(CONTINUING.len(), DANGLING.len());
 
-impl<const FRONT_MAX: usize> ErrTreeFmt<'_, FRONT_MAX> {
+impl<const FRONT_MAX: usize, T: ErrTreeFormattable> ErrTreeFmt<'_, FRONT_MAX, T> {
     /// Preamble arrow connections
     #[inline]
     fn write_front_lines(
@@ -82,24 +229,10 @@ impl<const FRONT_MAX: usize> ErrTreeFmt<'_, FRONT_MAX> {
 
         front_lines[scratch_fill..scratch_fill + chars.len()].copy_from_slice(chars.as_bytes());
     }
-}
-
-impl<const FRONT_MAX: usize> ErrTreeFmt<'_, FRONT_MAX> {
     #[cfg(feature = "tracing")]
     /// Check for a unique trace by searching found traces
     fn tracing_after(&self) -> bool {
-        if let Some(trace) = &self.tree.trace {
-            let mut unique = false;
-
-            trace.with_spans(|metadata, _| {
-                unique = self.found_traces.contains(&metadata.callsite());
-                false
-            });
-
-            unique
-        } else {
-            false
-        }
+        self.tree.trace_unique(self.found_traces)
     }
 
     #[cfg(not(feature = "tracing"))]
@@ -109,18 +242,21 @@ impl<const FRONT_MAX: usize> ErrTreeFmt<'_, FRONT_MAX> {
 
     #[cfg(feature = "source_line")]
     fn source_line(&self, f: &mut Formatter<'_>, tracing_after: bool) -> fmt::Result {
-        if let Some(location) = self.tree.location {
+        if self.tree.has_source_line() {
             Self::write_front_lines(self.front_lines, f, self.scratch_fill)?;
 
-            if !tracing_after && self.tree.sources.iter().all(|x| x.is_empty()) {
+            if !tracing_after && self.tree.sources_len() == 0 {
                 write!(f, "╰─ ")?;
             } else {
                 write!(f, "├─ ")?;
             }
             if cfg!(feature = "unix_color") {
-                write!(f, "at \x1b[3m{}\x1b[0m", location)?;
+                write!(f, "at \x1b[3m")?;
+                self.tree.apply_source_line(f)?;
+                write!(f, "\x1b[0m")?;
             } else {
-                write!(f, "at {}", location)?;
+                write!(f, "at ")?;
+                self.tree.apply_source_line(f)?;
             }
         }
 
@@ -253,74 +389,65 @@ impl<const FRONT_MAX: usize> ErrTreeFmt<'_, FRONT_MAX> {
 
     #[cfg(feature = "tracing")]
     pub(crate) fn tracing(&mut self, f: &mut Formatter<'_>) -> fmt::Result {
-        if let Some(trace) = &self.tree.trace {
-            let mut nonempty = false;
-            trace.with_spans(|_, _| {
-                nonempty = true;
-                false
-            });
+        if !self.tree.trace_empty() {
+            Self::write_front_lines(self.front_lines, f, self.scratch_fill)?;
+            write!(f, "│")?;
 
-            if nonempty {
-                Self::write_front_lines(self.front_lines, f, self.scratch_fill)?;
-                write!(f, "│")?;
+            let mut repeated = alloc::vec::Vec::<usize>::new();
 
-                let mut repeated = alloc::vec::Vec::<usize>::new();
+            self.tree.apply_trace(|trace_span| {
+                let pos_dup = self
+                    .found_traces
+                    .iter()
+                    .position(|c| *c == trace_span.identifier);
 
-                trace.with_spans(|metadata, fields| {
-                    let pos_dup = self
-                        .found_traces
-                        .iter()
-                        .position(|c| *c == metadata.callsite());
+                if let Some(pos_dup) = pos_dup {
+                    repeated.push(pos_dup);
+                } else {
+                    let depth = self.found_traces.len();
+                    self.found_traces.push(trace_span.identifier);
 
-                    if let Some(pos_dup) = pos_dup {
-                        repeated.push(pos_dup);
-                    } else {
-                        let depth = self.found_traces.len();
-                        self.found_traces.push(metadata.callsite());
-
-                        let _ = Self::write_front_lines(self.front_lines, f, self.scratch_fill);
-                        let _ = write!(
-                            f,
-                            "├─ tracing frame {} => {}::{}",
-                            depth,
-                            metadata.target(),
-                            metadata.name()
-                        );
-
-                        if !fields.is_empty() {
-                            let _ = write!(f, " with");
-                            Self::tracing_field_fmt(f, self.front_lines, fields, self.scratch_fill);
-                        }
-
-                        if let Some((file, line)) = metadata
-                            .file()
-                            .and_then(|file| metadata.line().map(|line| (file, line)))
-                        {
-                            let _ = Self::write_front_lines(self.front_lines, f, self.scratch_fill);
-                            let _ = write!(f, "│        at {}:{}", file, line);
-                        };
-                    };
-
-                    true
-                });
-
-                if !repeated.is_empty() {
                     let _ = Self::write_front_lines(self.front_lines, f, self.scratch_fill);
                     let _ = write!(
                         f,
-                        "├─ {} duplicate tracing frame(s): {:?}",
-                        repeated.len(),
-                        repeated
+                        "├─ tracing frame {} => {}::{}",
+                        depth, trace_span.target, trace_span.name
                     );
-                }
-            }
-        };
 
+                    if !trace_span.fields.is_empty() {
+                        let _ = write!(f, " with");
+                        Self::tracing_field_fmt(
+                            f,
+                            self.front_lines,
+                            trace_span.fields,
+                            self.scratch_fill,
+                        );
+                    }
+
+                    if let Some((file, line)) = trace_span.location {
+                        let _ = Self::write_front_lines(self.front_lines, f, self.scratch_fill);
+                        let _ = write!(f, "│        at {}:{}", file, line);
+                    };
+                };
+
+                Ok(())
+            })?;
+
+            if !repeated.is_empty() {
+                Self::write_front_lines(self.front_lines, f, self.scratch_fill)?;
+                write!(
+                    f,
+                    "├─ {} duplicate tracing frame(s): {:?}",
+                    repeated.len(),
+                    repeated
+                )?;
+            }
+        }
         Ok(())
     }
 
     fn fmt(mut self, f: &mut Formatter<'_>) -> fmt::Result {
-        Display::fmt(self.tree.inner, f)?;
+        self.tree.apply_msg(f)?;
 
         #[cfg_attr(
             not(any(feature = "source_line", feature = "tracing")),
@@ -334,36 +461,38 @@ impl<const FRONT_MAX: usize> ErrTreeFmt<'_, FRONT_MAX> {
         #[cfg(feature = "tracing")]
         self.tracing(f)?;
 
-        let mut source_fmt = |this: &mut Self, source: ErrTree, last: bool| {
-            Self::write_front_lines(this.front_lines, f, this.scratch_fill)?;
-            write!(f, "│")?;
-            Self::write_front_lines(this.front_lines, f, this.scratch_fill)?;
+        let mut source_fmt =
+            |front_lines: &mut [u8],
+             scratch_fill: usize,
+             #[cfg(feature = "tracing")] found_traces: &mut alloc::vec::Vec<T::TraceSpanType>,
+             source: T::Source<'_>,
+             last: bool| {
+                Self::write_front_lines(front_lines, f, scratch_fill)?;
+                write!(f, "│")?;
+                Self::write_front_lines(front_lines, f, scratch_fill)?;
 
-            if last {
-                write!(f, "╰─▶ ")?;
-            } else {
-                write!(f, "├─▶ ")?;
-            }
+                if last {
+                    write!(f, "╰─▶ ")?;
+                } else {
+                    write!(f, "├─▶ ")?;
+                }
 
-            let additional_scratch = if last {
-                DANGLING.len()
-            } else {
-                CONTINUING.len()
+                let additional_scratch = if last {
+                    DANGLING.len()
+                } else {
+                    CONTINUING.len()
+                };
+
+                ErrTreeFmt::<FRONT_MAX, _> {
+                    tree: source,
+                    scratch_fill: scratch_fill + additional_scratch,
+                    front_lines,
+
+                    #[cfg(feature = "tracing")]
+                    found_traces,
+                }
+                .fmt(f)
             };
-
-            ErrTreeFmt::<FRONT_MAX> {
-                tree: source,
-                scratch_fill: this.scratch_fill + additional_scratch,
-                front_lines: this.front_lines,
-
-                #[cfg(feature = "tracing")]
-                found_traces: this.found_traces,
-            }
-            .fmt(f)
-        };
-
-        let sources_len: usize = self.tree.sources.iter().map(|x| x.len()).sum();
-        let mut sources_iter = self.tree.sources.iter().flat_map(|x| x.iter());
 
         if self.scratch_fill + MAX_CELL_LEN >= FRONT_MAX {
             // Stop printing deeper in the stack past this point
@@ -372,33 +501,28 @@ impl<const FRONT_MAX: usize> ErrTreeFmt<'_, FRONT_MAX> {
             // Normal operation
 
             Self::add_front_line(self.front_lines, false, self.scratch_fill);
-            for _ in 0..sources_len.saturating_sub(1) {
-                let mut res = Ok(());
-                sources_iter
-                .next()
-                .expect(
-                    "This is guaranteed to be within the iterator length by previous calculation",
+            self.tree.apply_to_leading_sources(|source| {
+                source_fmt(
+                    self.front_lines,
+                    self.scratch_fill,
+                    #[cfg(feature = "tracing")]
+                    self.found_traces,
+                    source,
+                    false,
                 )
-                .as_err_tree(&mut |source| {
-                    res = source_fmt(&mut self, source, false);
-                });
-                res?
-            }
+            })?;
 
-            if sources_len > 0 {
+            self.tree.apply_to_last_source(|source| {
                 Self::add_front_line(self.front_lines, true, self.scratch_fill);
-
-                let mut res = Ok(());
-                sources_iter
-                .next()
-                .expect(
-                    "This is guaranteed to be within the iterator length by previous calculation",
+                source_fmt(
+                    self.front_lines,
+                    self.scratch_fill,
+                    #[cfg(feature = "tracing")]
+                    self.found_traces,
+                    source,
+                    true,
                 )
-                .as_err_tree(&mut |last_source| {
-                    res = source_fmt(&mut self, last_source, true);
-                });
-                res?
-            }
+            })?;
         };
 
         Ok(())
