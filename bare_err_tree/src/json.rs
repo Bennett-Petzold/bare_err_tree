@@ -21,27 +21,13 @@ use serde_json::from_str;
 
 use crate::{AsErrTree, ErrTree, ErrTreeFmtWrap, ErrTreeFormattable};
 
-#[track_caller]
-pub fn tree_to_json<E, S>(tree: S) -> Result<String, serde_json::Error>
-where
-    S: Borrow<E>,
-    E: AsErrTree + ?Sized,
-{
-    let mut res = Ok(String::new());
-    tree.borrow().as_err_tree(&mut |tree| {
-        let found_traces = &RefCell::new(Vec::new());
-        res = serde_json::to_string(&ErrTreeFmtSerde { tree, found_traces });
-    });
-    res
-}
-
 #[derive(Debug)]
-pub enum ReconstructErr {
+pub enum JsonErr {
     Serde(serde_json::Error),
     Formatting(fmt::Error),
 }
 
-impl Display for ReconstructErr {
+impl Display for JsonErr {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self {
             Self::Serde(x) => x.fmt(f),
@@ -50,7 +36,7 @@ impl Display for ReconstructErr {
     }
 }
 
-impl Error for ReconstructErr {
+impl Error for JsonErr {
     fn source(&self) -> Option<&(dyn Error + 'static)> {
         match self {
             Self::Serde(x) => Some(x),
@@ -59,31 +45,51 @@ impl Error for ReconstructErr {
     }
 }
 
-impl From<serde_json::Error> for ReconstructErr {
+impl From<serde_json::Error> for JsonErr {
     fn from(value: serde_json::Error) -> Self {
         Self::Serde(value)
     }
 }
 
-impl From<fmt::Error> for ReconstructErr {
+impl From<fmt::Error> for JsonErr {
     fn from(value: fmt::Error) -> Self {
         Self::Formatting(value)
     }
 }
 
-pub fn reconstruct_output<const FRONT_MAX: usize, S>(json: S) -> Result<String, ReconstructErr>
+#[track_caller]
+pub fn tree_to_json<E, S, F>(tree: S, formatter: &mut F) -> Result<(), JsonErr>
 where
-    S: AsRef<str>,
+    S: Borrow<E>,
+    E: AsErrTree + ?Sized,
+    F: fmt::Write,
 {
-    let tree = from_str::<ErrTreeReconstruct>(json.as_ref())?;
-    let mut out = String::new();
-    write!(out, "{}", ErrTreeFmtWrap::<FRONT_MAX, _> { tree: &tree })?;
-    Ok(out)
+    let mut res = Ok(String::new());
+    tree.borrow().as_err_tree(&mut |tree| {
+        res = serde_json::to_string(&ErrTreeFmtSerde { tree });
+    });
+    Ok(formatter.write_str(&res?)?)
+}
+
+pub fn reconstruct_output<const FRONT_MAX: usize, R, F>(
+    json: R,
+    formatter: &mut F,
+) -> Result<(), JsonErr>
+where
+    R: Iterator<Item = char>,
+    F: fmt::Write,
+{
+    let tree = from_str::<ErrTreeReconstruct>(json.collect::<String>().as_ref())?;
+    write!(
+        formatter,
+        "{}",
+        ErrTreeFmtWrap::<FRONT_MAX, _> { tree: &tree }
+    )?;
+    Ok(())
 }
 
 struct SourcesIterSer<'a> {
     sources: &'a [&'a [&'a dyn AsErrTree]],
-    found_traces: &'a RefCell<Vec<tracing_core::callsite::Identifier>>,
 }
 
 impl Serialize for SourcesIterSer<'_> {
@@ -97,10 +103,7 @@ impl Serialize for SourcesIterSer<'_> {
         for source in self.sources.iter().flat_map(|subsource| subsource.iter()) {
             let mut res = Ok(());
             source.as_err_tree(&mut |tree| {
-                res = seq_serialize.serialize_element(&ErrTreeFmtSerde {
-                    tree,
-                    found_traces: self.found_traces,
-                });
+                res = seq_serialize.serialize_element(&ErrTreeFmtSerde { tree });
             });
             res?
         }
@@ -111,7 +114,6 @@ impl Serialize for SourcesIterSer<'_> {
 
 struct ErrTreeFmtSerde<'a> {
     pub tree: ErrTree<'a>,
-    pub found_traces: &'a RefCell<Vec<tracing_core::callsite::Identifier>>,
 }
 
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -178,7 +180,6 @@ impl Serialize for ErrTreeFmtSerde<'_> {
             "sources",
             &SourcesIterSer {
                 sources: self.tree.sources,
-                found_traces: self.found_traces,
             },
         )?;
 

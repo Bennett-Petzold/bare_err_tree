@@ -49,11 +49,15 @@ fn gen_print_inner() -> String {
         5,
     ))
     .into();
-    tree_to_json(fatal).unwrap()
+    let mut out = String::new();
+    tree_to_json(fatal, &mut out).unwrap();
+    out
 }
 
 fn reconstruct(json: &str) -> String {
-    reconstruct_output::<60, _>(json).unwrap()
+    let mut out = String::new();
+    reconstruct_output::<60, _, _>(json.chars(), &mut out).unwrap();
+    out
 }
 
 #[derive(Debug, Error)]
