@@ -1,12 +1,11 @@
-//! Error tree output to/from JSON
+//! Error tree output to/from JSON.
 
 extern crate alloc;
 
 use core::{
     borrow::Borrow,
-    cell::RefCell,
     error::Error,
-    fmt::{self, Display, Formatter, Write},
+    fmt::{self, Display, Formatter},
 };
 
 use alloc::{
@@ -21,6 +20,7 @@ use serde_json::from_str;
 
 use crate::{AsErrTree, ErrTree, ErrTreeFmtWrap, ErrTreeFormattable};
 
+/// Error during JSON (de)serialization.
 #[derive(Debug)]
 pub enum JsonErr {
     Serde(serde_json::Error),
@@ -57,6 +57,10 @@ impl From<fmt::Error> for JsonErr {
     }
 }
 
+/// Produces JSON to store [`ErrTree`] formatted output.
+///
+/// JSON output can be used to display with [`ErrTree`] format with
+/// [`reconstruct_output`], but the [`ErrTree`] itself cannot be reconstructed.
 #[track_caller]
 pub fn tree_to_json<E, S, F>(tree: S, formatter: &mut F) -> Result<(), JsonErr>
 where
@@ -71,6 +75,15 @@ where
     Ok(formatter.write_str(&res?)?)
 }
 
+/// Reconstructs [`ErrTree`] formatted output from JSON.
+///
+/// Only the output produced by [`tree_to_json`] is valid for this function.
+///
+/// `FRONT_MAX` limits the number of leading bytes. Each deeper error requires 6
+/// bytes to fit "│   ". So for a max depth of 3 errors, `FRONT_MAX` == 18.
+/// By default, `FRONT_MAX` bytes are allocated on stack. When `heap_buffer` is
+/// enabled, the bytes are allocated on stack and `FRONT_MAX` only acts as a
+/// depth limit.
 pub fn reconstruct_output<const FRONT_MAX: usize, R, F>(
     json: R,
     formatter: &mut F,

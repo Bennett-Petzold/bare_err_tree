@@ -17,7 +17,7 @@ fn main() {
 }
 
 fn run_fatal() {
-    let formatted = reconstruct(&gen_print());
+    let formatted = gen_print();
     println!("{formatted}")
 }
 

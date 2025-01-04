@@ -29,6 +29,8 @@ Usage of the [`err_tree`] macro incurs a compliation time cost.
 * `unix_color`: Outputs UNIX console codes for emphasis.
 * `anyhow`: Adds implementation for [`anyhow::Error`].
 * `eyre`: Adds implementation for [`eyre::Report`].
+* `json`: Allows for storage to/reconstruction from JSON. Uses allocation due
+    to [`serde_json`] internals.
 #### Tracking Feature Flags
 * `source_line`: Tracks the source line of tree errors.
 * `tracing`: Produces a `tracing` backtrace with [`tracing_error`]. Uses
@@ -75,7 +77,7 @@ Contributions are welcome at
 
 #![no_std]
 
-#[cfg(any(feature = "heap_buffer", feature = "tracing"))]
+#[cfg(any(feature = "heap_buffer", feature = "tracing", feature = "json"))]
 extern crate alloc;
 
 #[cfg(feature = "source_line")]
