@@ -145,10 +145,12 @@ struct JsonSpanOwned {
     location: Option<(String, u32)>,
 }
 
+#[cfg(feature = "tracing")]
 struct SerializeSpan<'a> {
     trace: &'a tracing_error::SpanTrace,
 }
 
+#[cfg(feature = "tracing")]
 impl Serialize for SerializeSpan<'_> {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -208,7 +210,6 @@ struct ErrTreeReconstruct {
     #[cfg(feature = "tracing")]
     #[serde(default)]
     trace: Vec<JsonSpanOwned>,
-    #[cfg(feature = "tracing")]
     sources: Vec<Self>,
 }
 
