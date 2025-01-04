@@ -11,12 +11,15 @@ mod example {
     #[test]
     fn readme_example() {
         let expected_lines = r#"missed class
-├─ at bare_err_tree/tests/../test_cases/trace/src/bin/trace_example.rs:47:6
+├─ at bare_err_tree/tests/../test_cases/trace/src/bin/trace_example.rs:51:6
+│
+├─ tracing frame 0 => tracing::example::gen_print_inner
+│        at bare_err_tree/tests/../test_cases/trace/src/bin/trace_example.rs:38
 │
 ╰─▶ stayed in bed too long
-    ├─ at bare_err_tree/tests/../test_cases/trace/src/bin/trace_example.rs:36:57
+    ├─ at bare_err_tree/tests/../test_cases/trace/src/bin/trace_example.rs:40:57
     │
-    ├─ tracing frame 0 => tracing::example::new with
+    ├─ tracing frame 1 => tracing::example::new with
     │    bed_time=BedTime {
     │      hour: 2,
     │      reasons: [
@@ -30,12 +33,15 @@ mod example {
     │      ]
     │    }
     │    _garbage=5
-    │        at bare_err_tree/tests/../test_cases/trace/src/bin/trace_example.rs:120
+    │        at bare_err_tree/tests/../test_cases/trace/src/bin/trace_example.rs:124
+    ├─ 1 duplicate tracing frame(s): [0]
     │
     ├─▶ bed is comfortable
     │
     ╰─▶ went to sleep at 2 A.M.
-        ├─ at bare_err_tree/tests/../test_cases/trace/src/bin/trace_example.rs:37:9
+        ├─ at bare_err_tree/tests/../test_cases/trace/src/bin/trace_example.rs:41:9
+        │
+        ├─ 1 duplicate tracing frame(s): [0]
         │
         ├─▶ finishing a project
         │   │

@@ -29,6 +29,8 @@ Usage of the [`err_tree`] macro incurs a compliation time cost.
 * `unix_color`: Outputs UNIX console codes for emphasis.
 * `anyhow`: Adds implementation for [`anyhow::Error`].
 * `eyre`: Adds implementation for [`eyre::Report`].
+* `json`: Allows for storage to/reconstruction from JSON. Uses allocation due
+    to [`serde_json`] internals.
 #### Tracking Feature Flags
 * `source_line`: Tracks the source line of tree errors.
 * `tracing`: Produces a `tracing` backtrace with [`tracing_error`]. Uses
@@ -75,7 +77,7 @@ Contributions are welcome at
 
 #![no_std]
 
-#[cfg(any(feature = "heap_buffer", feature = "tracing"))]
+#[cfg(any(feature = "heap_buffer", feature = "tracing", feature = "json"))]
 extern crate alloc;
 
 #[cfg(feature = "source_line")]
@@ -91,6 +93,11 @@ mod pkg;
 pub use pkg::*;
 mod fmt_logic;
 use fmt_logic::*;
+
+#[cfg(feature = "json")]
+mod json;
+#[cfg(feature = "json")]
+pub use json::*;
 
 #[cfg(feature = "derive")]
 pub use bare_err_tree_proc::*;
@@ -121,7 +128,7 @@ where
                 panic!(
                     "Panic origin at: {:#?}\n{}",
                     loc,
-                    ErrTreeFmtWrap::<FRONT_MAX> { tree }
+                    ErrTreeFmtWrap::<FRONT_MAX, _> { tree }
                 )
             });
             unreachable!()
@@ -153,7 +160,7 @@ where
 {
     let mut res = Ok(());
     tree.borrow().as_err_tree(&mut |tree| {
-        res = write!(formatter, "{}", ErrTreeFmtWrap::<FRONT_MAX> { tree });
+        res = write!(formatter, "{}", ErrTreeFmtWrap::<FRONT_MAX, _> { tree });
     });
     res
 }

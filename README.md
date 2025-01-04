@@ -8,7 +8,8 @@
 Support for the extra information prints does not change the type or public API (besides a hidden field or deref).
 It is added via macro or manual implementation of the `AsErrTree` trait (see
 the [docs][Docs] for details).
-End users can then use `tree_unwrap` or `print_tree` to get better error output.
+End users can then use `tree_unwrap` or `print_tree` to get better error output,
+or store as JSON for later reconstruction.
 
 Unlike [anyhow][Anyhow], [eyre][Eyre], or [error-stack][ErrorStack], the extra
 functionality does not require exposing a special type in a library's API.
@@ -54,12 +55,15 @@ missed class
 Generate with `cd bare_err_tree/test_cases/trace; cargo run --bin trace_example`.
 ```
 missed class
-├─ at src/bin/trace_example.rs:46:6
+├─ at src/bin/trace_example.rs:51:6
+│
+├─ tracing frame 0 => trace_example::gen_print_inner
+│        at src/bin/trace_example.rs:38
 │
 ╰─▶ stayed in bed too long
-    ├─ at src/bin/trace_example.rs:35:57
+    ├─ at src/bin/trace_example.rs:40:57
     │
-    ├─ tracing frame 0 => trace_example::new with
+    ├─ tracing frame 1 => trace_example::new with
     │    bed_time=BedTime {
     │      hour: 2,
     │      reasons: [
@@ -73,12 +77,15 @@ missed class
     │      ]
     │    }
     │    _garbage=5
-    │        at src/bin/trace_example.rs:119
+    │        at src/bin/trace_example.rs:124
+    ├─ 1 duplicate tracing frame(s): [0]
     │
     ├─▶ bed is comfortable
     │
     ╰─▶ went to sleep at 2 A.M.
-        ├─ at src/bin/trace_example.rs:36:9
+        ├─ at src/bin/trace_example.rs:41:9
+        │
+        ├─ 1 duplicate tracing frame(s): [0]
         │
         ├─▶ finishing a project
         │   │
@@ -87,6 +94,12 @@ missed class
         ├─▶ stressed about exams
         │
         ╰─▶ playing video games
+```
+
+# Example Output (source\_line + tracing + json)
+Generate with `cd bare_err_tree/test_cases/json; cargo run --bin example`.
+```json
+{"msg":"missed class","location":"src/bin/example.rs:51:6","trace":[{"target":"example","name":"gen_print_inner","fields":"","location":["src/bin/example.rs",38]}],"sources":[{"msg":"stayed in bed too long","location":"src/bin/example.rs:40:57","trace":[{"target":"example","name":"new","fields":"bed_time=BedTime { hour: 2, reasons: [FinishingProject(ClassProject { desc: \"proving 1 == 2\" }), ExamStressed, PlayingGames] } _garbage=5","location":["src/bin/example.rs",130]},{"target":"example","name":"gen_print_inner","fields":"","location":["src/bin/example.rs",38]}],"sources":[{"msg":"bed is comfortable","sources":[]},{"msg":"went to sleep at 2 A.M.","location":"src/bin/example.rs:41:9","trace":[{"target":"example","name":"gen_print_inner","fields":"","location":["src/bin/example.rs",38]}],"sources":[{"msg":"finishing a project","sources":[{"msg":"proving 1 == 2","sources":[]}]},{"msg":"stressed about exams","sources":[]},{"msg":"playing video games","sources":[]}]}]}]}
 ```
 
 [CrateStatus]: https://img.shields.io/crates/v/bare_err_tree.svg

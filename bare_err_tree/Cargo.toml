@@ -1,6 +1,6 @@
 [package]
 name = "bare_err_tree"
-version = "0.4.0"
+version = "0.4.1"
 authors.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -22,6 +22,7 @@ boxed_tracing = ["tracing"]
 anyhow = ["dep:anyhow"]
 eyre = ["dep:eyre"]
 unix_color = []
+json = ["dep:serde", "dep:serde_json"]
 
 [dependencies]
 bare_err_tree_proc = { version = "0.3", path = "../bare_err_tree_proc", optional = true }
@@ -29,6 +30,8 @@ tracing-error = { version = "0.2", optional = true, default-features = false }
 tracing-core = { version = "0.1", optional = true, default-features = false }
 anyhow = { version = "1", optional = true, default-features = false }
 eyre = { version = "0.6", optional = true, default-features = false }
+serde_json = { version = "1", optional = true, default-features = false, features = ["alloc"] }
+serde = { version = "1", optional = true, default-features = false, features = ["alloc", "derive"] }
 
 [dev-dependencies]
 thiserror = "2"
