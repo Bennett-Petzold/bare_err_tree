@@ -5,6 +5,7 @@ extern crate alloc;
 use core::{
     borrow::Borrow,
     cell::RefCell,
+    error::Error,
     fmt::{self, Display, Formatter, Write},
 };
 
@@ -13,12 +14,12 @@ use alloc::{
     vec::Vec,
 };
 use serde::{
-    ser::{SerializeSeq, SerializeStruct},
+    ser::{SerializeMap, SerializeSeq},
     Deserialize, Serialize,
 };
 use serde_json::from_str;
 
-use crate::{AsErrTree, ErrTree, ErrTreeFmt};
+use crate::{AsErrTree, ErrTree, ErrTreeFmtWrap, ErrTreeFormattable};
 
 #[track_caller]
 pub fn tree_to_json<E, S>(tree: S) -> Result<String, serde_json::Error>
@@ -34,16 +35,50 @@ where
     res
 }
 
-#[track_caller]
-pub fn reconstruct_output<S>(json: S) -> Result<String, serde_json::Error>
+#[derive(Debug)]
+pub enum ReconstructErr {
+    Serde(serde_json::Error),
+    Formatting(fmt::Error),
+}
+
+impl Display for ReconstructErr {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Serde(x) => x.fmt(f),
+            Self::Formatting(x) => x.fmt(f),
+        }
+    }
+}
+
+impl Error for ReconstructErr {
+    fn source(&self) -> Option<&(dyn Error + 'static)> {
+        match self {
+            Self::Serde(x) => Some(x),
+            Self::Formatting(x) => Some(x),
+        }
+    }
+}
+
+impl From<serde_json::Error> for ReconstructErr {
+    fn from(value: serde_json::Error) -> Self {
+        Self::Serde(value)
+    }
+}
+
+impl From<fmt::Error> for ReconstructErr {
+    fn from(value: fmt::Error) -> Self {
+        Self::Formatting(value)
+    }
+}
+
+pub fn reconstruct_output<const FRONT_MAX: usize, S>(json: S) -> Result<String, ReconstructErr>
 where
     S: AsRef<str>,
 {
-    from_str::<ErrTreeReconstruct>(json.as_ref()).map(|x| {
-        let mut out = String::new();
-        x.fmt(&mut out, String::new()).unwrap();
-        out.trim_end().to_string()
-    })
+    let tree = from_str::<ErrTreeReconstruct>(json.as_ref())?;
+    let mut out = String::new();
+    write!(out, "{}", ErrTreeFmtWrap::<FRONT_MAX, _> { tree: &tree })?;
+    Ok(out)
 }
 
 struct SourcesIterSer<'a> {
@@ -74,26 +109,51 @@ impl Serialize for SourcesIterSer<'_> {
     }
 }
 
-struct ErrTreeFmtTraceSerde<'a> {
-    pub tree: ErrTree<'a>,
-    pub found_traces: &'a RefCell<Vec<tracing_core::callsite::Identifier>>,
-}
-
-impl Display for ErrTreeFmtTraceSerde<'_> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        ErrTreeFmt::<0, ErrTree> {
-            tree: self.tree.clone(),
-            scratch_fill: 0,
-            front_lines: &mut [],
-            found_traces: &mut self.found_traces.borrow_mut(),
-        }
-        .tracing(f)
-    }
-}
-
 struct ErrTreeFmtSerde<'a> {
     pub tree: ErrTree<'a>,
     pub found_traces: &'a RefCell<Vec<tracing_core::callsite::Identifier>>,
+}
+
+#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+struct JsonSpan<'a> {
+    target: &'a str,
+    name: &'a str,
+    fields: &'a str,
+    location: Option<(&'a str, u32)>,
+}
+
+#[derive(Serialize, Deserialize, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+struct JsonSpanOwned {
+    target: String,
+    name: String,
+    fields: String,
+    location: Option<(String, u32)>,
+}
+
+struct SerializeSpan<'a> {
+    trace: &'a tracing_error::SpanTrace,
+}
+
+impl Serialize for SerializeSpan<'_> {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        let mut seq = serializer.serialize_seq(None)?;
+        let mut res = Ok(());
+        self.trace.with_spans(|metadata, fields| {
+            res = seq.serialize_element(&JsonSpan {
+                target: metadata.target(),
+                name: metadata.name(),
+                fields,
+                location: metadata
+                    .file()
+                    .and_then(|file| metadata.line().map(|line| (file, line))),
+            });
+            res.is_ok()
+        });
+        seq.end()
+    }
 }
 
 impl Serialize for ErrTreeFmtSerde<'_> {
@@ -101,30 +161,20 @@ impl Serialize for ErrTreeFmtSerde<'_> {
     where
         S: serde::Serializer,
     {
-        let mut state = serializer.serialize_struct("Color", 3)?;
-        state.serialize_field("msg", &self.tree.inner.to_string())?;
+        let mut state = serializer.serialize_map(None)?;
+        state.serialize_entry("msg", &self.tree.inner.to_string())?;
 
         #[cfg(feature = "source_line")]
         if let Some(loc) = self.tree.location {
-            state.serialize_field("location", &loc.to_string())?;
+            state.serialize_entry("location", &loc.to_string())?;
         }
 
         #[cfg(feature = "tracing")]
-        if self.tree.trace.is_some() {
-            let mut trace = String::new();
-            write!(
-                &mut trace,
-                "{}",
-                ErrTreeFmtTraceSerde {
-                    tree: self.tree.clone(),
-                    found_traces: self.found_traces
-                }
-            )
-            .unwrap();
-            state.serialize_field("trace", &trace.to_string())?;
+        if let Some(trace) = &self.tree.trace {
+            state.serialize_entry("trace", &SerializeSpan { trace })?;
         }
 
-        state.serialize_field(
+        state.serialize_entry(
             "sources",
             &SourcesIterSer {
                 sources: self.tree.sources,
@@ -136,75 +186,96 @@ impl Serialize for ErrTreeFmtSerde<'_> {
     }
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Deserialize)]
 struct ErrTreeReconstruct {
     msg: String,
     #[cfg(feature = "source_line")]
     location: Option<String>,
     #[cfg(feature = "tracing")]
-    trace: Option<String>,
+    #[serde(default)]
+    trace: Vec<JsonSpanOwned>,
     #[cfg(feature = "tracing")]
     sources: Vec<Self>,
 }
 
-impl ErrTreeReconstruct {
-    fn fmt(&self, f: &mut String, leading: String) -> fmt::Result {
-        f.push_str(&self.msg);
-        f.push('\n');
+impl<'de> ErrTreeFormattable for &'de ErrTreeReconstruct {
+    fn apply_msg(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        f.write_str(&self.msg)
+    }
 
-        #[cfg(feature = "source_line")]
-        if let Some(loc) = &self.location {
-            f.push_str(&leading);
+    type Source<'a> = Self;
+    fn sources_len(&self) -> usize {
+        self.sources.len()
+    }
+    fn apply_to_leading_sources<F>(&self, mut func: F) -> fmt::Result
+    where
+        F: FnMut(Self::Source<'_>) -> fmt::Result,
+    {
+        for source in &self.sources[0..self.sources.len().saturating_sub(1)] {
+            (func)(source)?
+        }
+        Ok(())
+    }
+    fn apply_to_last_source<F>(&self, func: F) -> fmt::Result
+    where
+        F: FnMut(Self::Source<'_>) -> fmt::Result,
+    {
+        self.sources.last().map(func).unwrap_or(Ok(()))
+    }
 
-            #[cfg(not(feature = "tracing"))]
-            let last_entry = self.sources.is_empty();
-            #[cfg(feature = "tracing")]
-            let last_entry = self.sources.is_empty() && self.trace.is_none();
+    #[cfg(feature = "source_line")]
+    fn has_source_line(&self) -> bool {
+        self.location.is_some()
+    }
 
-            if last_entry {
-                f.push_str("╰─ ");
-            } else {
-                f.push_str("├─ ");
-            }
-            f.push_str("at ");
-            f.push_str(loc);
+    #[cfg(feature = "source_line")]
+    fn apply_source_line(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        if let Some(location) = &self.location {
+            f.write_str(location)
+        } else {
+            Ok(())
+        }
+    }
+
+    #[cfg(feature = "tracing")]
+    fn trace_empty(&self) -> bool {
+        self.trace.is_empty()
+    }
+
+    #[cfg(not(feature = "tracing"))]
+    type TraceSpanType = ();
+
+    #[cfg(feature = "tracing")]
+    type TraceSpanType = &'de JsonSpanOwned;
+
+    #[cfg(feature = "tracing")]
+    fn trace_unique(&self, found_traces: &[Self::TraceSpanType]) -> bool {
+        !self
+            .trace
+            .iter()
+            .any(|trace_line| found_traces.contains(&trace_line))
+    }
+
+    #[cfg(feature = "tracing")]
+    fn apply_trace<F>(&self, mut func: F) -> fmt::Result
+    where
+        F: FnMut(crate::TraceSpan<'_, Self::TraceSpanType>) -> fmt::Result,
+    {
+        use crate::TraceSpan;
+
+        for trace_line in &self.trace {
+            (func)(TraceSpan {
+                identifier: trace_line,
+                target: &trace_line.target,
+                name: &trace_line.name,
+                fields: &trace_line.fields,
+                location: trace_line
+                    .location
+                    .as_ref()
+                    .map(|(file, line)| (file.as_str(), *line)),
+            })?;
         }
 
-        #[cfg(feature = "tracing")]
-        if let Some(trace) = &self.trace {
-            if let Some(line) = trace.lines().next() {
-                f.push_str(line);
-                f.push('\n');
-            }
-            for line in trace.lines().skip(1) {
-                f.push_str(&leading);
-                f.push_str(line);
-                f.push('\n');
-            }
-            f.push_str(&leading);
-            f.push_str("│\n");
-        }
-
-        {
-            let mut new_lead = leading.clone();
-            new_lead.push_str("│    ");
-            for source in &self.sources[..self.sources.len().saturating_sub(1)] {
-                f.push_str(&leading);
-                f.push_str("├─▶ ");
-                source.fmt(f, new_lead.clone())?;
-                f.push_str(&leading);
-                f.push('│');
-                f.push('\n');
-            }
-        }
-
-        if let Some(last) = self.sources.last() {
-            let mut new_lead = leading.clone();
-            new_lead.push_str("    ");
-            f.push_str(&leading);
-            f.push_str("╰─▶ ");
-            last.fmt(f, new_lead)?;
-        }
         Ok(())
     }
 }

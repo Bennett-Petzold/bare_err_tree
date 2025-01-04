@@ -53,7 +53,7 @@ fn gen_print_inner() -> String {
 }
 
 fn reconstruct(json: &str) -> String {
-    reconstruct_output(json).unwrap()
+    reconstruct_output::<60, _>(json).unwrap()
 }
 
 #[derive(Debug, Error)]

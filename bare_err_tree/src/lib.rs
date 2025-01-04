@@ -126,7 +126,7 @@ where
                 panic!(
                     "Panic origin at: {:#?}\n{}",
                     loc,
-                    ErrTreeFmtWrap::<FRONT_MAX> { tree }
+                    ErrTreeFmtWrap::<FRONT_MAX, _> { tree }
                 )
             });
             unreachable!()
@@ -158,7 +158,7 @@ where
 {
     let mut res = Ok(());
     tree.borrow().as_err_tree(&mut |tree| {
-        res = write!(formatter, "{}", ErrTreeFmtWrap::<FRONT_MAX> { tree });
+        res = write!(formatter, "{}", ErrTreeFmtWrap::<FRONT_MAX, _> { tree });
     });
     res
 }

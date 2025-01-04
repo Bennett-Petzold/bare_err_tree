@@ -12,11 +12,14 @@ use core::{
 
 use crate::{AsErrTree, ErrTree};
 
-pub(crate) struct ErrTreeFmtWrap<'a, const FRONT_MAX: usize> {
-    pub tree: ErrTree<'a>,
+pub(crate) struct ErrTreeFmtWrap<const FRONT_MAX: usize, T> {
+    pub tree: T,
 }
 
-impl<const FRONT_MAX: usize> Display for ErrTreeFmtWrap<'_, FRONT_MAX> {
+impl<const FRONT_MAX: usize, T> Display for ErrTreeFmtWrap<FRONT_MAX, T>
+where
+    for<'a> &'a T: ErrTreeFormattable,
+{
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         #[cfg(not(feature = "heap_buffer"))]
         let mut front_lines = [0; FRONT_MAX];
@@ -28,7 +31,7 @@ impl<const FRONT_MAX: usize> Display for ErrTreeFmtWrap<'_, FRONT_MAX> {
         let mut found_traces = alloc::vec::Vec::new();
 
         ErrTreeFmt::<FRONT_MAX, _> {
-            tree: self.tree.clone(),
+            tree: &self.tree,
             scratch_fill: 0,
             front_lines: &mut front_lines,
 
@@ -41,11 +44,11 @@ impl<const FRONT_MAX: usize> Display for ErrTreeFmtWrap<'_, FRONT_MAX> {
 
 #[cfg(feature = "tracing")]
 pub(crate) struct TraceSpan<'a, T: Eq> {
-    identifier: T,
-    target: &'a str,
-    name: &'a str,
-    fields: &'a str,
-    location: Option<(&'a str, u32)>,
+    pub identifier: T,
+    pub target: &'a str,
+    pub name: &'a str,
+    pub fields: &'a str,
+    pub location: Option<(&'a str, u32)>,
 }
 
 pub(crate) trait ErrTreeFormattable {
@@ -53,10 +56,10 @@ pub(crate) trait ErrTreeFormattable {
 
     type Source<'a>: ErrTreeFormattable<TraceSpanType = Self::TraceSpanType>;
     fn sources_len(&self) -> usize;
-    fn apply_to_leading_sources<F>(&mut self, func: F) -> fmt::Result
+    fn apply_to_leading_sources<F>(&self, func: F) -> fmt::Result
     where
         F: FnMut(Self::Source<'_>) -> fmt::Result;
-    fn apply_to_last_source<F>(&mut self, func: F) -> fmt::Result
+    fn apply_to_last_source<F>(&self, func: F) -> fmt::Result
     where
         F: FnMut(Self::Source<'_>) -> fmt::Result;
 
@@ -68,15 +71,70 @@ pub(crate) trait ErrTreeFormattable {
     #[cfg(feature = "tracing")]
     fn trace_empty(&self) -> bool;
 
+    type TraceSpanType: Eq;
+
     #[cfg(feature = "tracing")]
     fn trace_unique(&self, found_traces: &[Self::TraceSpanType]) -> bool;
-
-    type TraceSpanType: Eq;
 
     #[cfg(feature = "tracing")]
     fn apply_trace<F>(&self, func: F) -> fmt::Result
     where
         F: FnMut(TraceSpan<'_, Self::TraceSpanType>) -> fmt::Result;
+}
+
+impl<T> ErrTreeFormattable for &T
+where
+    T: ErrTreeFormattable,
+{
+    fn apply_msg(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        T::apply_msg(self, f)
+    }
+
+    type Source<'a> = T::Source<'a>;
+    fn sources_len(&self) -> usize {
+        T::sources_len(self)
+    }
+    fn apply_to_leading_sources<F>(&self, func: F) -> fmt::Result
+    where
+        F: FnMut(Self::Source<'_>) -> fmt::Result,
+    {
+        T::apply_to_leading_sources(self, func)
+    }
+    fn apply_to_last_source<F>(&self, func: F) -> fmt::Result
+    where
+        F: FnMut(Self::Source<'_>) -> fmt::Result,
+    {
+        T::apply_to_last_source(self, func)
+    }
+
+    #[cfg(feature = "source_line")]
+    fn has_source_line(&self) -> bool {
+        T::has_source_line(self)
+    }
+    #[cfg(feature = "source_line")]
+    fn apply_source_line(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        T::apply_source_line(self, f)
+    }
+
+    #[cfg(feature = "tracing")]
+    fn trace_empty(&self) -> bool {
+        T::trace_empty(self)
+    }
+
+    type TraceSpanType = T::TraceSpanType;
+
+    #[cfg(feature = "tracing")]
+    fn trace_unique(&self, found_traces: &[Self::TraceSpanType]) -> bool {
+        T::trace_unique(self, found_traces)
+    }
+
+    #[cfg(feature = "tracing")]
+    fn apply_trace<F>(&self, func: F) -> fmt::Result
+    where
+        F: FnMut(TraceSpan<'_, Self::TraceSpanType>) -> fmt::Result,
+    {
+        T::apply_trace(self, func)
+    }
 }
 
 impl ErrTreeFormattable for ErrTree<'_> {
@@ -88,7 +146,7 @@ impl ErrTreeFormattable for ErrTree<'_> {
     fn sources_len(&self) -> usize {
         self.sources.iter().map(|line| line.len()).sum()
     }
-    fn apply_to_leading_sources<F>(&mut self, mut func: F) -> fmt::Result
+    fn apply_to_leading_sources<F>(&self, mut func: F) -> fmt::Result
     where
         F: FnMut(Self::Source<'_>) -> fmt::Result,
     {
@@ -104,7 +162,7 @@ impl ErrTreeFormattable for ErrTree<'_> {
         }
         Ok(())
     }
-    fn apply_to_last_source<F>(&mut self, mut func: F) -> fmt::Result
+    fn apply_to_last_source<F>(&self, mut func: F) -> fmt::Result
     where
         F: FnMut(Self::Source<'_>) -> fmt::Result,
     {
@@ -141,6 +199,12 @@ impl ErrTreeFormattable for ErrTree<'_> {
         empty
     }
 
+    #[cfg(not(feature = "tracing"))]
+    type TraceSpanType = ();
+
+    #[cfg(feature = "tracing")]
+    type TraceSpanType = tracing_core::callsite::Identifier;
+
     #[cfg(feature = "tracing")]
     fn trace_unique(&self, found_traces: &[Self::TraceSpanType]) -> bool {
         let mut unique = false;
@@ -152,12 +216,6 @@ impl ErrTreeFormattable for ErrTree<'_> {
         }
         unique
     }
-
-    #[cfg(not(feature = "tracing"))]
-    type TraceSpanType = ();
-
-    #[cfg(feature = "tracing")]
-    type TraceSpanType = tracing_core::callsite::Identifier;
 
     #[cfg(feature = "tracing")]
     fn apply_trace<F>(&self, mut func: F) -> fmt::Result
@@ -388,7 +446,7 @@ impl<const FRONT_MAX: usize, T: ErrTreeFormattable> ErrTreeFmt<'_, FRONT_MAX, T>
     }
 
     #[cfg(feature = "tracing")]
-    pub(crate) fn tracing(&mut self, f: &mut Formatter<'_>) -> fmt::Result {
+    fn tracing(&mut self, f: &mut Formatter<'_>) -> fmt::Result {
         if !self.tree.trace_empty() {
             Self::write_front_lines(self.front_lines, f, self.scratch_fill)?;
             write!(f, "│")?;
@@ -446,6 +504,7 @@ impl<const FRONT_MAX: usize, T: ErrTreeFormattable> ErrTreeFmt<'_, FRONT_MAX, T>
         Ok(())
     }
 
+    #[allow(unused_mut)]
     fn fmt(mut self, f: &mut Formatter<'_>) -> fmt::Result {
         self.tree.apply_msg(f)?;
 
