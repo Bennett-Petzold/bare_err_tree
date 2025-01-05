@@ -455,13 +455,35 @@ impl<const FRONT_MAX: usize, T: ErrTreeFormattable> ErrTreeFmt<'_, FRONT_MAX, T>
         }
     }
 
+    /// Straightforward formatting
+    #[cfg(not(feature = "pretty_tracing"))]
+    fn tracing_field_fmt(
+        f: &mut Formatter<'_>,
+        front_lines: &[u8],
+        fields: &str,
+        scratch_fill: usize,
+    ) {
+        let _ = Self::write_front_lines(front_lines, f, scratch_fill);
+        let _ = write!(f, "│    ");
+        let _ = write!(f, "{}", fields);
+    }
+
     #[cfg(feature = "tracing")]
     fn tracing(&mut self, f: &mut Formatter<'_>) -> fmt::Result {
         if !self.tree.trace_empty() {
             Self::write_front_lines(self.front_lines, f, self.scratch_fill)?;
             write!(f, "│")?;
 
-            let mut repeated = alloc::vec::Vec::<usize>::new();
+            #[cfg(all(not(feature = "heap_buffer"), feature = "tracing"))]
+            let mut repeated: [_; FRONT_MAX] = core::array::from_fn(|_| None);
+
+            #[cfg(all(feature = "heap_buffer", feature = "tracing"))]
+            let mut repeated = core::iter::repeat_with(|| None)
+                .take(FRONT_MAX)
+                .collect::<alloc::vec::Vec<_>>()
+                .into_boxed_slice();
+
+            let mut repeated_idx = 0;
 
             self.tree.apply_trace(|trace_span| {
                 let pos_dup = self
@@ -472,7 +494,8 @@ impl<const FRONT_MAX: usize, T: ErrTreeFormattable> ErrTreeFmt<'_, FRONT_MAX, T>
                     .position(|c| *c == trace_span.identifier);
 
                 if let Some(pos_dup) = pos_dup {
-                    repeated.push(pos_dup);
+                    repeated[repeated_idx] = Some(pos_dup);
+                    repeated_idx += 1;
                 } else {
                     let depth = self.found_traces.partition_point(|x| x.is_some());
                     if depth < self.found_traces.len() {
@@ -505,13 +528,18 @@ impl<const FRONT_MAX: usize, T: ErrTreeFormattable> ErrTreeFmt<'_, FRONT_MAX, T>
                 Ok(())
             })?;
 
-            if !repeated.is_empty() {
+            if repeated_idx > 0 {
                 Self::write_front_lines(self.front_lines, f, self.scratch_fill)?;
+                write!(f, "├─ {} duplicate tracing frame(s): [", repeated_idx)?;
+
+                for idx in 0..repeated_idx - 1 {
+                    write!(f, "{}, ", repeated[idx].expect("Previously set as Some"))?;
+                }
+
                 write!(
                     f,
-                    "├─ {} duplicate tracing frame(s): {:?}",
-                    repeated.len(),
-                    repeated
+                    "{}]",
+                    repeated[repeated_idx - 1].expect("Previously set as Some")
                 )?;
             }
         }

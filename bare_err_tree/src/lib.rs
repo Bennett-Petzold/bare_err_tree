@@ -56,7 +56,7 @@ Specify desired tracking features by importing `bare_err_tree` in `Cargo.toml`.
 
 Call [`tree_unwrap`] on the [`Result`] or [`print_tree`] on the [`Error`] with
 `FRONT_MAX` set to `6 * (maximum tree depth)`. Note that unless `heap_buffer`
-is enabled, `FRONT_MAX` (x2 if `tracing` is enabled) bytes will be
+is enabled, `FRONT_MAX` (x3 if `tracing` is enabled) bytes will be
 occupied on stack for the duration of a print call. Make sure this falls
 within platform stack size, and single stack frame size, limits.
 

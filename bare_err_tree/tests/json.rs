@@ -1,5 +1,5 @@
 #![cfg(all(
-    feature = "tracing",
+    feature = "pretty_tracing",
     feature = "derive_alloc",
     feature = "source_line",
     feature = "json",
