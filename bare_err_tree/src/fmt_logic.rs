@@ -32,6 +32,7 @@ where
 
         #[cfg(all(feature = "heap_buffer", feature = "tracing"))]
         let mut found_traces = core::iter::repeat_with(|| None)
+            .take(FRONT_MAX)
             .collect::<alloc::vec::Vec<_>>()
             .into_boxed_slice();
 
@@ -330,8 +331,8 @@ impl<const FRONT_MAX: usize, T: ErrTreeFormattable> ErrTreeFmt<'_, FRONT_MAX, T>
         Ok(())
     }
 
-    #[cfg(feature = "tracing")]
     /// Simple implementation of pretty formatting
+    #[cfg(feature = "pretty_tracing")]
     fn tracing_field_fmt(
         f: &mut Formatter<'_>,
         front_lines: &[u8],

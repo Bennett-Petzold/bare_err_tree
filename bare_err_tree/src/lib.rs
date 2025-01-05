@@ -34,7 +34,9 @@ Usage of the [`err_tree`] macro incurs a compliation time cost.
 #### Tracking Feature Flags
 * `source_line`: Tracks the source line of tree errors.
 * `tracing`: Produces a `tracing` backtrace with [`tracing_error`].
-* `boxed_tracing`: Same as `tracing`, but boxes the trace.
+* `boxed_tracing`: `tracing` with a boxed trace.
+* `pretty_tracing`: `tracing` with a nicely formatted trace. Requires allocation
+    in order to track nested structure.
 
 # Adding [`ErrTree`] Support (Library or Bin)
 Both libraries and binaries can add type support for [`ErrTree`] prints.
@@ -76,7 +78,7 @@ Contributions are welcome at
 
 #![no_std]
 
-#[cfg(any(feature = "heap_buffer", feature = "json"))]
+#[cfg(any(feature = "heap_buffer", feature = "pretty_tracing", feature = "json"))]
 extern crate alloc;
 
 #[cfg(feature = "source_line")]
