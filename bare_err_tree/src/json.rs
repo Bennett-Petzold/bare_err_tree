@@ -83,7 +83,8 @@ where
 /// bytes to fit "│   ". So for a max depth of 3 errors, `FRONT_MAX` == 18.
 /// By default, `FRONT_MAX` bytes are allocated on stack. When `heap_buffer` is
 /// enabled, the bytes are allocated on stack and `FRONT_MAX` only acts as a
-/// depth limit.
+/// depth limit. When `tracing` is enabled, at most `FRONT_MAX` stack traces
+/// will be tracked for duplicates.
 pub fn reconstruct_output<const FRONT_MAX: usize, R, F>(
     json: R,
     formatter: &mut F,
@@ -264,11 +265,15 @@ impl<'de> ErrTreeFormattable for &'de ErrTreeReconstruct {
     type TraceSpanType = &'de JsonSpanOwned;
 
     #[cfg(feature = "tracing")]
-    fn trace_unique(&self, found_traces: &[Self::TraceSpanType]) -> bool {
-        !self
-            .trace
-            .iter()
-            .any(|trace_line| found_traces.contains(&trace_line))
+    fn trace_unique(&self, found_traces: &[Option<Self::TraceSpanType>]) -> bool {
+        let search_trace_end = found_traces.partition_point(|x| x.is_some());
+        let search_traces = &found_traces[0..search_trace_end];
+        !self.trace.iter().any(|trace_line| {
+            search_traces
+                .iter()
+                .flatten()
+                .any(|found| *found == trace_line)
+        })
     }
 
     #[cfg(feature = "tracing")]

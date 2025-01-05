@@ -27,8 +27,13 @@ where
         #[cfg(feature = "heap_buffer")]
         let mut front_lines = alloc::vec![0; FRONT_MAX].into_boxed_slice();
 
-        #[cfg(feature = "tracing")]
-        let mut found_traces = alloc::vec::Vec::new();
+        #[cfg(all(not(feature = "heap_buffer"), feature = "tracing"))]
+        let mut found_traces: [_; FRONT_MAX] = core::array::from_fn(|_| None);
+
+        #[cfg(all(feature = "heap_buffer", feature = "tracing"))]
+        let mut found_traces = core::iter::repeat_with(|| None)
+            .collect::<alloc::vec::Vec<_>>()
+            .into_boxed_slice();
 
         ErrTreeFmt::<FRONT_MAX, _> {
             tree: &self.tree,
@@ -74,7 +79,7 @@ pub(crate) trait ErrTreeFormattable {
     type TraceSpanType: Eq;
 
     #[cfg(feature = "tracing")]
-    fn trace_unique(&self, found_traces: &[Self::TraceSpanType]) -> bool;
+    fn trace_unique(&self, found_traces: &[Option<Self::TraceSpanType>]) -> bool;
 
     #[cfg(feature = "tracing")]
     fn apply_trace<F>(&self, func: F) -> fmt::Result
@@ -124,7 +129,7 @@ where
     type TraceSpanType = T::TraceSpanType;
 
     #[cfg(feature = "tracing")]
-    fn trace_unique(&self, found_traces: &[Self::TraceSpanType]) -> bool {
+    fn trace_unique(&self, found_traces: &[Option<Self::TraceSpanType>]) -> bool {
         T::trace_unique(self, found_traces)
     }
 
@@ -206,11 +211,15 @@ impl ErrTreeFormattable for ErrTree<'_> {
     type TraceSpanType = tracing_core::callsite::Identifier;
 
     #[cfg(feature = "tracing")]
-    fn trace_unique(&self, found_traces: &[Self::TraceSpanType]) -> bool {
+    fn trace_unique(&self, found_traces: &[Option<Self::TraceSpanType>]) -> bool {
         let mut unique = false;
         if let Some(trace) = &self.trace {
             trace.with_spans(|metadata, _| {
-                unique = found_traces.contains(&metadata.callsite());
+                unique = found_traces
+                    .iter()
+                    .take_while(|x| x.is_some())
+                    .flatten()
+                    .any(|x| x == &metadata.callsite());
                 !unique
             })
         }
@@ -250,7 +259,7 @@ pub(crate) struct ErrTreeFmt<'a, const FRONT_MAX: usize, T: ErrTreeFormattable> 
     pub front_lines: &'a mut [u8],
 
     #[cfg(feature = "tracing")]
-    pub found_traces: &'a mut alloc::vec::Vec<T::TraceSpanType>,
+    pub found_traces: &'a mut [Option<T::TraceSpanType>],
 }
 
 /// Workaround for lack of `const` in [`core::cmp::max`].
@@ -457,13 +466,17 @@ impl<const FRONT_MAX: usize, T: ErrTreeFormattable> ErrTreeFmt<'_, FRONT_MAX, T>
                 let pos_dup = self
                     .found_traces
                     .iter()
+                    .take_while(|x| x.is_some())
+                    .flatten()
                     .position(|c| *c == trace_span.identifier);
 
                 if let Some(pos_dup) = pos_dup {
                     repeated.push(pos_dup);
                 } else {
-                    let depth = self.found_traces.len();
-                    self.found_traces.push(trace_span.identifier);
+                    let depth = self.found_traces.partition_point(|x| x.is_some());
+                    if depth < self.found_traces.len() {
+                        self.found_traces[depth] = Some(trace_span.identifier);
+                    }
 
                     let _ = Self::write_front_lines(self.front_lines, f, self.scratch_fill);
                     let _ = write!(
@@ -523,7 +536,7 @@ impl<const FRONT_MAX: usize, T: ErrTreeFormattable> ErrTreeFmt<'_, FRONT_MAX, T>
         let mut source_fmt =
             |front_lines: &mut [u8],
              scratch_fill: usize,
-             #[cfg(feature = "tracing")] found_traces: &mut alloc::vec::Vec<T::TraceSpanType>,
+             #[cfg(feature = "tracing")] found_traces: &mut [Option<T::TraceSpanType>],
              source: T::Source<'_>,
              last: bool| {
                 Self::write_front_lines(front_lines, f, scratch_fill)?;
