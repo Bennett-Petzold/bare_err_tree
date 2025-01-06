@@ -332,140 +332,97 @@ impl<const FRONT_MAX: usize, T: ErrTreeFormattable> ErrTreeFmt<'_, FRONT_MAX, T>
     }
 
     /// Simple implementation of pretty formatting
-    #[cfg(feature = "pretty_tracing")]
-    fn tracing_field_fmt(
-        f: &mut Formatter<'_>,
-        front_lines: &[u8],
-        mut fields: &str,
-        scratch_fill: usize,
-    ) {
-        let mut next_slice = |search_chars: &mut alloc::vec::Vec<_>, depth: &mut usize| {
-            fields = fields.trim();
-
-            let next_idx = {
-                let last_search_char = search_chars.last().and_then(|c| fields.find(*c));
-                let brace = fields.find('{');
-                let bracket = fields.find('[');
-                let paren = fields.find('(');
-                let comma = fields.find(',');
-                let quote = fields.find('"');
-
-                let before = |lhs: usize, rhs: Option<usize>| {
-                    if let Some(rhs) = rhs {
-                        lhs < rhs
-                    } else {
-                        true
-                    }
-                };
-
-                // Default, no special chars left
-                let mut idx = None;
-
-                if let Some(last_search_char) = last_search_char {
-                    if before(last_search_char, brace)
-                        && before(last_search_char, paren)
-                        && before(last_search_char, bracket)
-                        && before(last_search_char, comma)
-                        && before(last_search_char, quote)
-                    {
-                        if last_search_char == 0 {
-                            let _ = search_chars.pop();
-                            *depth = depth.saturating_sub(1);
-
-                            if fields.chars().nth(1) == Some(',') {
-                                idx = Some(2);
-                            } else {
-                                idx = Some(1);
-                            }
-                        } else {
-                            idx = Some(last_search_char);
-                        }
-                    }
-                }
-                if let Some(brace) = brace {
-                    if idx.is_none()
-                        && before(brace, bracket)
-                        && before(brace, paren)
-                        && before(brace, comma)
-                        && before(brace, quote)
-                    {
-                        search_chars.push('}');
-                        *depth = depth.saturating_add(1);
-                        idx = Some(brace + 1);
-                    }
-                }
-                if let Some(bracket) = bracket {
-                    if idx.is_none()
-                        && before(bracket, paren)
-                        && before(bracket, comma)
-                        && before(bracket, quote)
-                    {
-                        search_chars.push(']');
-                        *depth = depth.saturating_add(1);
-                        idx = Some(bracket + 1);
-                    }
-                }
-                if let Some(paren) = paren {
-                    if idx.is_none() && before(paren, comma) && before(paren, quote) {
-                        search_chars.push(')');
-                        *depth = depth.saturating_add(1);
-                        idx = Some(paren + 1);
-                    }
-                }
-                if let Some(comma) = comma {
-                    if idx.is_none() && before(comma, quote) {
-                        idx = Some(comma + 1);
-                    }
-                }
-                if let Some(quote) = quote {
-                    if idx.is_none() {
-                        idx = Some(
-                            fields[quote + 1..]
-                                .find('"')
-                                .expect("If the quote opens, it must close")
-                                + quote
-                                + 2,
-                        );
-                    }
-                }
-
-                idx.unwrap_or(fields.len())
-            };
-
-            let cur = &fields[..next_idx];
-            fields = &fields[next_idx..];
-            cur
-        };
-
-        let mut search_chars = alloc::vec::Vec::new();
-        let mut prev_depth = 0;
-        let mut depth = 0;
-
-        let mut next = next_slice(&mut search_chars, &mut depth);
-        while !next.is_empty() {
-            let _ = Self::write_front_lines(front_lines, f, scratch_fill);
-            let _ = write!(f, "│    ");
-            for _ in 0..core::cmp::min(prev_depth, depth) {
-                let _ = write!(f, "  ");
-            }
-            let _ = write!(f, "{}", next);
-
-            prev_depth = depth;
-            next = next_slice(&mut search_chars, &mut depth);
-        }
-    }
-
-    /// Straightforward formatting
-    #[cfg(not(feature = "pretty_tracing"))]
+    #[cfg(feature = "tracing")]
     fn tracing_field_fmt(
         f: &mut Formatter<'_>,
         front_lines: &[u8],
         fields: &str,
         scratch_fill: usize,
-    ) {
-        let _ = Self::write_front_lines(front_lines, f, scratch_fill);
-        let _ = write!(f, "│    ");
-        let _ = write!(f, "{}", fields);
+    ) -> fmt::Result {
+        use core::fmt::Write;
+
+        let mut depth = 0;
+        let mut in_quote = false;
+
+        const START_CHARS: [char; 3] = ['{', '[', '('];
+        const END_CHARS: [char; 3] = ['}', ']', ')'];
+        const ESC: char = '\\';
+
+        let push_front = |f: &mut _, depth| {
+            Self::write_front_lines(front_lines, f, scratch_fill)?;
+            write!(f, "│    ")?;
+            for _ in 0..depth {
+                write!(f, "  ")?;
+            }
+            Ok(())
+        };
+
+        push_front(f, depth)?;
+        let mut prev = '\0';
+        for c in fields.chars() {
+            let mut space_except = false;
+
+            if in_quote {
+                if prev == '"' {
+                    in_quote = false;
+                    if c == ' ' {
+                        space_except = true;
+                    }
+                }
+            } else {
+                match prev {
+                    x if START_CHARS.contains(&x) => {
+                        depth += 1;
+                        push_front(f, depth)?;
+                        if c == ' ' {
+                            space_except = true;
+                        }
+                    }
+                    ',' => {
+                        push_front(f, depth)?;
+                        if c == ' ' {
+                            space_except = true;
+                        }
+                    }
+                    '"' => in_quote = true,
+                    x => {
+                        if END_CHARS.contains(&c) {
+                            depth -= 1;
+                            push_front(f, depth)?;
+                        } else if c == ' ' && END_CHARS.contains(&x) {
+                            space_except = true;
+                            if depth == 0 {
+                                push_front(f, depth)?;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Special case for escaping
+            prev = if prev == ESC { '\0' } else { c };
+
+            if !space_except {
+                f.write_char(c)?;
+            }
+        }
+
+        /*
+        let mut next = next_slice(&mut search_chars, &mut depth);
+        while !next.is_empty() {
+            Self::write_front_lines(front_lines, f, scratch_fill);
+            write!(f, "│    ");
+            for _ in 0..core::cmp::min(prev_depth, depth) {
+                write!(f, "  ");
+            }
+            write!(f, "{}", next);
+
+            prev_depth = depth;
+            next = next_slice(&mut search_chars, &mut depth);
+        }
+        */
+
+        Ok(())
     }
 
     #[cfg(feature = "tracing")]
@@ -502,26 +459,26 @@ impl<const FRONT_MAX: usize, T: ErrTreeFormattable> ErrTreeFmt<'_, FRONT_MAX, T>
                         self.found_traces[depth] = Some(trace_span.identifier);
                     }
 
-                    let _ = Self::write_front_lines(self.front_lines, f, self.scratch_fill);
-                    let _ = write!(
+                    Self::write_front_lines(self.front_lines, f, self.scratch_fill)?;
+                    write!(
                         f,
                         "├─ tracing frame {} => {}::{}",
                         depth, trace_span.target, trace_span.name
-                    );
+                    )?;
 
                     if !trace_span.fields.is_empty() {
-                        let _ = write!(f, " with");
+                        write!(f, " with")?;
                         Self::tracing_field_fmt(
                             f,
                             self.front_lines,
                             trace_span.fields,
                             self.scratch_fill,
-                        );
+                        )?;
                     }
 
                     if let Some((file, line)) = trace_span.location {
-                        let _ = Self::write_front_lines(self.front_lines, f, self.scratch_fill);
-                        let _ = write!(f, "│        at {}:{}", file, line);
+                        Self::write_front_lines(self.front_lines, f, self.scratch_fill)?;
+                        write!(f, "│        at {}:{}", file, line)?;
                     };
                 };
 

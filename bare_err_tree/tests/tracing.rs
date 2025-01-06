@@ -1,12 +1,13 @@
 #![cfg(all(
     feature = "tracing",
-    not(feature = "pretty_tracing"),
     feature = "derive_alloc",
     feature = "source_line",
     not(feature = "unix_color")
 ))]
 
 mod example {
+    use std::assert_eq;
+
     include!("../test_cases/trace/src/bin/trace_example.rs");
 
     #[test]
@@ -21,7 +22,19 @@ mod example {
     ├─ at bare_err_tree/tests/../test_cases/trace/src/bin/trace_example.rs:40:57
     │
     ├─ tracing frame 1 => tracing::example::new with
-    │    bed_time=BedTime { hour: 2, reasons: [FinishingProject(ClassProject { desc: "proving 1 == 2" }), ExamStressed, PlayingGames] } _garbage=5
+    │    bed_time=BedTime {
+    │      hour: 2,
+    │      reasons: [
+    │        FinishingProject(
+    │          ClassProject {
+    │            desc: "proving 1 == 2"
+    │          }
+    │        ),
+    │        ExamStressed,
+    │        PlayingGames
+    │      ]
+    │    }
+    │    _garbage=5
     │        at bare_err_tree/tests/../test_cases/trace/src/bin/trace_example.rs:124
     ├─ 1 duplicate tracing frame(s): [0]
     │

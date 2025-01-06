@@ -1,6 +1,6 @@
 [package]
 name = "bare_err_tree"
-version = "0.4.1"
+version = "0.5.0"
 authors.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -19,7 +19,6 @@ heap_buffer = []
 source_line = []
 tracing = ["dep:tracing-error", "dep:tracing-core"]
 boxed_tracing = ["tracing"]
-pretty_tracing = ["tracing"]
 anyhow = ["dep:anyhow"]
 eyre = ["dep:eyre"]
 unix_color = []
