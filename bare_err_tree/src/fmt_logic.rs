@@ -407,21 +407,6 @@ impl<const FRONT_MAX: usize, T: ErrTreeFormattable> ErrTreeFmt<'_, FRONT_MAX, T>
             }
         }
 
-        /*
-        let mut next = next_slice(&mut search_chars, &mut depth);
-        while !next.is_empty() {
-            Self::write_front_lines(front_lines, f, scratch_fill);
-            write!(f, "│    ");
-            for _ in 0..core::cmp::min(prev_depth, depth) {
-                write!(f, "  ");
-            }
-            write!(f, "{}", next);
-
-            prev_depth = depth;
-            next = next_slice(&mut search_chars, &mut depth);
-        }
-        */
-
         Ok(())
     }
 

@@ -5,17 +5,11 @@ extern crate alloc;
 use core::{
     borrow::Borrow,
     error::Error,
-    fmt::{self, Display, Formatter},
+    fmt::{self, Display, Formatter, Write},
 };
 
-use alloc::{
-    string::{String, ToString},
-    vec::Vec,
-};
-use serde::{
-    ser::{SerializeMap, SerializeSeq},
-    Deserialize, Serialize,
-};
+use alloc::{string::String, vec::Vec};
+use serde::{Deserialize, Serialize};
 use serde_json::from_str;
 
 use crate::{AsErrTree, ErrTree, ErrTreeFmtWrap, ErrTreeFormattable};
@@ -68,11 +62,118 @@ where
     E: AsErrTree + ?Sized,
     F: fmt::Write,
 {
-    let mut res = Ok(String::new());
+    let mut res = Ok(());
     tree.borrow().as_err_tree(&mut |tree| {
-        res = serde_json::to_string(&ErrTreeFmtSerde { tree });
+        res = json_fmt(tree, formatter);
     });
-    Ok(formatter.write_str(&res?)?)
+    res?;
+    Ok(())
+}
+
+/// Custom JSON format outputter
+fn json_fmt<F: fmt::Write>(tree: ErrTree<'_>, formatter: &mut F) -> fmt::Result {
+    formatter.write_str("{\"msg\":\"")?;
+    write!(JsonEscapeFormatter { formatter }, "{}", tree.inner)?;
+    formatter.write_char('"')?;
+
+    #[cfg(feature = "source_line")]
+    if let Some(loc) = tree.location {
+        formatter.write_str(",\"location\":\"")?;
+        write!(JsonEscapeFormatter { formatter }, "{}", loc)?;
+        formatter.write_char('"')?;
+    }
+
+    #[cfg(feature = "tracing")]
+    if let Some(trace) = tree.trace {
+        formatter.write_str(",\"trace\":[")?;
+        let mut res = Ok(());
+        let mut first_trace = true;
+        trace.with_spans(|metadata, fields| {
+            res = json_trace_fmt(metadata, fields, first_trace, formatter);
+            first_trace = false;
+            res.is_ok()
+        });
+        res?;
+        formatter.write_char(']')?;
+    }
+
+    if tree.sources_len() > 0 {
+        formatter.write_str(",\"sources\":[")?;
+        let mut sources = tree
+            .sources()
+            .iter()
+            .flat_map(|source_line| source_line.iter());
+        if let Some(first_source) = sources.next() {
+            let mut res = Ok(());
+            first_source.as_err_tree(&mut |subtree| {
+                res = json_fmt(subtree, formatter);
+            });
+            res?
+        }
+        for source in sources {
+            formatter.write_char(',')?;
+            let mut res = Ok(());
+            source.as_err_tree(&mut |subtree| {
+                res = json_fmt(subtree, formatter);
+            });
+            res?
+        }
+        formatter.write_char(']')?;
+    }
+
+    formatter.write_char('}')
+}
+
+/// Escapes strings according to JSON
+struct JsonEscapeFormatter<'a, F> {
+    formatter: &'a mut F,
+}
+
+impl<F: Write> Write for JsonEscapeFormatter<'_, F> {
+    fn write_str(&mut self, s: &str) -> fmt::Result {
+        for c in s.chars() {
+            self.write_char(c)?;
+        }
+        Ok(())
+    }
+
+    fn write_char(&mut self, c: char) -> fmt::Result {
+        if c == '"' {
+            self.formatter.write_char('\\')?;
+        }
+
+        self.formatter.write_char(c)
+    }
+}
+
+#[cfg(feature = "tracing")]
+fn json_trace_fmt<F: fmt::Write>(
+    metadata: &tracing_core::Metadata<'static>,
+    fields: &str,
+    first_trace: bool,
+    formatter: &mut F,
+) -> fmt::Result {
+    if !first_trace {
+        formatter.write_char(',')?;
+    }
+    formatter.write_str("{\"target\":\"")?;
+    write!(JsonEscapeFormatter { formatter }, "{}", metadata.target())?;
+    formatter.write_str("\",\"name\":\"")?;
+    write!(JsonEscapeFormatter { formatter }, "{}", metadata.name())?;
+    formatter.write_str("\",\"fields\":\"")?;
+    write!(JsonEscapeFormatter { formatter }, "{}", fields)?;
+    formatter.write_char('"')?;
+
+    if let Some((file, line)) = metadata
+        .file()
+        .and_then(|file| metadata.line().map(|line| (file, line)))
+    {
+        formatter.write_str(",\"location\":[\"")?;
+        write!(JsonEscapeFormatter { formatter }, "{}", file)?;
+        write!(formatter, "\",{line}]")?;
+    }
+    formatter.write_char('}')?;
+    Ok(())
 }
 
 /// Reconstructs [`ErrTree`] formatted output from JSON.
@@ -102,34 +203,6 @@ where
     Ok(())
 }
 
-struct SourcesIterSer<'a> {
-    sources: &'a [&'a [&'a dyn AsErrTree]],
-}
-
-impl Serialize for SourcesIterSer<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        let len = self.sources.iter().map(|subsource| subsource.len()).sum();
-        let mut seq_serialize = serializer.serialize_seq(Some(len))?;
-
-        for source in self.sources.iter().flat_map(|subsource| subsource.iter()) {
-            let mut res = Ok(());
-            source.as_err_tree(&mut |tree| {
-                res = seq_serialize.serialize_element(&ErrTreeFmtSerde { tree });
-            });
-            res?
-        }
-
-        seq_serialize.end()
-    }
-}
-
-struct ErrTreeFmtSerde<'a> {
-    pub tree: ErrTree<'a>,
-}
-
 #[derive(Serialize, Deserialize, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 struct JsonSpan<'a> {
     target: &'a str,
@@ -146,63 +219,6 @@ struct JsonSpanOwned {
     location: Option<(String, u32)>,
 }
 
-#[cfg(feature = "tracing")]
-struct SerializeSpan<'a> {
-    trace: &'a tracing_error::SpanTrace,
-}
-
-#[cfg(feature = "tracing")]
-impl Serialize for SerializeSpan<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        let mut seq = serializer.serialize_seq(None)?;
-        let mut res = Ok(());
-        self.trace.with_spans(|metadata, fields| {
-            res = seq.serialize_element(&JsonSpan {
-                target: metadata.target(),
-                name: metadata.name(),
-                fields,
-                location: metadata
-                    .file()
-                    .and_then(|file| metadata.line().map(|line| (file, line))),
-            });
-            res.is_ok()
-        });
-        seq.end()
-    }
-}
-
-impl Serialize for ErrTreeFmtSerde<'_> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: serde::Serializer,
-    {
-        let mut state = serializer.serialize_map(None)?;
-        state.serialize_entry("msg", &self.tree.inner.to_string())?;
-
-        #[cfg(feature = "source_line")]
-        if let Some(loc) = self.tree.location {
-            state.serialize_entry("location", &loc.to_string())?;
-        }
-
-        #[cfg(feature = "tracing")]
-        if let Some(trace) = &self.tree.trace {
-            state.serialize_entry("trace", &SerializeSpan { trace })?;
-        }
-
-        state.serialize_entry(
-            "sources",
-            &SourcesIterSer {
-                sources: self.tree.sources,
-            },
-        )?;
-
-        state.end()
-    }
-}
-
 #[derive(Deserialize)]
 struct ErrTreeReconstruct {
     msg: String,
@@ -211,6 +227,7 @@ struct ErrTreeReconstruct {
     #[cfg(feature = "tracing")]
     #[serde(default)]
     trace: Vec<JsonSpanOwned>,
+    #[serde(default)]
     sources: Vec<Self>,
 }
 
