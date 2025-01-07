@@ -61,13 +61,14 @@ mod example {
 
 mod json_escapes {
     use core::error::Error;
+    use std::println;
 
-    use bare_err_tree::tree_to_json;
+    use bare_err_tree::{reconstruct_output, tree_to_json};
     use thiserror::Error;
 
     #[derive(Debug, Error)]
     #[error(
-        "foo\n \\ \\n \t
+        "foo\n \\ \\n \t/
 bar"
     )]
     struct WeirdError;
@@ -77,8 +78,13 @@ bar"
         let mut out = String::new();
         tree_to_json::<&dyn Error, _, _>((&WeirdError) as &dyn Error, &mut out).unwrap();
 
-        let expected_json = "{\"msg\":\"foo\n \\ \\n \t\nbar\"}";
+        let expected_json = r#"{"msg":"foo\n \\ \\n \t/\nbar"}"#;
+        let expected_reconstruct = "foo\n \\ \\n \t/\nbar";
 
         assert_eq!(out, expected_json);
+
+        let mut reconstructed = String::new();
+        reconstruct_output::<60, _, _>(out, &mut reconstructed).unwrap();
+        assert_eq!(reconstructed, expected_reconstruct);
     }
 }

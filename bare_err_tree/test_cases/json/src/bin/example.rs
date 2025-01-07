@@ -56,7 +56,7 @@ fn gen_print_inner() -> String {
 
 fn reconstruct(json: &str) -> String {
     let mut out = String::new();
-    reconstruct_output::<60, _, _>(json.chars(), &mut out).unwrap();
+    reconstruct_output::<60, _, _>(json, &mut out).unwrap();
     out
 }
 

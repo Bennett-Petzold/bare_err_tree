@@ -138,11 +138,22 @@ impl<F: Write> Write for JsonEscapeFormatter<'_, F> {
     }
 
     fn write_char(&mut self, c: char) -> fmt::Result {
-        if c == '"' {
+        const BACKSPACE: char = 8 as char;
+        const FORM_FEED: char = 12 as char;
+        const JSON_ESCAPE: [char; 7] = ['"', '\\', BACKSPACE, FORM_FEED, '\n', '\r', '\t'];
+
+        if JSON_ESCAPE.contains(&c) {
             self.formatter.write_char('\\')?;
         }
 
-        self.formatter.write_char(c)
+        match c {
+            BACKSPACE => self.formatter.write_char('b'),
+            FORM_FEED => self.formatter.write_char('f'),
+            '\n' => self.formatter.write_char('n'),
+            '\r' => self.formatter.write_char('r'),
+            '\t' => self.formatter.write_char('t'),
+            x => self.formatter.write_char(x),
+        }
     }
 }
 
@@ -186,15 +197,15 @@ fn json_trace_fmt<F: fmt::Write>(
 /// enabled, the bytes are allocated on stack and `FRONT_MAX` only acts as a
 /// depth limit. When `tracing` is enabled, at most `FRONT_MAX` stack traces
 /// will be tracked for duplicates.
-pub fn reconstruct_output<const FRONT_MAX: usize, R, F>(
-    json: R,
+pub fn reconstruct_output<const FRONT_MAX: usize, S, F>(
+    json: S,
     formatter: &mut F,
 ) -> Result<(), JsonErr>
 where
-    R: Iterator<Item = char>,
+    S: AsRef<str>,
     F: fmt::Write,
 {
-    let tree = from_str::<ErrTreeReconstruct>(json.collect::<String>().as_ref())?;
+    let tree = from_str::<ErrTreeReconstruct>(json.as_ref())?;
     write!(
         formatter,
         "{}",
