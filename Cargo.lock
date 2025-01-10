@@ -15,8 +15,6 @@ dependencies = [
  "anyhow",
  "bare_err_tree_proc",
  "eyre",
- "serde",
- "serde_json",
  "thiserror",
  "tracing",
  "tracing-core",
