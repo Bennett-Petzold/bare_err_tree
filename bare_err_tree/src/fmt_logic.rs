@@ -63,7 +63,6 @@ pub(crate) trait ErrTreeFormattable {
     type Source<'a>: ErrTreeFormattable<TraceSpanId = Self::TraceSpanId>;
     fn sources_len(&self) -> usize;
 
-    #[cfg(feature = "source_line")]
     fn sources_empty(&self) -> bool {
         self.sources_len() == 0
     }

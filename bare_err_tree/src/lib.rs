@@ -74,7 +74,7 @@ Contributions are welcome at
 
 #![no_std]
 
-#[cfg(feature = "heap_buffer")]
+#[cfg(any(feature = "heap_buffer", feature = "boxed_tracing"))]
 extern crate alloc;
 
 #[cfg(feature = "source_line")]
@@ -238,11 +238,7 @@ impl<'a> ErrTree<'a> {
     pub fn with_pkg(
         inner: &'a dyn Error,
         sources: &'a [&[&dyn AsErrTree]],
-        #[cfg_attr(
-            not(feature = "source_line"),
-            expect(unused, reason = "should be null when no tracking is enabled")
-        )]
-        pkg: &'a ErrTreePkg,
+        #[allow(unused)] pkg: &'a ErrTreePkg,
     ) -> Self {
         Self {
             inner,
