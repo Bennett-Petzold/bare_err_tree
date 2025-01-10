@@ -9,7 +9,7 @@ Support for the extra information prints does not change the type or public API 
 It is added via macro or manual implementation of the `AsErrTree` trait (see
 the [docs][Docs] for details).
 End users can then use `tree_unwrap` or `print_tree` to get better error output,
-or store as JSON for later reconstruction.
+or store as [JSON][JSON] for later reconstruction.
 
 Unlike [anyhow][Anyhow], [eyre][Eyre], or [error-stack][ErrorStack], the extra
 functionality does not require exposing a special type in a library's API.
@@ -24,6 +24,11 @@ information, so it works on top of std and other libraries.
 * The error is an enum
     * The macro only supports creating a struct that wraps the enum as transparently as possible.
     * Direct implementation on an enum is possible, but likely pretty clunky.
+
+The `json` feature is currently the best way to store/transmit error logs.
+It does not use heap allocation to allow usage on all embedded systems.
+The JSON output heavily repeats keys and does not deduplicate traces: compression
+(e.g. [zstd][zstd-rs]) is strongly recommended for storage.
 
 The formatting is borrowed from from [error-stack][ErrorStack].
 Please see the [contributors page](https://github.com/hashintel/hash/graphs/contributors) for appropriate credit.
@@ -114,3 +119,6 @@ Generate with `cd bare_err_tree/test_cases/json; cargo run --bin example`.
 [ErrorStack]: https://crates.io/crates/error-stack
 [Eyre]: https://crates.io/crates/eyre
 [Anyhow]: https://crates.io/crates/anyhow
+
+[zstd-rs]: https://crates.io/crates/zstd
+[JSON]: https://www.json.org/json-en.html

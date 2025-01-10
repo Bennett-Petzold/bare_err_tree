@@ -13,7 +13,6 @@ implemented via a wrapper).
 It is added via macro or manual implementation of [`AsErrTree`].
 End users can then use [`tree_unwrap`] or [`print_tree`] to get better error output.
 
-
 If none of the [tracking feature flags](#tracking-feature-flags) are enabled,
 the metadata is set to the [`unit`] type to take zero space.
 If the print methods are never called, and none of the tracking features are
