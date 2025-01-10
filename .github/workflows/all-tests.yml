@@ -142,5 +142,5 @@ jobs:
     - uses: Swatinem/rust-cache@v2
     - uses: taiki-e/install-action@cargo-hack
 
-    - run: cargo hack test --feature-powerset
+    - run: cargo hack test --feature-powerset --skip default,boxed_tracing,anyhow,eyre,unix_color
 

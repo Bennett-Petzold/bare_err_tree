@@ -13,7 +13,6 @@ implemented via a wrapper).
 It is added via macro or manual implementation of [`AsErrTree`].
 End users can then use [`tree_unwrap`] or [`print_tree`] to get better error output.
 
-
 If none of the [tracking feature flags](#tracking-feature-flags) are enabled,
 the metadata is set to the [`unit`] type to take zero space.
 If the print methods are never called, and none of the tracking features are
@@ -29,13 +28,11 @@ Usage of the [`err_tree`] macro incurs a compliation time cost.
 * `unix_color`: Outputs UNIX console codes for emphasis.
 * `anyhow`: Adds implementation for [`anyhow::Error`].
 * `eyre`: Adds implementation for [`eyre::Report`].
-* `json`: Allows for storage to/reconstruction from JSON. Uses allocation due
-    to [`serde_json`] internals.
+* `json`: Allows for storage to/reconstruction from JSON.
 #### Tracking Feature Flags
 * `source_line`: Tracks the source line of tree errors.
-* `tracing`: Produces a `tracing` backtrace with [`tracing_error`]. Uses
-    allocation to format prints.
-* `boxed_tracing`: Same as `tracing`, but boxes the trace.
+* `tracing`: Produces a `tracing` backtrace with [`tracing_error`].
+* `boxed_tracing`: `tracing` with a boxed trace.
 
 # Adding [`ErrTree`] Support (Library or Bin)
 Both libraries and binaries can add type support for [`ErrTree`] prints.
@@ -55,9 +52,9 @@ Specify desired tracking features by importing `bare_err_tree` in `Cargo.toml`.
 
 Call [`tree_unwrap`] on the [`Result`] or [`print_tree`] on the [`Error`] with
 `FRONT_MAX` set to `6 * (maximum tree depth)`. Note that unless `heap_buffer`
-is enabled, `FRONT_MAX` bytes will always be occupied on stack for the duration
-of a print call. Make sure this falls within platform stack size, and single
-stack frame size, limits.
+is enabled, `FRONT_MAX` (x3 if `tracing` is enabled) bytes will be
+occupied on stack for the duration of a print call. Make sure this falls
+within platform stack size, and single stack frame size, limits.
 
 # Credit
 
@@ -77,7 +74,7 @@ Contributions are welcome at
 
 #![no_std]
 
-#[cfg(any(feature = "heap_buffer", feature = "tracing", feature = "json"))]
+#[cfg(any(feature = "heap_buffer", feature = "boxed_tracing"))]
 extern crate alloc;
 
 #[cfg(feature = "source_line")]
@@ -108,7 +105,8 @@ pub use bare_err_tree_proc::*;
 /// bytes to fit "│   ". So for a max depth of 3 errors, `FRONT_MAX` == 18.
 /// By default, `FRONT_MAX` bytes are allocated on stack. When `heap_buffer` is
 /// enabled, the bytes are allocated on heap and `FRONT_MAX` only acts as a
-/// depth limit.
+/// depth limit. When `tracing` is enabled, at most `FRONT_MAX` stack traces
+/// will be tracked for duplicates.
 ///
 /// Errors must define [`Error::source`] correctly for the tree to display.
 /// The derive macros for [`ErrTree`] track extra information and handle
@@ -142,7 +140,8 @@ where
 /// bytes to fit "│   ". So for a max depth of 3 errors, `FRONT_MAX` == 18.
 /// By default, `FRONT_MAX` bytes are allocated on stack. When `heap_buffer` is
 /// enabled, the bytes are allocated on stack and `FRONT_MAX` only acts as a
-/// depth limit.
+/// depth limit. When `tracing` is enabled, at most `FRONT_MAX` stack traces
+/// will be tracked for duplicates.
 ///
 /// Errors must define [`Error::source`] correctly for the tree to display.
 /// The derive macros for [`ErrTree`] track extra information and handle
@@ -239,11 +238,7 @@ impl<'a> ErrTree<'a> {
     pub fn with_pkg(
         inner: &'a dyn Error,
         sources: &'a [&[&dyn AsErrTree]],
-        #[cfg_attr(
-            not(feature = "source_line"),
-            expect(unused, reason = "should be null when no tracking is enabled")
-        )]
-        pkg: &'a ErrTreePkg,
+        #[allow(unused)] pkg: &'a ErrTreePkg,
     ) -> Self {
         Self {
             inner,

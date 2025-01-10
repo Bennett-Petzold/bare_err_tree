@@ -6,6 +6,8 @@
 ))]
 
 mod example {
+    use std::assert_eq;
+
     include!("../test_cases/trace/src/bin/trace_example.rs");
 
     #[test]
@@ -62,6 +64,31 @@ mod near_empty {
     fn near_empty() {
         let expected_lines = "EMPTY
 ╰─ at bare_err_tree/tests/../test_cases/trace/src/bin/near-empty.rs:34:17";
+
+        assert_eq!(gen_print(), expected_lines);
+    }
+}
+
+mod trailing {
+    include!("../test_cases/trace/src/bin/trailing.rs");
+
+    #[test]
+    fn near_empty() {
+        let expected_lines = "missed class
+├─ at bare_err_tree/tests/../test_cases/trace/src/bin/trailing.rs:37:6
+│
+├─ tracing frame 0 => tracing::trailing::gen_print_inner
+│        at bare_err_tree/tests/../test_cases/trace/src/bin/trailing.rs:32
+│
+╰─▶ stayed in bed too long
+    ├─ at bare_err_tree/tests/../test_cases/trace/src/bin/trailing.rs:34:57
+    │
+    ├─ 1 duplicate tracing frame(s): [0]
+    │
+    ╰─▶ proving 1 == 2
+        ├─ at bare_err_tree/tests/../test_cases/trace/src/bin/trailing.rs:34:72
+        │
+        ╰─ 1 duplicate tracing frame(s): [0]";
 
         assert_eq!(gen_print(), expected_lines);
     }
