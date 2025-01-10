@@ -572,22 +572,7 @@
 <a href="#571" id="571">571</a>
 <a href="#572" id="572">572</a>
 <a href="#573" id="573">573</a>
-<a href="#574" id="574">574</a>
-<a href="#575" id="575">575</a>
-<a href="#576" id="576">576</a>
-<a href="#577" id="577">577</a>
-<a href="#578" id="578">578</a>
-<a href="#579" id="579">579</a>
-<a href="#580" id="580">580</a>
-<a href="#581" id="581">581</a>
-<a href="#582" id="582">582</a>
-<a href="#583" id="583">583</a>
-<a href="#584" id="584">584</a>
-<a href="#585" id="585">585</a>
-<a href="#586" id="586">586</a>
-<a href="#587" id="587">587</a>
-<a href="#588" id="588">588</a>
-<a href="#589" id="589">589</a></pre></div><pre class="rust"><code><span class="comment">/*
+<a href="#574" id="574">574</a></pre></div><pre class="rust"><code><span class="comment">/*
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
@@ -595,8 +580,8 @@
 
 </span><span class="kw">use </span>core::{
     error::Error,
-    fmt::{<span class="self">self</span>, Display, Formatter},
-    str,
+    fmt::{<span class="self">self</span>, Display, Formatter, Write},
+    str::{<span class="self">self</span>, Chars},
 };
 
 <span class="kw">use crate</span>::{AsErrTree, ErrTree};
@@ -616,8 +601,14 @@
         <span class="attr">#[cfg(feature = <span class="string">"heap_buffer"</span>)]
         </span><span class="kw">let </span><span class="kw-2">mut </span>front_lines = <span class="macro">alloc::vec!</span>[<span class="number">0</span>; FRONT_MAX].into_boxed_slice();
 
-        <span class="attr">#[cfg(feature = <span class="string">"tracing"</span>)]
-        </span><span class="kw">let </span><span class="kw-2">mut </span>found_traces = alloc::vec::Vec::new();
+        <span class="attr">#[cfg(all(not(feature = <span class="string">"heap_buffer"</span>), feature = <span class="string">"tracing"</span>))]
+        </span><span class="kw">let </span><span class="kw-2">mut </span>found_traces: [<span class="kw">_</span>; FRONT_MAX] = core::array::from_fn(|<span class="kw">_</span>| <span class="prelude-val">None</span>);
+
+        <span class="attr">#[cfg(all(feature = <span class="string">"heap_buffer"</span>, feature = <span class="string">"tracing"</span>))]
+        </span><span class="kw">let </span><span class="kw-2">mut </span>found_traces = core::iter::repeat_with(|| <span class="prelude-val">None</span>)
+            .take(FRONT_MAX)
+            .collect::&lt;alloc::vec::Vec&lt;<span class="kw">_</span>&gt;&gt;()
+            .into_boxed_slice();
 
         ErrTreeFmt::&lt;FRONT_MAX, <span class="kw">_</span>&gt; {
             tree: <span class="kw-2">&amp;</span><span class="self">self</span>.tree,
@@ -632,19 +623,24 @@
 }
 
 <span class="attr">#[cfg(feature = <span class="string">"tracing"</span>)]
-</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>TraceSpan&lt;<span class="lifetime">'a</span>, T: Eq&gt; {
+</span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>TraceSpan&lt;T: Eq, CharIter&gt; {
     <span class="kw">pub </span>identifier: T,
-    <span class="kw">pub </span>target: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>str,
-    <span class="kw">pub </span>name: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>str,
-    <span class="kw">pub </span>fields: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>str,
-    <span class="kw">pub </span>location: <span class="prelude-ty">Option</span>&lt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span>str, u32)&gt;,
+    <span class="kw">pub </span>target: CharIter,
+    <span class="kw">pub </span>name: CharIter,
+    <span class="kw">pub </span>fields: CharIter,
+    <span class="kw">pub </span>location: <span class="prelude-ty">Option</span>&lt;(CharIter, u32)&gt;,
 }
 
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">trait </span>ErrTreeFormattable {
     <span class="kw">fn </span>apply_msg(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result;
 
-    <span class="kw">type </span>Source&lt;<span class="lifetime">'a</span>&gt;: ErrTreeFormattable&lt;TraceSpanType = <span class="self">Self</span>::TraceSpanType&gt;;
+    <span class="kw">type </span>Source&lt;<span class="lifetime">'a</span>&gt;: ErrTreeFormattable&lt;TraceSpanId = <span class="self">Self</span>::TraceSpanId&gt;;
     <span class="kw">fn </span>sources_len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize;
+
+    <span class="kw">fn </span>sources_empty(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+        <span class="self">self</span>.sources_len() == <span class="number">0
+    </span>}
+
     <span class="kw">fn </span>apply_to_leading_sources&lt;F&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, func: F) -&gt; fmt::Result
     <span class="kw">where
         </span>F: FnMut(<span class="self">Self</span>::Source&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result;
@@ -660,15 +656,13 @@
     <span class="attr">#[cfg(feature = <span class="string">"tracing"</span>)]
     </span><span class="kw">fn </span>trace_empty(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool;
 
-    <span class="kw">type </span>TraceSpanType: Eq;
-
-    <span class="attr">#[cfg(feature = <span class="string">"tracing"</span>)]
-    </span><span class="kw">fn </span>trace_unique(<span class="kw-2">&amp;</span><span class="self">self</span>, found_traces: <span class="kw-2">&amp;</span>[<span class="self">Self</span>::TraceSpanType]) -&gt; bool;
+    <span class="kw">type </span>TraceSpanId: Eq;
+    <span class="kw">type </span>TraceSpanIter&lt;<span class="lifetime">'a</span>&gt;: IntoIterator&lt;Item = char&gt;;
 
     <span class="attr">#[cfg(feature = <span class="string">"tracing"</span>)]
     </span><span class="kw">fn </span>apply_trace&lt;F&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, func: F) -&gt; fmt::Result
     <span class="kw">where
-        </span>F: FnMut(TraceSpan&lt;<span class="lifetime">'_</span>, <span class="self">Self</span>::TraceSpanType&gt;) -&gt; fmt::Result;
+        </span>F: FnMut(TraceSpan&lt;<span class="self">Self</span>::TraceSpanId, <span class="self">Self</span>::TraceSpanIter&lt;<span class="lifetime">'_</span>&gt;&gt;) -&gt; fmt::Result;
 }
 
 <span class="kw">impl</span>&lt;T&gt; ErrTreeFormattable <span class="kw">for </span><span class="kw-2">&amp;</span>T
@@ -710,17 +704,13 @@
         T::trace_empty(<span class="self">self</span>)
     }
 
-    <span class="kw">type </span>TraceSpanType = T::TraceSpanType;
-
-    <span class="attr">#[cfg(feature = <span class="string">"tracing"</span>)]
-    </span><span class="kw">fn </span>trace_unique(<span class="kw-2">&amp;</span><span class="self">self</span>, found_traces: <span class="kw-2">&amp;</span>[<span class="self">Self</span>::TraceSpanType]) -&gt; bool {
-        T::trace_unique(<span class="self">self</span>, found_traces)
-    }
+    <span class="kw">type </span>TraceSpanId = T::TraceSpanId;
+    <span class="kw">type </span>TraceSpanIter&lt;<span class="lifetime">'a</span>&gt; = T::TraceSpanIter&lt;<span class="lifetime">'a</span>&gt;;
 
     <span class="attr">#[cfg(feature = <span class="string">"tracing"</span>)]
     </span><span class="kw">fn </span>apply_trace&lt;F&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, func: F) -&gt; fmt::Result
     <span class="kw">where
-        </span>F: FnMut(TraceSpan&lt;<span class="lifetime">'_</span>, <span class="self">Self</span>::TraceSpanType&gt;) -&gt; fmt::Result,
+        </span>F: FnMut(TraceSpan&lt;<span class="self">Self</span>::TraceSpanId, <span class="self">Self</span>::TraceSpanIter&lt;<span class="lifetime">'_</span>&gt;&gt;) -&gt; fmt::Result,
     {
         T::apply_trace(<span class="self">self</span>, func)
     }
@@ -789,39 +779,29 @@
     }
 
     <span class="attr">#[cfg(not(feature = <span class="string">"tracing"</span>))]
-    </span><span class="kw">type </span>TraceSpanType = ();
+    </span><span class="kw">type </span>TraceSpanId = ();
 
     <span class="attr">#[cfg(feature = <span class="string">"tracing"</span>)]
-    </span><span class="kw">type </span>TraceSpanType = tracing_core::callsite::Identifier;
+    </span><span class="kw">type </span>TraceSpanId = tracing_core::callsite::Identifier;
 
-    <span class="attr">#[cfg(feature = <span class="string">"tracing"</span>)]
-    </span><span class="kw">fn </span>trace_unique(<span class="kw-2">&amp;</span><span class="self">self</span>, found_traces: <span class="kw-2">&amp;</span>[<span class="self">Self</span>::TraceSpanType]) -&gt; bool {
-        <span class="kw">let </span><span class="kw-2">mut </span>unique = <span class="bool-val">false</span>;
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(trace) = <span class="kw-2">&amp;</span><span class="self">self</span>.trace {
-            trace.with_spans(|metadata, <span class="kw">_</span>| {
-                unique = found_traces.contains(<span class="kw-2">&amp;</span>metadata.callsite());
-                !unique
-            })
-        }
-        unique
-    }
+    <span class="kw">type </span>TraceSpanIter&lt;<span class="lifetime">'a</span>&gt; = Chars&lt;<span class="lifetime">'a</span>&gt;;
 
     <span class="attr">#[cfg(feature = <span class="string">"tracing"</span>)]
     </span><span class="kw">fn </span>apply_trace&lt;F&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw-2">mut </span>func: F) -&gt; fmt::Result
     <span class="kw">where
-        </span>F: FnMut(TraceSpan&lt;<span class="lifetime">'_</span>, <span class="self">Self</span>::TraceSpanType&gt;) -&gt; fmt::Result,
+        </span>F: FnMut(TraceSpan&lt;<span class="self">Self</span>::TraceSpanId, <span class="self">Self</span>::TraceSpanIter&lt;<span class="lifetime">'_</span>&gt;&gt;) -&gt; fmt::Result,
     {
         <span class="kw">if let </span><span class="prelude-val">Some</span>(trace) = <span class="kw-2">&amp;</span><span class="self">self</span>.trace {
             <span class="kw">let </span><span class="kw-2">mut </span>res = <span class="prelude-val">Ok</span>(());
             trace.with_spans(|metadata, fields| {
                 res = (func)(TraceSpan {
                     identifier: metadata.callsite(),
-                    target: metadata.target(),
-                    name: metadata.name(),
-                    fields,
+                    target: metadata.target().chars(),
+                    name: metadata.name().chars(),
+                    fields: fields.chars(),
                     location: metadata
                         .file()
-                        .and_then(|file| metadata.line().map(|line| (file, line))),
+                        .and_then(|file| metadata.line().map(|line| (file.chars(), line))),
                 });
                 res.is_ok()
             });
@@ -839,7 +819,7 @@
     </span><span class="kw">pub </span>front_lines: <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>[u8],
 
     <span class="attr">#[cfg(feature = <span class="string">"tracing"</span>)]
-    </span><span class="kw">pub </span>found_traces: <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>alloc::vec::Vec&lt;T::TraceSpanType&gt;,
+    </span><span class="kw">pub </span>found_traces: <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>[<span class="prelude-ty">Option</span>&lt;T::TraceSpanId&gt;],
 }
 
 <span class="doccomment">/// Workaround for lack of `const` in [`core::cmp::max`].
@@ -877,9 +857,9 @@
         front_lines[scratch_fill..scratch_fill + chars.len()].copy_from_slice(chars.as_bytes());
     }
     <span class="attr">#[cfg(feature = <span class="string">"tracing"</span>)]
-    </span><span class="doccomment">/// Check for a unique trace by searching found traces
+    </span><span class="doccomment">/// There is tracing after if the trace is nonempty
     </span><span class="kw">fn </span>tracing_after(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
-        <span class="self">self</span>.tree.trace_unique(<span class="self">self</span>.found_traces)
+        !<span class="self">self</span>.tree.trace_empty()
     }
 
     <span class="attr">#[cfg(not(feature = <span class="string">"tracing"</span>))]
@@ -892,10 +872,10 @@
         <span class="kw">if </span><span class="self">self</span>.tree.has_source_line() {
             <span class="self">Self</span>::write_front_lines(<span class="self">self</span>.front_lines, f, <span class="self">self</span>.scratch_fill)<span class="question-mark">?</span>;
 
-            <span class="kw">if </span>!tracing_after &amp;&amp; <span class="self">self</span>.tree.sources_len() == <span class="number">0 </span>{
-                <span class="macro">write!</span>(f, <span class="string">"╰─ "</span>)<span class="question-mark">?</span>;
+            <span class="kw">if </span>!tracing_after &amp;&amp; <span class="self">self</span>.tree.sources_empty() {
+                f.write_str(<span class="string">"╰─ "</span>)<span class="question-mark">?</span>;
             } <span class="kw">else </span>{
-                <span class="macro">write!</span>(f, <span class="string">"├─ "</span>)<span class="question-mark">?</span>;
+                f.write_str(<span class="string">"├─ "</span>)<span class="question-mark">?</span>;
             }
             <span class="kw">if </span><span class="macro">cfg!</span>(feature = <span class="string">"unix_color"</span>) {
                 <span class="macro">write!</span>(f, <span class="string">"at \x1b[3m"</span>)<span class="question-mark">?</span>;
@@ -910,183 +890,173 @@
         <span class="prelude-val">Ok</span>(())
     }
 
-    <span class="attr">#[cfg(feature = <span class="string">"tracing"</span>)]
-    </span><span class="doccomment">/// Simple implementation of pretty formatting
-    </span><span class="kw">fn </span>tracing_field_fmt(
+    <span class="doccomment">/// Simple implementation of pretty formatting
+    </span><span class="attr">#[cfg(feature = <span class="string">"tracing"</span>)]
+    </span><span class="kw">fn </span>tracing_field_fmt&lt;I&gt;(
         f: <span class="kw-2">&amp;mut </span>Formatter&lt;<span class="lifetime">'_</span>&gt;,
         front_lines: <span class="kw-2">&amp;</span>[u8],
-        <span class="kw-2">mut </span>fields: <span class="kw-2">&amp;</span>str,
+        fields: I,
         scratch_fill: usize,
-    ) {
-        <span class="kw">let </span><span class="kw-2">mut </span>next_slice = |search_chars: <span class="kw-2">&amp;mut </span>alloc::vec::Vec&lt;<span class="kw">_</span>&gt;, depth: <span class="kw-2">&amp;mut </span>usize| {
-            fields = fields.trim();
+    ) -&gt; fmt::Result
+    <span class="kw">where
+        </span>I: IntoIterator&lt;Item = char&gt;,
+    {
+        <span class="kw">use </span>core::fmt::Write;
 
-            <span class="kw">let </span>next_idx = {
-                <span class="kw">let </span>last_search_char = search_chars.last().and_then(|c| fields.find(<span class="kw-2">*</span>c));
-                <span class="kw">let </span>brace = fields.find(<span class="string">'{'</span>);
-                <span class="kw">let </span>bracket = fields.find(<span class="string">'['</span>);
-                <span class="kw">let </span>paren = fields.find(<span class="string">'('</span>);
-                <span class="kw">let </span>comma = fields.find(<span class="string">','</span>);
-                <span class="kw">let </span>quote = fields.find(<span class="string">'"'</span>);
+        <span class="kw">let </span><span class="kw-2">mut </span>depth = <span class="number">0</span>;
+        <span class="kw">let </span><span class="kw-2">mut </span>in_quote = <span class="bool-val">false</span>;
 
-                <span class="kw">let </span>before = |lhs: usize, rhs: <span class="prelude-ty">Option</span>&lt;usize&gt;| {
-                    <span class="kw">if let </span><span class="prelude-val">Some</span>(rhs) = rhs {
-                        lhs &lt; rhs
-                    } <span class="kw">else </span>{
-                        <span class="bool-val">true
-                    </span>}
-                };
+        <span class="kw">const </span>START_CHARS: [char; <span class="number">3</span>] = [<span class="string">'{'</span>, <span class="string">'['</span>, <span class="string">'('</span>];
+        <span class="kw">const </span>END_CHARS: [char; <span class="number">3</span>] = [<span class="string">'}'</span>, <span class="string">']'</span>, <span class="string">')'</span>];
+        <span class="kw">const </span>ESC: char = <span class="string">'\\'</span>;
 
-                <span class="comment">// Default, no special chars left
-                </span><span class="kw">let </span><span class="kw-2">mut </span>idx = <span class="prelude-val">None</span>;
+        <span class="kw">let </span>push_front = |f: <span class="kw-2">&amp;mut </span><span class="kw">_</span>, depth| {
+            <span class="self">Self</span>::write_front_lines(front_lines, f, scratch_fill)<span class="question-mark">?</span>;
+            <span class="macro">write!</span>(f, <span class="string">"│    "</span>)<span class="question-mark">?</span>;
+            <span class="kw">for _ in </span><span class="number">0</span>..depth {
+                <span class="macro">write!</span>(f, <span class="string">"  "</span>)<span class="question-mark">?</span>;
+            }
+            <span class="prelude-val">Ok</span>(())
+        };
 
-                <span class="kw">if let </span><span class="prelude-val">Some</span>(last_search_char) = last_search_char {
-                    <span class="kw">if </span>before(last_search_char, brace)
-                        &amp;&amp; before(last_search_char, paren)
-                        &amp;&amp; before(last_search_char, bracket)
-                        &amp;&amp; before(last_search_char, comma)
-                        &amp;&amp; before(last_search_char, quote)
-                    {
-                        <span class="kw">if </span>last_search_char == <span class="number">0 </span>{
-                            <span class="kw">let _ </span>= search_chars.pop();
-                            <span class="kw-2">*</span>depth = depth.saturating_sub(<span class="number">1</span>);
+        push_front(f, depth)<span class="question-mark">?</span>;
+        <span class="kw">let </span><span class="kw-2">mut </span>prev = <span class="string">'\0'</span>;
+        <span class="kw">for </span>c <span class="kw">in </span>fields {
+            <span class="kw">let </span><span class="kw-2">mut </span>space_except = <span class="bool-val">false</span>;
 
-                            <span class="kw">if </span>fields.chars().nth(<span class="number">1</span>) == <span class="prelude-val">Some</span>(<span class="string">','</span>) {
-                                idx = <span class="prelude-val">Some</span>(<span class="number">2</span>);
-                            } <span class="kw">else </span>{
-                                idx = <span class="prelude-val">Some</span>(<span class="number">1</span>);
+            <span class="kw">if </span>in_quote {
+                <span class="kw">if </span>prev == <span class="string">'"' </span>{
+                    in_quote = <span class="bool-val">false</span>;
+                    <span class="kw">if </span>c == <span class="string">' ' </span>{
+                        space_except = <span class="bool-val">true</span>;
+                    }
+                }
+            } <span class="kw">else </span>{
+                <span class="kw">match </span>prev {
+                    x <span class="kw">if </span>START_CHARS.contains(<span class="kw-2">&amp;</span>x) =&gt; {
+                        depth += <span class="number">1</span>;
+                        push_front(f, depth)<span class="question-mark">?</span>;
+                        <span class="kw">if </span>c == <span class="string">' ' </span>{
+                            space_except = <span class="bool-val">true</span>;
+                        }
+                    }
+                    <span class="string">',' </span>=&gt; {
+                        push_front(f, depth)<span class="question-mark">?</span>;
+                        <span class="kw">if </span>c == <span class="string">' ' </span>{
+                            space_except = <span class="bool-val">true</span>;
+                        }
+                    }
+                    <span class="string">'"' </span>=&gt; in_quote = <span class="bool-val">true</span>,
+                    x =&gt; {
+                        <span class="kw">if </span>END_CHARS.contains(<span class="kw-2">&amp;</span>c) {
+                            depth -= <span class="number">1</span>;
+                            push_front(f, depth)<span class="question-mark">?</span>;
+                        } <span class="kw">else if </span>c == <span class="string">' ' </span>&amp;&amp; END_CHARS.contains(<span class="kw-2">&amp;</span>x) {
+                            space_except = <span class="bool-val">true</span>;
+                            <span class="kw">if </span>depth == <span class="number">0 </span>{
+                                push_front(f, depth)<span class="question-mark">?</span>;
                             }
-                        } <span class="kw">else </span>{
-                            idx = <span class="prelude-val">Some</span>(last_search_char);
                         }
                     }
                 }
-                <span class="kw">if let </span><span class="prelude-val">Some</span>(brace) = brace {
-                    <span class="kw">if </span>idx.is_none()
-                        &amp;&amp; before(brace, bracket)
-                        &amp;&amp; before(brace, paren)
-                        &amp;&amp; before(brace, comma)
-                        &amp;&amp; before(brace, quote)
-                    {
-                        search_chars.push(<span class="string">'}'</span>);
-                        <span class="kw-2">*</span>depth = depth.saturating_add(<span class="number">1</span>);
-                        idx = <span class="prelude-val">Some</span>(brace + <span class="number">1</span>);
-                    }
-                }
-                <span class="kw">if let </span><span class="prelude-val">Some</span>(bracket) = bracket {
-                    <span class="kw">if </span>idx.is_none()
-                        &amp;&amp; before(bracket, paren)
-                        &amp;&amp; before(bracket, comma)
-                        &amp;&amp; before(bracket, quote)
-                    {
-                        search_chars.push(<span class="string">']'</span>);
-                        <span class="kw-2">*</span>depth = depth.saturating_add(<span class="number">1</span>);
-                        idx = <span class="prelude-val">Some</span>(bracket + <span class="number">1</span>);
-                    }
-                }
-                <span class="kw">if let </span><span class="prelude-val">Some</span>(paren) = paren {
-                    <span class="kw">if </span>idx.is_none() &amp;&amp; before(paren, comma) &amp;&amp; before(paren, quote) {
-                        search_chars.push(<span class="string">')'</span>);
-                        <span class="kw-2">*</span>depth = depth.saturating_add(<span class="number">1</span>);
-                        idx = <span class="prelude-val">Some</span>(paren + <span class="number">1</span>);
-                    }
-                }
-                <span class="kw">if let </span><span class="prelude-val">Some</span>(comma) = comma {
-                    <span class="kw">if </span>idx.is_none() &amp;&amp; before(comma, quote) {
-                        idx = <span class="prelude-val">Some</span>(comma + <span class="number">1</span>);
-                    }
-                }
-                <span class="kw">if let </span><span class="prelude-val">Some</span>(quote) = quote {
-                    <span class="kw">if </span>idx.is_none() {
-                        idx = <span class="prelude-val">Some</span>(
-                            fields[quote + <span class="number">1</span>..]
-                                .find(<span class="string">'"'</span>)
-                                .expect(<span class="string">"If the quote opens, it must close"</span>)
-                                + quote
-                                + <span class="number">2</span>,
-                        );
-                    }
-                }
-
-                idx.unwrap_or(fields.len())
-            };
-
-            <span class="kw">let </span>cur = <span class="kw-2">&amp;</span>fields[..next_idx];
-            fields = <span class="kw-2">&amp;</span>fields[next_idx..];
-            cur
-        };
-
-        <span class="kw">let </span><span class="kw-2">mut </span>search_chars = alloc::vec::Vec::new();
-        <span class="kw">let </span><span class="kw-2">mut </span>prev_depth = <span class="number">0</span>;
-        <span class="kw">let </span><span class="kw-2">mut </span>depth = <span class="number">0</span>;
-
-        <span class="kw">let </span><span class="kw-2">mut </span>next = next_slice(<span class="kw-2">&amp;mut </span>search_chars, <span class="kw-2">&amp;mut </span>depth);
-        <span class="kw">while </span>!next.is_empty() {
-            <span class="kw">let _ </span>= <span class="self">Self</span>::write_front_lines(front_lines, f, scratch_fill);
-            <span class="kw">let _ </span>= <span class="macro">write!</span>(f, <span class="string">"│    "</span>);
-            <span class="kw">for _ in </span><span class="number">0</span>..core::cmp::min(prev_depth, depth) {
-                <span class="kw">let _ </span>= <span class="macro">write!</span>(f, <span class="string">"  "</span>);
             }
-            <span class="kw">let _ </span>= <span class="macro">write!</span>(f, <span class="string">"{}"</span>, next);
 
-            prev_depth = depth;
-            next = next_slice(<span class="kw-2">&amp;mut </span>search_chars, <span class="kw-2">&amp;mut </span>depth);
+            <span class="comment">// Special case for escaping
+            </span>prev = <span class="kw">if </span>prev == ESC { <span class="string">'\0' </span>} <span class="kw">else </span>{ c };
+
+            <span class="kw">if </span>!space_except {
+                f.write_char(c)<span class="question-mark">?</span>;
+            }
         }
+
+        <span class="prelude-val">Ok</span>(())
     }
 
     <span class="attr">#[cfg(feature = <span class="string">"tracing"</span>)]
     </span><span class="kw">fn </span>tracing(<span class="kw-2">&amp;mut </span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
+        <span class="kw">use </span>core::fmt::Write;
+
         <span class="kw">if </span>!<span class="self">self</span>.tree.trace_empty() {
             <span class="self">Self</span>::write_front_lines(<span class="self">self</span>.front_lines, f, <span class="self">self</span>.scratch_fill)<span class="question-mark">?</span>;
             <span class="macro">write!</span>(f, <span class="string">"│"</span>)<span class="question-mark">?</span>;
 
-            <span class="kw">let </span><span class="kw-2">mut </span>repeated = alloc::vec::Vec::&lt;usize&gt;::new();
+            <span class="attr">#[cfg(all(not(feature = <span class="string">"heap_buffer"</span>), feature = <span class="string">"tracing"</span>))]
+            </span><span class="kw">let </span><span class="kw-2">mut </span>repeated: [<span class="kw">_</span>; FRONT_MAX] = core::array::from_fn(|<span class="kw">_</span>| <span class="prelude-val">None</span>);
+
+            <span class="attr">#[cfg(all(feature = <span class="string">"heap_buffer"</span>, feature = <span class="string">"tracing"</span>))]
+            </span><span class="kw">let </span><span class="kw-2">mut </span>repeated = core::iter::repeat_with(|| <span class="prelude-val">None</span>)
+                .take(FRONT_MAX)
+                .collect::&lt;alloc::vec::Vec&lt;<span class="kw">_</span>&gt;&gt;()
+                .into_boxed_slice();
+
+            <span class="kw">let </span><span class="kw-2">mut </span>repeated_idx = <span class="number">0</span>;
 
             <span class="self">self</span>.tree.apply_trace(|trace_span| {
                 <span class="kw">let </span>pos_dup = <span class="self">self
                     </span>.found_traces
                     .iter()
+                    .take_while(|x| x.is_some())
+                    .flatten()
                     .position(|c| <span class="kw-2">*</span>c == trace_span.identifier);
 
                 <span class="kw">if let </span><span class="prelude-val">Some</span>(pos_dup) = pos_dup {
-                    repeated.push(pos_dup);
+                    repeated[repeated_idx] = <span class="prelude-val">Some</span>(pos_dup);
+                    repeated_idx += <span class="number">1</span>;
                 } <span class="kw">else </span>{
-                    <span class="kw">let </span>depth = <span class="self">self</span>.found_traces.len();
-                    <span class="self">self</span>.found_traces.push(trace_span.identifier);
+                    <span class="kw">let </span>depth = <span class="self">self</span>.found_traces.partition_point(|x| x.is_some());
+                    <span class="kw">if </span>depth &lt; <span class="self">self</span>.found_traces.len() {
+                        <span class="self">self</span>.found_traces[depth] = <span class="prelude-val">Some</span>(trace_span.identifier);
+                    }
 
-                    <span class="kw">let _ </span>= <span class="self">Self</span>::write_front_lines(<span class="self">self</span>.front_lines, f, <span class="self">self</span>.scratch_fill);
-                    <span class="kw">let _ </span>= <span class="macro">write!</span>(
-                        f,
-                        <span class="string">"├─ tracing frame {} =&gt; {}::{}"</span>,
-                        depth, trace_span.target, trace_span.name
-                    );
+                    <span class="self">Self</span>::write_front_lines(<span class="self">self</span>.front_lines, f, <span class="self">self</span>.scratch_fill)<span class="question-mark">?</span>;
+                    <span class="macro">write!</span>(f, <span class="string">"├─ tracing frame {} =&gt; "</span>, depth)<span class="question-mark">?</span>;
+                    <span class="comment">//depth, trace_span.target, trace_span.name
+                    </span><span class="kw">for </span>c <span class="kw">in </span>trace_span.target {
+                        f.write_char(c)<span class="question-mark">?
+                    </span>}
+                    f.write_str(<span class="string">"::"</span>)<span class="question-mark">?</span>;
+                    <span class="kw">for </span>c <span class="kw">in </span>trace_span.name {
+                        f.write_char(c)<span class="question-mark">?
+                    </span>}
 
-                    <span class="kw">if </span>!trace_span.fields.is_empty() {
-                        <span class="kw">let _ </span>= <span class="macro">write!</span>(f, <span class="string">" with"</span>);
-                        <span class="self">Self</span>::tracing_field_fmt(
-                            f,
-                            <span class="self">self</span>.front_lines,
-                            trace_span.fields,
-                            <span class="self">self</span>.scratch_fill,
-                        );
+                    <span class="kw">let </span><span class="kw-2">mut </span>fields = trace_span.fields.into_iter().peekable();
+                    <span class="kw">if </span>fields.peek().is_some() {
+                        <span class="macro">write!</span>(f, <span class="string">" with"</span>)<span class="question-mark">?</span>;
+                        <span class="self">Self</span>::tracing_field_fmt(f, <span class="self">self</span>.front_lines, fields, <span class="self">self</span>.scratch_fill)<span class="question-mark">?</span>;
                     }
 
                     <span class="kw">if let </span><span class="prelude-val">Some</span>((file, line)) = trace_span.location {
-                        <span class="kw">let _ </span>= <span class="self">Self</span>::write_front_lines(<span class="self">self</span>.front_lines, f, <span class="self">self</span>.scratch_fill);
-                        <span class="kw">let _ </span>= <span class="macro">write!</span>(f, <span class="string">"│        at {}:{}"</span>, file, line);
+                        <span class="self">Self</span>::write_front_lines(<span class="self">self</span>.front_lines, f, <span class="self">self</span>.scratch_fill)<span class="question-mark">?</span>;
+                        f.write_str(<span class="string">"│        at "</span>)<span class="question-mark">?</span>;
+                        <span class="kw">for </span>c <span class="kw">in </span>file {
+                            f.write_char(c)<span class="question-mark">?
+                        </span>}
+                        f.write_char(<span class="string">':'</span>)<span class="question-mark">?</span>;
+                        <span class="macro">write!</span>(f, <span class="string">"{line}"</span>)<span class="question-mark">?</span>;
                     };
                 };
 
                 <span class="prelude-val">Ok</span>(())
             })<span class="question-mark">?</span>;
 
-            <span class="kw">if </span>!repeated.is_empty() {
+            <span class="kw">if </span>repeated_idx &gt; <span class="number">0 </span>{
                 <span class="self">Self</span>::write_front_lines(<span class="self">self</span>.front_lines, f, <span class="self">self</span>.scratch_fill)<span class="question-mark">?</span>;
+                <span class="kw">if </span><span class="self">self</span>.tree.sources_empty() {
+                    f.write_str(<span class="string">"╰─ "</span>)<span class="question-mark">?</span>;
+                } <span class="kw">else </span>{
+                    f.write_str(<span class="string">"├─ "</span>)<span class="question-mark">?</span>;
+                }
+
+                <span class="macro">write!</span>(f, <span class="string">"{} duplicate tracing frame(s): ["</span>, repeated_idx)<span class="question-mark">?</span>;
+
+                <span class="kw">for </span>idx <span class="kw">in </span><span class="number">0</span>..repeated_idx - <span class="number">1 </span>{
+                    <span class="macro">write!</span>(f, <span class="string">"{}, "</span>, repeated[idx].expect(<span class="string">"Previously set as Some"</span>))<span class="question-mark">?</span>;
+                }
+
                 <span class="macro">write!</span>(
                     f,
-                    <span class="string">"├─ {} duplicate tracing frame(s): {:?}"</span>,
-                    repeated.len(),
-                    repeated
+                    <span class="string">"{}]"</span>,
+                    repeated[repeated_idx - <span class="number">1</span>].expect(<span class="string">"Previously set as Some"</span>)
                 )<span class="question-mark">?</span>;
             }
         }
@@ -1112,17 +1082,17 @@
         <span class="kw">let </span><span class="kw-2">mut </span>source_fmt =
             |front_lines: <span class="kw-2">&amp;mut </span>[u8],
              scratch_fill: usize,
-             <span class="attr">#[cfg(feature = <span class="string">"tracing"</span>)] </span>found_traces: <span class="kw-2">&amp;mut </span>alloc::vec::Vec&lt;T::TraceSpanType&gt;,
+             <span class="attr">#[cfg(feature = <span class="string">"tracing"</span>)] </span>found_traces: <span class="kw-2">&amp;mut </span>[<span class="prelude-ty">Option</span>&lt;T::TraceSpanId&gt;],
              source: T::Source&lt;<span class="lifetime">'_</span>&gt;,
              last: bool| {
                 <span class="self">Self</span>::write_front_lines(front_lines, f, scratch_fill)<span class="question-mark">?</span>;
-                <span class="macro">write!</span>(f, <span class="string">"│"</span>)<span class="question-mark">?</span>;
+                f.write_char(<span class="string">'│'</span>)<span class="question-mark">?</span>;
                 <span class="self">Self</span>::write_front_lines(front_lines, f, scratch_fill)<span class="question-mark">?</span>;
 
                 <span class="kw">if </span>last {
-                    <span class="macro">write!</span>(f, <span class="string">"╰─▶ "</span>)<span class="question-mark">?</span>;
+                    f.write_str(<span class="string">"╰─▶ "</span>)<span class="question-mark">?</span>;
                 } <span class="kw">else </span>{
-                    <span class="macro">write!</span>(f, <span class="string">"├─▶ "</span>)<span class="question-mark">?</span>;
+                    f.write_str(<span class="string">"├─▶ "</span>)<span class="question-mark">?</span>;
                 }
 
                 <span class="kw">let </span>additional_scratch = <span class="kw">if </span>last {

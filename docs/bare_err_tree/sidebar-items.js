@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"attr":["err_tree"],"enum":["JsonErr"],"fn":["print_tree","reconstruct_output","tree_to_json","tree_unwrap"],"macro":["tree"],"struct":["ErrTree","ErrTreePkg"],"trait":["AsErrTree"]};
+window.SIDEBAR_ITEMS = {"attr":["err_tree"],"fn":["print_tree","reconstruct_output","tree_to_json","tree_unwrap"],"macro":["tree"],"struct":["ErrTree","ErrTreePkg"],"trait":["AsErrTree"]};

@@ -375,12 +375,7 @@
 <a href="#374" id="374">374</a>
 <a href="#375" id="375">375</a>
 <a href="#376" id="376">376</a>
-<a href="#377" id="377">377</a>
-<a href="#378" id="378">378</a>
-<a href="#379" id="379">379</a>
-<a href="#380" id="380">380</a>
-<a href="#381" id="381">381</a>
-<a href="#382" id="382">382</a></pre></div><pre class="rust"><code><span class="comment">/*
+<a href="#377" id="377">377</a></pre></div><pre class="rust"><code><span class="comment">/*
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
@@ -394,7 +389,6 @@ API beyond a hidden field (when implemented on structs) or deref (when
 implemented via a wrapper).
 It is added via macro or manual implementation of [`AsErrTree`].
 End users can then use [`tree_unwrap`] or [`print_tree`] to get better error output.
-
 
 If none of the [tracking feature flags](#tracking-feature-flags) are enabled,
 the metadata is set to the [`unit`] type to take zero space.
@@ -411,13 +405,11 @@ Usage of the [`err_tree`] macro incurs a compliation time cost.
 * `unix_color`: Outputs UNIX console codes for emphasis.
 * `anyhow`: Adds implementation for [`anyhow::Error`].
 * `eyre`: Adds implementation for [`eyre::Report`].
-* `json`: Allows for storage to/reconstruction from JSON. Uses allocation due
-    to [`serde_json`] internals.
+* `json`: Allows for storage to/reconstruction from JSON.
 #### Tracking Feature Flags
 * `source_line`: Tracks the source line of tree errors.
-* `tracing`: Produces a `tracing` backtrace with [`tracing_error`]. Uses
-    allocation to format prints.
-* `boxed_tracing`: Same as `tracing`, but boxes the trace.
+* `tracing`: Produces a `tracing` backtrace with [`tracing_error`].
+* `boxed_tracing`: `tracing` with a boxed trace.
 
 # Adding [`ErrTree`] Support (Library or Bin)
 Both libraries and binaries can add type support for [`ErrTree`] prints.
@@ -437,9 +429,9 @@ Specify desired tracking features by importing `bare_err_tree` in `Cargo.toml`.
 
 Call [`tree_unwrap`] on the [`Result`] or [`print_tree`] on the [`Error`] with
 `FRONT_MAX` set to `6 * (maximum tree depth)`. Note that unless `heap_buffer`
-is enabled, `FRONT_MAX` bytes will always be occupied on stack for the duration
-of a print call. Make sure this falls within platform stack size, and single
-stack frame size, limits.
+is enabled, `FRONT_MAX` (x3 if `tracing` is enabled) bytes will be
+occupied on stack for the duration of a print call. Make sure this falls
+within platform stack size, and single stack frame size, limits.
 
 # Credit
 
@@ -459,7 +451,7 @@ Contributions are welcome at
 
 </span><span class="attr">#![no_std]
 
-#[cfg(any(feature = <span class="string">"heap_buffer"</span>, feature = <span class="string">"tracing"</span>, feature = <span class="string">"json"</span>))]
+#[cfg(any(feature = <span class="string">"heap_buffer"</span>, feature = <span class="string">"boxed_tracing"</span>))]
 </span><span class="kw">extern crate </span>alloc;
 
 <span class="attr">#[cfg(feature = <span class="string">"source_line"</span>)]
@@ -490,7 +482,8 @@ Contributions are welcome at
 /// bytes to fit "│   ". So for a max depth of 3 errors, `FRONT_MAX` == 18.
 /// By default, `FRONT_MAX` bytes are allocated on stack. When `heap_buffer` is
 /// enabled, the bytes are allocated on heap and `FRONT_MAX` only acts as a
-/// depth limit.
+/// depth limit. When `tracing` is enabled, at most `FRONT_MAX` stack traces
+/// will be tracked for duplicates.
 ///
 /// Errors must define [`Error::source`] correctly for the tree to display.
 /// The derive macros for [`ErrTree`] track extra information and handle
@@ -524,7 +517,8 @@ Contributions are welcome at
 /// bytes to fit "│   ". So for a max depth of 3 errors, `FRONT_MAX` == 18.
 /// By default, `FRONT_MAX` bytes are allocated on stack. When `heap_buffer` is
 /// enabled, the bytes are allocated on stack and `FRONT_MAX` only acts as a
-/// depth limit.
+/// depth limit. When `tracing` is enabled, at most `FRONT_MAX` stack traces
+/// will be tracked for duplicates.
 ///
 /// Errors must define [`Error::source`] correctly for the tree to display.
 /// The derive macros for [`ErrTree`] track extra information and handle
@@ -621,11 +615,7 @@ Contributions are welcome at
     </span><span class="kw">pub fn </span>with_pkg(
         inner: <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw">dyn </span>Error,
         sources: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>[<span class="kw-2">&amp;</span>[<span class="kw-2">&amp;</span><span class="kw">dyn </span>AsErrTree]],
-        <span class="attr">#[cfg_attr(
-            not(feature = <span class="string">"source_line"</span>),
-            expect(unused, reason = <span class="string">"should be null when no tracking is enabled"</span>)
-        )]
-        </span>pkg: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>ErrTreePkg,
+        <span class="attr">#[allow(unused)] </span>pkg: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>ErrTreePkg,
     ) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             inner,

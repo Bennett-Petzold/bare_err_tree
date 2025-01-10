@@ -1,2 +1,2 @@
-window.ALL_CRATES = ["anyhow","bare_err_tree","bare_err_tree_proc","cfg_if","eyre","indenter","itoa","lazy_static","memchr","once_cell","pin_project_lite","proc_macro2","quote","ryu","serde","serde_derive","serde_json","sharded_slab","syn","thread_local","tracing","tracing_core","tracing_error","tracing_subscriber","unicode_ident"];
-//{"start":21,"fragment_lengths":[8,16,21,9,7,11,7,14,9,12,19,14,8,6,8,15,13,15,6,15,10,15,16,21,16]}
+window.ALL_CRATES = ["anyhow","bare_err_tree","bare_err_tree_proc","cfg_if","eyre","indenter","lazy_static","once_cell","pin_project_lite","proc_macro2","quote","sharded_slab","syn","thread_local","tracing","tracing_core","tracing_error","tracing_subscriber","unicode_ident"];
+//{"start":21,"fragment_lengths":[8,16,21,9,7,11,14,12,19,14,8,15,6,15,10,15,16,21,16]}
