@@ -17,3 +17,6 @@ name = "trace_example"
 
 [[bin]]
 name = "near-empty"
+
+[[bin]]
+name = "trailing"
