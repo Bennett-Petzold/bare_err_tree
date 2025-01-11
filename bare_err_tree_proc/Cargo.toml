@@ -1,6 +1,6 @@
 [package]
 name = "bare_err_tree_proc"
-version = "0.3.0"
+version = "0.4.0"
 authors.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -13,7 +13,6 @@ readme.workspace = true
 
 [features]
 default = []
-alloc = []
 
 [lib]
 proc-macro = true

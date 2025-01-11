@@ -1,14 +1,12 @@
 #![cfg(all(
     feature = "tracing",
-    feature = "derive_alloc",
+    feature = "derive",
     feature = "source_line",
     feature = "json",
     not(feature = "unix_color")
 ))]
 
 mod example {
-    use std::println;
-
     include!("../test_cases/json/src/bin/reconstruct.rs");
 
     #[test]

@@ -141,7 +141,7 @@ use fields::*;
 ///     // Confirm exactly six sources from annotation
 ///     err.as_err_tree(&mut |tree| {
 ///         let sources = tree.sources();
-///         assert_eq!(sources.iter().map(|s| s.iter()).flatten().count(), 6);
+///         assert_eq!(sources.count(), 6);
 ///     });
 /// }
 /// ```

@@ -1,6 +1,6 @@
 #![cfg(all(
     feature = "tracing",
-    feature = "derive_alloc",
+    feature = "derive",
     feature = "source_line",
     not(feature = "unix_color")
 ))]

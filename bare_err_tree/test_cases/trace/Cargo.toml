@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-bare_err_tree = { path = "../../", features = ["derive_alloc", "source_line", "tracing"] }
+bare_err_tree = { path = "../../", features = ["derive", "source_line", "tracing"] }
 thiserror = "2.0.7"
 tracing = "0.1"
 tracing-error = "0.2"
