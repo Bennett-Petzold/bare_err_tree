@@ -8,14 +8,6 @@ use proc_macro::TokenStream;
 use quote::{quote, quote_spanned};
 use syn::{spanned::Spanned, DataEnum, DataStruct, Expr, Field, Ident, Type};
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-enum Sizing {
-    /// [TYPE; N]
-    Static(Expr),
-    /// Anything that can be collected from an iter to a vec
-    Dynamic,
-}
-
 #[derive(Debug)]
 enum ErrType {
     /// &dyn ErrTree, not in a collection
@@ -23,17 +15,17 @@ enum ErrType {
     /// Known ErrTree, not in a collection
     Tree((Ident, proc_macro2::Span)),
     /// &dyn ErrTree, in a collection
-    DynSlice((Ident, proc_macro2::Span, Sizing)),
+    DynSlice((Ident, proc_macro2::Span)),
     /// Known ErrTree, in a collection
-    TreeSlice((Ident, proc_macro2::Span, Sizing)),
+    TreeSlice((Ident, proc_macro2::Span)),
 }
 
 /// Sorted collection of [`ErrType`]s
 pub struct CollectedErrType {
     r#dyn: Vec<(Ident, proc_macro2::Span)>,
     tree: Vec<(Ident, proc_macro2::Span)>,
-    dyniter: Vec<(Ident, proc_macro2::Span, Sizing)>,
-    treeiter: Vec<(Ident, proc_macro2::Span, Sizing)>,
+    dyniter: Vec<(Ident, proc_macro2::Span)>,
+    treeiter: Vec<(Ident, proc_macro2::Span)>,
 }
 
 impl FromIterator<ErrType> for CollectedErrType {
@@ -192,20 +184,13 @@ impl CollectedErrType {
 ///
 /// Distinguishes between sized and unsized arrays to generate the
 /// correct identity name and sizing types.
-fn iter_parse(
-    f: &Field,
-    ident: Ident,
-) -> Option<Result<(Ident, proc_macro2::Span, Sizing), TokenStream>> {
+fn iter_parse(f: &Field, ident: Ident) -> Option<Result<(Ident, proc_macro2::Span), TokenStream>> {
     let mut ty = f.ty.clone();
     while let Type::Reference(ty_ref) = ty {
         ty = *ty_ref.elem;
     }
 
-    if let Type::Array(ty) = ty {
-        Some(Ok((ident, f.span(), Sizing::Static(ty.len.clone()))))
-    } else {
-        Some(Ok((f.ident.clone()?, f.span(), Sizing::Dynamic)))
-    }
+    Some(Ok((ident, f.span())))
 }
 
 /// Finds all child error annotations on a struct.
@@ -255,11 +240,7 @@ pub fn get_enum_macros(data: &DataEnum) -> Result<CollectedErrType, TokenStream>
                                     iter_parse(field, f.ident.clone())
                                         .map(|z| z.map(ErrType::DynSlice))
                                 } else {
-                                    Some(Ok(ErrType::DynSlice((
-                                        f.ident.clone(),
-                                        f.span(),
-                                        Sizing::Dynamic,
-                                    ))))
+                                    Some(Ok(ErrType::DynSlice((f.ident.clone(), f.span()))))
                                 }
                             }
                             "tree_iter_err" => {
@@ -269,11 +250,7 @@ pub fn get_enum_macros(data: &DataEnum) -> Result<CollectedErrType, TokenStream>
                                     iter_parse(field, f.ident.clone())
                                         .map(|z| z.map(ErrType::DynSlice))
                                 } else {
-                                    Some(Ok(ErrType::TreeSlice((
-                                        f.ident.clone(),
-                                        f.span(),
-                                        Sizing::Dynamic,
-                                    ))))
+                                    Some(Ok(ErrType::TreeSlice((f.ident.clone(), f.span()))))
                                 }
                             }
                             _ => None,
