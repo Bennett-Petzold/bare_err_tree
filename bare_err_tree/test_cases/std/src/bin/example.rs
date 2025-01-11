@@ -87,17 +87,17 @@ struct BedComfy;
 #[derive(Debug, Error, Default)]
 #[error("stayed in bed too long")]
 struct Overslept {
+    #[dyn_err]
+    comfy: BedComfy,
     #[tree_err]
     #[source]
     bed_time: BedTime,
-    #[dyn_err]
-    comfy: BedComfy,
 }
 
 impl Overslept {
     #[track_caller]
     fn new(bed_time: BedTime) -> Self {
-        Overslept::_tree(bed_time, BedComfy)
+        Overslept::_tree(BedComfy, bed_time)
     }
 }
 
