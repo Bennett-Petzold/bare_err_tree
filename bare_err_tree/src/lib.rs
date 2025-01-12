@@ -5,13 +5,13 @@
  */
 
 /*!
-`bare_err_tree` is a `no_std` library to print an [`Error`] with a tree of sources.
+`bare_err_tree` is a `no_std` and no `alloc` library to print an [`Error`] with a tree of sources.
 
-The functionality introduced by this library does not change the type or public
-API beyond a hidden field (when implemented on structs) or deref (when
-implemented via a wrapper).
-It is added via macro or manual implementation of [`AsErrTree`].
-End users can then use [`tree_unwrap`] or [`print_tree`] to get better error output.
+Support for the extra information prints does not change the type or public
+API (besides a hidden field or deref). It is added via macro or manual
+implementation of the [`AsErrTree`] trait. End users can then use
+[`tree_unwrap`] or [`print_tree`] to get better error output, or store as JSON
+for later reconstruction.
 
 If none of the [tracking feature flags](#tracking-feature-flags) are enabled,
 the metadata is set to the [`unit`] type to take zero space.
@@ -21,18 +21,17 @@ Usage of the [`err_tree`] macro incurs a compliation time cost.
 
 # Feature Flags
 * `derive`: Enabled by default, provides [`err_tree`] via proc macro.
-* `derive_alloc`: Allows derive to generate allocating code (e.g. for `Vec`
-    sources).
-* `heap_buffer`: Uses heap to store leading arrows so that `FRONT_MAX` bytes of
-    the stack aren't statically allocated for this purpose.
+* `json`: Allows for storage to/reconstruction from JSON.
+* `heap_buffer`: Uses heap to store so state that `FRONT_MAX` (x3 if tracing
+    is enabled) bytes of the stack aren't statically allocated for this purpose.
+* `boxed`: Boxes the error package. Addresses ballooning from large tracking
+    features. Boxing the error itself is likely more efficient, when available.
 * `unix_color`: Outputs UNIX console codes for emphasis.
 * `anyhow`: Adds implementation for [`anyhow::Error`].
 * `eyre`: Adds implementation for [`eyre::Report`].
-* `json`: Allows for storage to/reconstruction from JSON.
 #### Tracking Feature Flags
 * `source_line`: Tracks the source line of tree errors.
 * `tracing`: Produces a `tracing` backtrace with [`tracing_error`].
-* `boxed_tracing`: `tracing` with a boxed trace.
 
 # Adding [`ErrTree`] Support (Library or Bin)
 Both libraries and binaries can add type support for [`ErrTree`] prints.
@@ -74,7 +73,7 @@ Contributions are welcome at
 
 #![no_std]
 
-#[cfg(any(feature = "heap_buffer", feature = "boxed_tracing"))]
+#[cfg(any(feature = "heap_buffer", feature = "boxed"))]
 extern crate alloc;
 
 #[cfg(feature = "source_line")]
@@ -151,11 +150,33 @@ where
 /// The derive macros for [`ErrTree`] track extra information and handle
 /// multiple sources ([`Error::source`] is designed around a single error
 /// source).
+///
+/// ```rust
+/// # use std::{
+/// #   panic::Location,
+/// #   error::Error,
+/// #   fmt::{self, Write, Display, Formatter},
+/// #   io::{self, stdout},
+/// #   borrow::Borrow,
+/// # };
+/// use bare_err_tree::{AsErrTree, print_tree};
+///
+/// const PRINT_SIZE: usize = 60;
+///
+/// fn sized_print<E, S, F>(tree: S, formatter: &mut F) -> fmt::Result
+/// where
+///     S: Borrow<E>,
+///     E: AsErrTree + ?Sized,
+///     F: fmt::Write,
+/// {
+///     print_tree::<PRINT_SIZE, _, _, _>(tree, formatter)
+/// }
+///
+/// fn io_as_tree() {
+/// }
+/// ```
 #[track_caller]
-pub fn print_tree<const FRONT_MAX: usize, E, S, F>(
-    tree: S,
-    formatter: &mut F,
-) -> Result<(), fmt::Error>
+pub fn print_tree<const FRONT_MAX: usize, E, S, F>(tree: S, mut formatter: F) -> fmt::Result
 where
     S: Borrow<E>,
     E: AsErrTree + ?Sized,
@@ -249,11 +270,9 @@ impl<'a> ErrTree<'a> {
             inner,
             sources: sources.into(),
             #[cfg(feature = "source_line")]
-            location: Some(pkg.location),
-            #[cfg(all(feature = "tracing", not(feature = "boxed_tracing")))]
-            trace: Some(&pkg.trace),
-            #[cfg(feature = "boxed_tracing")]
-            trace: Some(&*pkg.trace),
+            location: Some(pkg.location()),
+            #[cfg(feature = "tracing")]
+            trace: Some(pkg.trace()),
         }
     }
 

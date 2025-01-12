@@ -9,7 +9,10 @@ use core::{cmp::Ordering, fmt::Debug, hash::Hash};
 #[cfg(feature = "source_line")]
 use core::panic::Location;
 
-#[cfg(feature = "boxed_tracing")]
+#[cfg(feature = "tracing")]
+use tracing_error::SpanTrace;
+
+#[cfg(feature = "boxed")]
 use alloc::boxed::Box;
 
 /// Captures extra information for [`ErrTree`][`crate::ErrTree`]
@@ -19,31 +22,51 @@ use alloc::boxed::Box;
 /// `#[track_caller]` to capture the correct callsite.
 ///
 /// The inner fields are obscured to allow arbitrary metadata tracking
-/// combinations via feature flags without changing the API.
+/// combinations via feature flags without changing the API. The `boxed`
+/// feature can be enabled to store this in heap.
 ///
 /// All instances of this are considered equal, to avoid infecting sort order
 /// or comparisons between the parent error types. Hashing is a no-op.
 #[derive(Clone)]
 pub struct ErrTreePkg {
+    #[cfg(not(feature = "boxed"))]
+    inner: InnerErrTreePkg,
+    #[cfg(feature = "boxed")]
+    inner: Box<InnerErrTreePkg>,
+}
+
+#[derive(Clone)]
+pub struct InnerErrTreePkg {
     #[cfg(feature = "source_line")]
-    pub(crate) location: &'static Location<'static>,
-    #[cfg(all(feature = "tracing", not(feature = "boxed_tracing")))]
-    pub(crate) trace: tracing_error::SpanTrace,
-    #[cfg(feature = "boxed_tracing")]
-    pub(crate) trace: Box<tracing_error::SpanTrace>,
+    location: &'static Location<'static>,
+    #[cfg(feature = "tracing")]
+    trace: SpanTrace,
 }
 
 impl ErrTreePkg {
     #[track_caller]
     pub fn new() -> Self {
-        Self {
+        let inner = InnerErrTreePkg {
             #[cfg(feature = "source_line")]
             location: Location::caller(),
-            #[cfg(all(feature = "tracing", not(feature = "boxed_tracing")))]
-            trace: tracing_error::SpanTrace::capture(),
-            #[cfg(feature = "boxed_tracing")]
-            trace: Box::new(tracing_error::SpanTrace::capture()),
-        }
+            #[cfg(feature = "tracing")]
+            trace: SpanTrace::capture(),
+        };
+
+        #[cfg(feature = "boxed")]
+        let inner = Box::new(inner);
+
+        Self { inner }
+    }
+
+    #[cfg(feature = "source_line")]
+    pub(crate) fn location(&self) -> &'static Location<'static> {
+        self.inner.location
+    }
+
+    #[cfg(feature = "tracing")]
+    pub(crate) fn trace(&self) -> &SpanTrace {
+        &self.inner.trace
     }
 }
 
