@@ -667,7 +667,7 @@ Contributions are welcome at
 {
     <span class="kw">let </span><span class="kw-2">mut </span>res = <span class="prelude-val">Ok</span>(());
     tree.as_err_tree(<span class="kw-2">&amp;mut </span>|tree| {
-        res = <span class="macro">write!</span>(formatter, <span class="string">"{}"</span>, ErrTreeFmtWrap::&lt;FRONT_MAX, <span class="kw">_</span>&gt;::new(tree));
+        res = fmt_tree::&lt;FRONT_MAX, <span class="kw">_</span>, <span class="kw">_</span>&gt;(tree, <span class="kw-2">&amp;mut </span>formatter);
     });
     res
 }

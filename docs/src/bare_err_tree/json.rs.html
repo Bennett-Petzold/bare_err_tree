@@ -634,16 +634,23 @@
 <a href="#633" id="633">633</a>
 <a href="#634" id="634">634</a>
 <a href="#635" id="635">635</a>
-<a href="#636" id="636">636</a></pre></div><pre class="rust"><code><span class="doccomment">//! Error tree output to/from JSON.
+<a href="#636" id="636">636</a>
+<a href="#637" id="637">637</a></pre></div><pre class="rust"><code><span class="comment">/*
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/.
+ */
+
+</span><span class="doccomment">//! Error tree output to/from JSON.
 
 </span><span class="kw">use </span>core::{
     borrow::Borrow,
-    fmt::{<span class="self">self</span>, Formatter, Write},
+    fmt::{<span class="self">self</span>, Write},
     iter::FusedIterator,
     str::Chars,
 };
 
-<span class="kw">use crate</span>::{AsErrTree, ErrTree, ErrTreeFmtWrap, ErrTreeFormattable};
+<span class="kw">use crate</span>::{fmt_tree, AsErrTree, ErrTree, ErrTreeFormattable};
 
 <span class="doccomment">/// Produces JSON to store [`ErrTree`] formatted output.
 ///
@@ -790,12 +797,7 @@
     </span>S: AsRef&lt;str&gt;,
     F: fmt::Write,
 {
-    <span class="macro">write!</span>(
-        formatter,
-        <span class="string">"{}"</span>,
-        ErrTreeFmtWrap::&lt;FRONT_MAX, <span class="kw">_</span>&gt;::new(JsonReconstruct::new(json.as_ref()))
-    )<span class="question-mark">?</span>;
-    <span class="prelude-val">Ok</span>(())
+    fmt_tree::&lt;FRONT_MAX, <span class="kw">_</span>, <span class="kw">_</span>&gt;(JsonReconstruct::new(json.as_ref()), formatter)
 }
 
 <span class="kw">const </span>EMPTY_STR: <span class="kw-2">&amp;</span>str = <span class="string">""</span>;
@@ -884,7 +886,7 @@
 }
 
 <span class="kw">impl</span>&lt;<span class="lifetime">'f</span>&gt; ErrTreeFormattable <span class="kw">for </span>JsonReconstruct&lt;<span class="lifetime">'f</span>&gt; {
-    <span class="kw">fn </span>apply_msg(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
+    <span class="kw">fn </span>apply_msg&lt;W: fmt::Write + <span class="question-mark">?</span>Sized&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>W) -&gt; fmt::Result {
         apply_json_str(<span class="self">self</span>.msg, f)
     }
 
@@ -922,7 +924,7 @@
         !<span class="self">self</span>.source_line.is_empty()
     }
     <span class="attr">#[cfg(feature = <span class="string">"source_line"</span>)]
-    </span><span class="kw">fn </span>apply_source_line(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
+    </span><span class="kw">fn </span>apply_source_line&lt;W: fmt::Write + <span class="question-mark">?</span>Sized&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>W) -&gt; fmt::Result {
         apply_json_str(<span class="self">self</span>.source_line, f)
     }
 
@@ -1208,7 +1210,7 @@
 
 <span class="kw">impl </span>FusedIterator <span class="kw">for </span>JsonStrChars&lt;<span class="lifetime">'_</span>&gt; {}
 
-<span class="kw">fn </span>apply_json_str&lt;F: fmt::Write&gt;(s: <span class="kw-2">&amp;</span>str, formatter: <span class="kw-2">&amp;mut </span>F) -&gt; fmt::Result {
+<span class="kw">fn </span>apply_json_str&lt;F: fmt::Write + <span class="question-mark">?</span>Sized&gt;(s: <span class="kw-2">&amp;</span>str, formatter: <span class="kw-2">&amp;mut </span>F) -&gt; fmt::Result {
     <span class="kw">for </span>c <span class="kw">in </span>JsonStrChars::new(s) {
         formatter.write_char(c)<span class="question-mark">?</span>;
     }

@@ -581,7 +581,15 @@
 <a href="#580" id="580">580</a>
 <a href="#581" id="581">581</a>
 <a href="#582" id="582">582</a>
-<a href="#583" id="583">583</a></pre></div><pre class="rust"><code><span class="comment">/*
+<a href="#583" id="583">583</a>
+<a href="#584" id="584">584</a>
+<a href="#585" id="585">585</a>
+<a href="#586" id="586">586</a>
+<a href="#587" id="587">587</a>
+<a href="#588" id="588">588</a>
+<a href="#589" id="589">589</a>
+<a href="#590" id="590">590</a>
+<a href="#591" id="591">591</a></pre></div><pre class="rust"><code><span class="comment">/*
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
@@ -589,55 +597,58 @@
 
 </span><span class="kw">use </span>core::{
     cell::RefCell,
-    error::Error,
-    fmt::{<span class="self">self</span>, Display, Formatter, Write},
+    fmt::{<span class="self">self</span>, Display, Formatter},
     str::{<span class="self">self</span>, Chars},
 };
 
 <span class="kw">use crate</span>::{AsErrTree, ErrTree};
 
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>ErrTreeFmtWrap&lt;<span class="kw">const </span>FRONT_MAX: usize, T&gt; {
-    <span class="kw">pub </span>tree: RefCell&lt;T&gt;,
-}
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>ErrTreeFmtWrap&lt;<span class="kw">const </span>FRONT_MAX: usize, T&gt;(RefCell&lt;T&gt;);
 
 <span class="kw">impl</span>&lt;<span class="kw">const </span>FRONT_MAX: usize, T&gt; ErrTreeFmtWrap&lt;FRONT_MAX, T&gt; {
     <span class="kw">pub fn </span>new(tree: T) -&gt; <span class="self">Self </span>{
-        <span class="self">Self </span>{
-            tree: RefCell::new(tree),
-        }
+        <span class="self">Self</span>(RefCell::new(tree))
     }
 }
 
 <span class="kw">impl</span>&lt;<span class="kw">const </span>FRONT_MAX: usize, T&gt; Display <span class="kw">for </span>ErrTreeFmtWrap&lt;FRONT_MAX, T&gt;
 <span class="kw">where
-    for</span>&lt;<span class="lifetime">'a</span>&gt; T: ErrTreeFormattable,
+    </span>T: ErrTreeFormattable,
 {
     <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
-        <span class="attr">#[cfg(not(feature = <span class="string">"heap_buffer"</span>))]
-        </span><span class="kw">let </span><span class="kw-2">mut </span>front_lines = [<span class="number">0</span>; FRONT_MAX];
-
-        <span class="attr">#[cfg(feature = <span class="string">"heap_buffer"</span>)]
-        </span><span class="kw">let </span><span class="kw-2">mut </span>front_lines = <span class="macro">alloc::vec!</span>[<span class="number">0</span>; FRONT_MAX].into_boxed_slice();
-
-        <span class="attr">#[cfg(all(not(feature = <span class="string">"heap_buffer"</span>), feature = <span class="string">"tracing"</span>))]
-        </span><span class="kw">let </span><span class="kw-2">mut </span>found_traces: [<span class="kw">_</span>; FRONT_MAX] = core::array::from_fn(|<span class="kw">_</span>| <span class="prelude-val">None</span>);
-
-        <span class="attr">#[cfg(all(feature = <span class="string">"heap_buffer"</span>, feature = <span class="string">"tracing"</span>))]
-        </span><span class="kw">let </span><span class="kw-2">mut </span>found_traces = core::iter::repeat_with(|| <span class="prelude-val">None</span>)
-            .take(FRONT_MAX)
-            .collect::&lt;alloc::vec::Vec&lt;<span class="kw">_</span>&gt;&gt;()
-            .into_boxed_slice();
-
-        ErrTreeFmt::&lt;FRONT_MAX, <span class="kw">_</span>&gt; {
-            tree: <span class="kw-2">&amp;mut *</span><span class="self">self</span>.tree.borrow_mut(),
-            scratch_fill: <span class="number">0</span>,
-            front_lines: <span class="kw-2">&amp;mut </span>front_lines,
-
-            <span class="attr">#[cfg(feature = <span class="string">"tracing"</span>)]
-            </span>found_traces: <span class="kw-2">&amp;mut </span>found_traces,
-        }
-        .fmt(f)
+        fmt_tree::&lt;FRONT_MAX, <span class="kw">_</span>, <span class="kw">_</span>&gt;(<span class="kw-2">&amp;mut *</span><span class="self">self</span>.<span class="number">0</span>.borrow_mut(), f)
     }
+}
+
+<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>fmt_tree&lt;<span class="kw">const </span>FRONT_MAX: usize, T, W&gt;(tree: T, f: <span class="kw-2">&amp;mut </span>W) -&gt; fmt::Result
+<span class="kw">where
+    </span>T: ErrTreeFormattable,
+    W: fmt::Write + <span class="question-mark">?</span>Sized,
+{
+    <span class="attr">#[cfg(not(feature = <span class="string">"heap_buffer"</span>))]
+    </span><span class="kw">let </span><span class="kw-2">mut </span>front_lines = [<span class="number">0</span>; FRONT_MAX];
+
+    <span class="attr">#[cfg(feature = <span class="string">"heap_buffer"</span>)]
+    </span><span class="kw">let </span><span class="kw-2">mut </span>front_lines = <span class="macro">alloc::vec!</span>[<span class="number">0</span>; FRONT_MAX].into_boxed_slice();
+
+    <span class="attr">#[cfg(all(not(feature = <span class="string">"heap_buffer"</span>), feature = <span class="string">"tracing"</span>))]
+    </span><span class="kw">let </span><span class="kw-2">mut </span>found_traces: [<span class="kw">_</span>; FRONT_MAX] = core::array::from_fn(|<span class="kw">_</span>| <span class="prelude-val">None</span>);
+
+    <span class="attr">#[cfg(all(feature = <span class="string">"heap_buffer"</span>, feature = <span class="string">"tracing"</span>))]
+    </span><span class="kw">let </span><span class="kw-2">mut </span>found_traces = core::iter::repeat_with(|| <span class="prelude-val">None</span>)
+        .take(FRONT_MAX)
+        .collect::&lt;alloc::vec::Vec&lt;<span class="kw">_</span>&gt;&gt;()
+        .into_boxed_slice();
+
+    ErrTreeFmt::&lt;FRONT_MAX, <span class="kw">_</span>&gt; {
+        tree,
+        scratch_fill: <span class="number">0</span>,
+        front_lines: <span class="kw-2">&amp;mut </span>front_lines,
+
+        <span class="attr">#[cfg(feature = <span class="string">"tracing"</span>)]
+        </span>found_traces: <span class="kw-2">&amp;mut </span>found_traces,
+    }
+    .fmt(f)
 }
 
 <span class="attr">#[cfg(feature = <span class="string">"tracing"</span>)]
@@ -650,7 +661,7 @@
 }
 
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">trait </span>ErrTreeFormattable {
-    <span class="kw">fn </span>apply_msg(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result;
+    <span class="kw">fn </span>apply_msg&lt;W: fmt::Write + <span class="question-mark">?</span>Sized&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>W) -&gt; fmt::Result;
 
     <span class="kw">type </span>Source&lt;<span class="lifetime">'a</span>&gt;: ErrTreeFormattable&lt;TraceSpanId = <span class="self">Self</span>::TraceSpanId&gt;;
 
@@ -667,7 +678,7 @@
     <span class="attr">#[cfg(feature = <span class="string">"source_line"</span>)]
     </span><span class="kw">fn </span>has_source_line(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool;
     <span class="attr">#[cfg(feature = <span class="string">"source_line"</span>)]
-    </span><span class="kw">fn </span>apply_source_line(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result;
+    </span><span class="kw">fn </span>apply_source_line&lt;W: fmt::Write + <span class="question-mark">?</span>Sized&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>W) -&gt; fmt::Result;
 
     <span class="attr">#[cfg(feature = <span class="string">"tracing"</span>)]
     </span><span class="kw">fn </span>trace_empty(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool;
@@ -685,7 +696,7 @@
 <span class="kw">where
     </span>T: ErrTreeFormattable,
 {
-    <span class="kw">fn </span>apply_msg(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
+    <span class="kw">fn </span>apply_msg&lt;W: fmt::Write + <span class="question-mark">?</span>Sized&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>W) -&gt; fmt::Result {
         T::apply_msg(<span class="self">self</span>, f)
     }
 
@@ -711,7 +722,7 @@
         T::has_source_line(<span class="self">self</span>)
     }
     <span class="attr">#[cfg(feature = <span class="string">"source_line"</span>)]
-    </span><span class="kw">fn </span>apply_source_line(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
+    </span><span class="kw">fn </span>apply_source_line&lt;W: fmt::Write + <span class="question-mark">?</span>Sized&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>W) -&gt; fmt::Result {
         T::apply_source_line(<span class="self">self</span>, f)
     }
 
@@ -733,8 +744,8 @@
 }
 
 <span class="kw">impl </span>ErrTreeFormattable <span class="kw">for </span>ErrTree&lt;<span class="lifetime">'_</span>&gt; {
-    <span class="kw">fn </span>apply_msg(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
-        &lt;<span class="kw">dyn </span>Error <span class="kw">as </span>Display&gt;::fmt(<span class="self">self</span>.inner, f)
+    <span class="kw">fn </span>apply_msg&lt;W: fmt::Write + <span class="question-mark">?</span>Sized&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>W) -&gt; fmt::Result {
+        <span class="macro">write!</span>(f, <span class="string">"{}"</span>, <span class="self">self</span>.inner)
     }
 
     <span class="kw">type </span>Source&lt;<span class="lifetime">'a</span>&gt; = ErrTree&lt;<span class="lifetime">'a</span>&gt;;
@@ -777,7 +788,7 @@
     }
 
     <span class="attr">#[cfg(feature = <span class="string">"source_line"</span>)]
-    </span><span class="kw">fn </span>apply_source_line(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
+    </span><span class="kw">fn </span>apply_source_line&lt;W: fmt::Write + <span class="question-mark">?</span>Sized&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>W) -&gt; fmt::Result {
         <span class="kw">if let </span><span class="prelude-val">Some</span>(loc) = <span class="self">self</span>.location {
             <span class="macro">write!</span>(f, <span class="string">"{}"</span>, loc)<span class="question-mark">?</span>;
         }
@@ -856,11 +867,10 @@
 <span class="kw">impl</span>&lt;<span class="kw">const </span>FRONT_MAX: usize, T: ErrTreeFormattable&gt; ErrTreeFmt&lt;<span class="lifetime">'_</span>, FRONT_MAX, T&gt; {
     <span class="doccomment">/// Preamble arrow connections
     </span><span class="attr">#[inline]
-    </span><span class="kw">fn </span>write_front_lines(
-        front_lines: <span class="kw-2">&amp;</span>[u8],
-        f: <span class="kw-2">&amp;mut </span>Formatter&lt;<span class="lifetime">'_</span>&gt;,
-        scratch_fill: usize,
-    ) -&gt; fmt::Result {
+    </span><span class="kw">fn </span>write_front_lines&lt;W&gt;(front_lines: <span class="kw-2">&amp;</span>[u8], f: <span class="kw-2">&amp;mut </span>W, scratch_fill: usize) -&gt; fmt::Result
+    <span class="kw">where
+        </span>W: fmt::Write + <span class="question-mark">?</span>Sized,
+    {
         <span class="kw">let </span>front_lines = str::from_utf8(<span class="kw-2">&amp;</span>front_lines[..scratch_fill])
             .expect(<span class="string">"All characters are static and guaranteed to be valid UTF-8"</span>);
 
@@ -886,7 +896,10 @@
     </span>}
 
     <span class="attr">#[cfg(feature = <span class="string">"source_line"</span>)]
-    </span><span class="kw">fn </span>source_line(<span class="kw-2">&amp;mut </span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>Formatter&lt;<span class="lifetime">'_</span>&gt;, tracing_after: bool) -&gt; fmt::Result {
+    </span><span class="kw">fn </span>source_line&lt;W&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>W, tracing_after: bool) -&gt; fmt::Result
+    <span class="kw">where
+        </span>W: fmt::Write + <span class="question-mark">?</span>Sized,
+    {
         <span class="kw">if </span><span class="self">self</span>.tree.has_source_line() {
             <span class="self">Self</span>::write_front_lines(<span class="self">self</span>.front_lines, f, <span class="self">self</span>.scratch_fill)<span class="question-mark">?</span>;
 
@@ -910,17 +923,16 @@
 
     <span class="doccomment">/// Simple implementation of pretty formatting
     </span><span class="attr">#[cfg(feature = <span class="string">"tracing"</span>)]
-    </span><span class="kw">fn </span>tracing_field_fmt&lt;I&gt;(
-        f: <span class="kw-2">&amp;mut </span>Formatter&lt;<span class="lifetime">'_</span>&gt;,
+    </span><span class="kw">fn </span>tracing_field_fmt&lt;I, W&gt;(
+        f: <span class="kw-2">&amp;mut </span>W,
         front_lines: <span class="kw-2">&amp;</span>[u8],
         fields: I,
         scratch_fill: usize,
     ) -&gt; fmt::Result
     <span class="kw">where
         </span>I: IntoIterator&lt;Item = char&gt;,
+        W: fmt::Write + <span class="question-mark">?</span>Sized,
     {
-        <span class="kw">use </span>core::fmt::Write;
-
         <span class="kw">let </span><span class="kw-2">mut </span>depth = <span class="number">0</span>;
         <span class="kw">let </span><span class="kw-2">mut </span>in_quote = <span class="bool-val">false</span>;
 
@@ -928,11 +940,11 @@
         <span class="kw">const </span>END_CHARS: [char; <span class="number">3</span>] = [<span class="string">'}'</span>, <span class="string">']'</span>, <span class="string">')'</span>];
         <span class="kw">const </span>ESC: char = <span class="string">'\\'</span>;
 
-        <span class="kw">let </span>push_front = |f: <span class="kw-2">&amp;mut </span><span class="kw">_</span>, depth| {
+        <span class="kw">let </span>push_front = |f: <span class="kw-2">&amp;mut </span>W, depth| {
             <span class="self">Self</span>::write_front_lines(front_lines, f, scratch_fill)<span class="question-mark">?</span>;
-            <span class="macro">write!</span>(f, <span class="string">"│    "</span>)<span class="question-mark">?</span>;
+            f.write_str(<span class="string">"│    "</span>)<span class="question-mark">?</span>;
             <span class="kw">for _ in </span><span class="number">0</span>..depth {
-                <span class="macro">write!</span>(f, <span class="string">"  "</span>)<span class="question-mark">?</span>;
+                f.write_str(<span class="string">"  "</span>)<span class="question-mark">?</span>;
             }
             <span class="prelude-val">Ok</span>(())
         };
@@ -991,9 +1003,10 @@
     }
 
     <span class="attr">#[cfg(feature = <span class="string">"tracing"</span>)]
-    </span><span class="kw">fn </span>tracing(<span class="kw-2">&amp;mut </span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
-        <span class="kw">use </span>core::fmt::Write;
-
+    </span><span class="kw">fn </span>tracing&lt;W&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>W) -&gt; fmt::Result
+    <span class="kw">where
+        </span>W: fmt::Write + <span class="question-mark">?</span>Sized,
+    {
         <span class="kw">if </span>!<span class="self">self</span>.tree.trace_empty() {
             <span class="self">Self</span>::write_front_lines(<span class="self">self</span>.front_lines, f, <span class="self">self</span>.scratch_fill)<span class="question-mark">?</span>;
             <span class="macro">write!</span>(f, <span class="string">"│"</span>)<span class="question-mark">?</span>;
@@ -1082,7 +1095,10 @@
     }
 
     <span class="attr">#[allow(unused_mut)]
-    </span><span class="kw">fn </span>fmt(<span class="kw-2">mut </span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
+    </span><span class="kw">fn </span>fmt&lt;W&gt;(<span class="kw-2">mut </span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>W) -&gt; fmt::Result
+    <span class="kw">where
+        </span>W: fmt::Write + <span class="question-mark">?</span>Sized,
+    {
         <span class="self">self</span>.tree.apply_msg(f)<span class="question-mark">?</span>;
 
         <span class="attr">#[cfg_attr(
