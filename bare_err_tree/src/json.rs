@@ -1,7 +1,5 @@
 //! Error tree output to/from JSON.
 
-extern crate alloc;
-
 use core::{
     borrow::Borrow,
     fmt::{self, Formatter, Write},
@@ -30,7 +28,7 @@ where
 }
 
 /// Custom JSON format outputter
-fn json_fmt<F: fmt::Write>(tree: ErrTree<'_>, formatter: &mut F) -> fmt::Result {
+fn json_fmt<F: fmt::Write>(mut tree: ErrTree<'_>, formatter: &mut F) -> fmt::Result {
     formatter.write_str("{\"msg\":\"")?;
     write!(JsonEscapeFormatter { formatter }, "{}", tree.inner)?;
     formatter.write_char('"')?;
@@ -56,20 +54,15 @@ fn json_fmt<F: fmt::Write>(tree: ErrTree<'_>, formatter: &mut F) -> fmt::Result 
         formatter.write_char(']')?;
     }
 
-    if tree.sources_len() > 0 {
+    if let Some(first_source) = tree.sources.next() {
         formatter.write_str(",\"sources\":[")?;
-        let mut sources = tree
-            .sources()
-            .iter()
-            .flat_map(|source_line| source_line.iter());
-        if let Some(first_source) = sources.next() {
-            let mut res = Ok(());
-            first_source.as_err_tree(&mut |subtree| {
-                res = json_fmt(subtree, formatter);
-            });
-            res?
-        }
-        for source in sources {
+        let mut res = Ok(());
+        first_source.as_err_tree(&mut |subtree| {
+            res = json_fmt(subtree, formatter);
+        });
+        res?;
+
+        for source in tree.sources {
             formatter.write_char(',')?;
             let mut res = Ok(());
             source.as_err_tree(&mut |subtree| {
@@ -164,9 +157,7 @@ where
     write!(
         formatter,
         "{}",
-        ErrTreeFmtWrap::<FRONT_MAX, _> {
-            tree: JsonReconstruct::new(json.as_ref())
-        }
+        ErrTreeFmtWrap::<FRONT_MAX, _>::new(JsonReconstruct::new(json.as_ref()))
     )?;
     Ok(())
 }
@@ -209,7 +200,7 @@ impl<'f> JsonReconstruct<'f> {
                         &sources_start_slice[end_idx + BRACKET_LEN..],
                     )
                 } else {
-                    todo!()
+                    (EMPTY_STR, EMPTY_STR, EMPTY_STR)
                 }
             } else {
                 (json_body, EMPTY_STR, EMPTY_STR)
@@ -262,16 +253,11 @@ impl<'f> ErrTreeFormattable for JsonReconstruct<'f> {
     }
 
     type Source<'a> = JsonReconstruct<'f>;
-    fn sources_len(&self) -> usize {
-        SourcesIter::new(self.sources).count()
-    }
-
-    #[cfg(feature = "source_line")]
-    fn sources_empty(&self) -> bool {
+    fn sources_empty(&mut self) -> bool {
         SourcesIter::new(self.sources).next().is_none()
     }
 
-    fn apply_to_leading_sources<F>(&self, mut func: F) -> fmt::Result
+    fn apply_to_leading_sources<F>(&mut self, mut func: F) -> fmt::Result
     where
         F: FnMut(Self::Source<'_>) -> fmt::Result,
     {
@@ -285,7 +271,7 @@ impl<'f> ErrTreeFormattable for JsonReconstruct<'f> {
         }
         Ok(())
     }
-    fn apply_to_last_source<F>(&self, mut func: F) -> fmt::Result
+    fn apply_to_last_source<F>(&mut self, mut func: F) -> fmt::Result
     where
         F: FnMut(Self::Source<'_>) -> fmt::Result,
     {

@@ -3,7 +3,7 @@
 [![Docs][PagesStatus]][Docs]
 
 # bare\_err\_tree
-`bare_err_tree` is a `no_std` library to print a standard `Error` with a tree of sources.
+`bare_err_tree` is a `no_std` + no `alloc` library to print a standard `Error` with a tree of sources.
 
 Support for the extra information prints does not change the type or public API (besides a hidden field or deref).
 It is added via macro or manual implementation of the `AsErrTree` trait (see

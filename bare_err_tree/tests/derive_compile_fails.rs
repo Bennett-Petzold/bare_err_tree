@@ -2,7 +2,6 @@
 
 use trybuild::TestCases;
 
-#[cfg(feature = "derive_alloc")]
 #[test]
 fn derive_example() {
     TestCases::new().pass("test_cases/std/src/bin/derive_testing.rs");
@@ -14,7 +13,6 @@ fn false_tree_defs() {
     TestCases::new().compile_fail("test_cases/std/fail_src/false_tree*.rs");
 }
 
-#[cfg(feature = "derive_alloc")]
 #[test]
 fn container_as_err() {
     TestCases::new().compile_fail("test_cases/std/fail_src/container.rs");

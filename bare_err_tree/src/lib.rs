@@ -5,13 +5,13 @@
  */
 
 /*!
-`bare_err_tree` is a `no_std` library to print an [`Error`] with a tree of sources.
+`bare_err_tree` is a `no_std` and no `alloc` library to print an [`Error`] with a tree of sources.
 
-The functionality introduced by this library does not change the type or public
-API beyond a hidden field (when implemented on structs) or deref (when
-implemented via a wrapper).
-It is added via macro or manual implementation of [`AsErrTree`].
-End users can then use [`tree_unwrap`] or [`print_tree`] to get better error output.
+Support for the extra information prints does not change the type or public
+API (besides a hidden field or deref). It is added via macro or manual
+implementation of the [`AsErrTree`] trait. End users can then use
+[`tree_unwrap`] or [`print_tree`] to get better error output, or store as JSON
+for later reconstruction.
 
 If none of the [tracking feature flags](#tracking-feature-flags) are enabled,
 the metadata is set to the [`unit`] type to take zero space.
@@ -21,18 +21,18 @@ Usage of the [`err_tree`] macro incurs a compliation time cost.
 
 # Feature Flags
 * `derive`: Enabled by default, provides [`err_tree`] via proc macro.
-* `derive_alloc`: Allows derive to generate allocating code (e.g. for `Vec`
-    sources).
-* `heap_buffer`: Uses heap to store leading arrows so that `FRONT_MAX` bytes of
-    the stack aren't statically allocated for this purpose.
+* `json`: Allows for storage to/reconstruction from JSON.
+* `heap_buffer`: Uses heap to store so state that `FRONT_MAX` (x3 if tracing
+    is enabled) bytes of the stack aren't statically allocated for this purpose.
+* `boxed`: Boxes the error package. Addresses ballooning from large tracking
+    features. Boxing the error itself is likely more efficient, when available.
 * `unix_color`: Outputs UNIX console codes for emphasis.
 * `anyhow`: Adds implementation for [`anyhow::Error`].
 * `eyre`: Adds implementation for [`eyre::Report`].
-* `json`: Allows for storage to/reconstruction from JSON.
+* `adapt`: Provides a [`std::io::Write`] adapter.
 #### Tracking Feature Flags
 * `source_line`: Tracks the source line of tree errors.
 * `tracing`: Produces a `tracing` backtrace with [`tracing_error`].
-* `boxed_tracing`: `tracing` with a boxed trace.
 
 # Adding [`ErrTree`] Support (Library or Bin)
 Both libraries and binaries can add type support for [`ErrTree`] prints.
@@ -74,22 +74,28 @@ Contributions are welcome at
 
 #![no_std]
 
-#[cfg(any(feature = "heap_buffer", feature = "boxed_tracing"))]
+#[cfg(feature = "adapt")]
+extern crate std;
+
+#[cfg(any(feature = "heap_buffer", feature = "boxed"))]
 extern crate alloc;
 
 #[cfg(feature = "source_line")]
 use core::panic::Location;
 
 use core::{
-    borrow::Borrow,
     error::Error,
     fmt::{self},
 };
 
 mod pkg;
 pub use pkg::*;
+pub mod flex;
+pub use flex::*;
 mod fmt_logic;
 use fmt_logic::*;
+mod buffer;
+use buffer::*;
 
 #[cfg(feature = "json")]
 mod json;
@@ -113,20 +119,19 @@ pub use bare_err_tree_proc::*;
 /// multiple sources ([`Error::source`] is designed around a single error
 /// source).
 #[track_caller]
-pub fn tree_unwrap<const FRONT_MAX: usize, T, E, S>(res: Result<T, S>) -> T
+pub fn tree_unwrap<const FRONT_MAX: usize, T, E>(res: Result<T, E>) -> T
 where
-    S: Borrow<E>,
-    E: AsErrTree + ?Sized,
+    E: AsErrTree,
 {
     match res {
         Ok(x) => x,
         Err(tree) => {
             let loc = core::panic::Location::caller();
-            tree.borrow().as_err_tree(&mut |tree| {
+            tree.as_err_tree(&mut |tree| {
                 panic!(
                     "Panic origin at: {:#?}\n{}",
                     loc,
-                    ErrTreeFmtWrap::<FRONT_MAX, _> { tree }
+                    ErrTreeFmtWrap::<FRONT_MAX, _>::new(tree)
                 )
             });
             unreachable!()
@@ -147,21 +152,106 @@ where
 /// The derive macros for [`ErrTree`] track extra information and handle
 /// multiple sources ([`Error::source`] is designed around a single error
 /// source).
+///
+/// ```rust
+/// # use std::{
+/// #   panic::Location,
+/// #   error::Error,
+/// #   fmt::{self, Write, Display, Formatter},
+/// #   string::String,
+/// #   io::self,
+/// # };
+/// use bare_err_tree::{AsErrTree, print_tree};
+///
+/// const PRINT_SIZE: usize = 60;
+///
+/// fn sized_print<E, F>(tree: E, formatter: F) -> fmt::Result
+/// where
+///     E: AsErrTree,
+///     F: fmt::Write,
+/// {
+///     print_tree::<PRINT_SIZE, _, _>(tree, formatter)
+/// }
+///
+/// fn io_as_tree() {
+///     let mut out = String::new();
+///     sized_print(&io::Error::last_os_error() as &dyn Error, &mut out).unwrap();
+///     println!("{out}");
+/// }
+/// ```
 #[track_caller]
-pub fn print_tree<const FRONT_MAX: usize, E, S, F>(
-    tree: S,
-    formatter: &mut F,
-) -> Result<(), fmt::Error>
+pub fn print_tree<const FRONT_MAX: usize, E, F>(tree: E, mut formatter: F) -> fmt::Result
 where
-    S: Borrow<E>,
-    E: AsErrTree + ?Sized,
+    E: AsErrTree,
     F: fmt::Write,
 {
     let mut res = Ok(());
-    tree.borrow().as_err_tree(&mut |tree| {
-        res = write!(formatter, "{}", ErrTreeFmtWrap::<FRONT_MAX, _> { tree });
+    tree.as_err_tree(&mut |tree| {
+        res = write!(formatter, "{}", ErrTreeFmtWrap::<FRONT_MAX, _>::new(tree));
     });
     res
+}
+
+#[cfg(feature = "adapt")]
+/// Converts [`std::io::Write`] to [`core::fmt::Write`].
+///
+/// Provided for using [`print_tree`] without a [`std::string::String`] buffer.
+/// This adapter does not call [`flush`][`std::io::Write::flush`], only
+/// [`write_all`][`std::io::Write::write_all`].
+///
+/// ```rust
+/// # use std::{
+/// #   panic::Location,
+/// #   error::Error,
+/// #   fmt::{self, Write, Display, Formatter},
+/// #   io::{self, stdout},
+/// # };
+/// use bare_err_tree::{AdaptWrite, AsErrTree, print_tree};
+///
+/// const PRINT_SIZE: usize = 60;
+///
+/// fn sized_print<E, F>(tree: E, formatter: F) -> fmt::Result
+/// where
+///     E: AsErrTree,
+///     F: fmt::Write,
+/// {
+///     print_tree::<PRINT_SIZE, _, _>(tree, formatter)
+/// }
+///
+/// fn io_as_tree() {
+///     let mut out = AdaptWrite(stdout());
+///     sized_print(&io::Error::last_os_error() as &dyn Error, &mut out).unwrap();
+///     out.flush().unwrap();
+/// }
+/// ```
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct AdaptWrite<W>(pub W);
+
+#[cfg(feature = "adapt")]
+impl<W> From<W> for AdaptWrite<W> {
+    fn from(value: W) -> Self {
+        Self(value)
+    }
+}
+
+#[cfg(feature = "adapt")]
+impl<W> core::fmt::Write for AdaptWrite<W>
+where
+    W: std::io::Write,
+{
+    fn write_str(&mut self, s: &str) -> fmt::Result {
+        self.0.write_all(s.as_bytes()).map_err(|_| fmt::Error)
+    }
+}
+
+#[cfg(feature = "adapt")]
+impl<W> AdaptWrite<W>
+where
+    W: std::io::Write,
+{
+    pub fn flush(&mut self) -> std::io::Result<()> {
+        self.0.flush()
+    }
 }
 
 /// Intermediate struct for printing created by [`AsErrTree`].
@@ -181,7 +271,7 @@ where
 /// #   error::Error,
 /// #   fmt::{Display, Formatter},
 /// # };
-/// use bare_err_tree::{ErrTree, ErrTreePkg, AsErrTree};
+/// use bare_err_tree::{ErrTree, ErrTreePkg, AsErrTree, ErrTreeConv};
 ///
 /// #[derive(Debug)]
 /// pub struct HighLevelIo {
@@ -201,11 +291,13 @@ where
 ///
 /// impl AsErrTree for HighLevelIo {
 ///     fn as_err_tree(&self, func: &mut dyn FnMut(ErrTree<'_>)) {
-///         // Cast to AsErrTree via Error
-///         let source = &(&self.source as &dyn Error) as &dyn AsErrTree;
+///         // Cast to ErrTree adapter via Error
+///         let source = ErrTreeConv::from(&self.source as &dyn Error);
+///         // Convert to a single item iterator
+///         let source_iter = &mut core::iter::once(source);
 ///
 ///         // Call the formatting function
-///         (func)(ErrTree::with_pkg(self, &[&[source]], &self._pkg));
+///         (func)(ErrTree::with_pkg(self, source_iter, &self._pkg));
 ///     }
 /// }
 ///
@@ -223,10 +315,9 @@ where
 ///     # }
 /// }
 /// ```
-#[derive(Clone)]
 pub struct ErrTree<'a> {
     inner: &'a dyn Error,
-    sources: &'a [&'a [&'a dyn AsErrTree]],
+    sources: IterBuffer<&'a mut dyn Iterator<Item = ErrTreeConv<'a>>>,
     #[cfg(feature = "source_line")]
     location: Option<&'a Location<'a>>,
     #[cfg(feature = "tracing")]
@@ -237,26 +328,27 @@ impl<'a> ErrTree<'a> {
     /// Common constructor, with metadata.
     pub fn with_pkg(
         inner: &'a dyn Error,
-        sources: &'a [&[&dyn AsErrTree]],
+        sources: &'a mut dyn Iterator<Item = ErrTreeConv<'a>>,
         #[allow(unused)] pkg: &'a ErrTreePkg,
     ) -> Self {
         Self {
             inner,
-            sources,
+            sources: sources.into(),
             #[cfg(feature = "source_line")]
-            location: Some(pkg.location),
-            #[cfg(all(feature = "tracing", not(feature = "boxed_tracing")))]
-            trace: Some(&pkg.trace),
-            #[cfg(feature = "boxed_tracing")]
-            trace: Some(&*pkg.trace),
+            location: Some(pkg.location()),
+            #[cfg(feature = "tracing")]
+            trace: Some(pkg.trace()),
         }
     }
 
     /// Constructor for when metadata needs to be hidden.
-    pub fn no_pkg(inner: &'a dyn Error, sources: &'a [&[&dyn AsErrTree]]) -> Self {
+    pub fn no_pkg(
+        inner: &'a dyn Error,
+        sources: &'a mut dyn Iterator<Item = ErrTreeConv<'a>>,
+    ) -> Self {
         Self {
             inner,
-            sources,
+            sources: sources.into(),
             #[cfg(feature = "source_line")]
             location: None,
             #[cfg(feature = "tracing")]
@@ -264,7 +356,8 @@ impl<'a> ErrTree<'a> {
         }
     }
 
-    pub fn sources(&self) -> &[&[&dyn AsErrTree]] {
+    /// Consumes this tree to return its sources
+    pub fn sources(self) -> impl Iterator<Item = ErrTreeConv<'a>> {
         self.sources
     }
 }
@@ -288,8 +381,8 @@ pub trait AsErrTree {
 impl AsErrTree for dyn Error {
     fn as_err_tree(&self, func: &mut dyn FnMut(ErrTree<'_>)) {
         match self.source() {
-            Some(e) => (func)(ErrTree::no_pkg(self, &[&[&e as &dyn AsErrTree]])),
-            None => (func)(ErrTree::no_pkg(self, &[])),
+            Some(e) => (func)(ErrTree::no_pkg(self, &mut core::iter::once(e.into()))),
+            None => (func)(ErrTree::no_pkg(self, &mut core::iter::empty())),
         }
     }
 }
@@ -337,8 +430,8 @@ impl<T: ?Sized + AsErrTree> AsErrTree for &T {
 ///         // Equivalent to:
 ///         // (func)(bare_err_tree::ErrTree::with_pkg(
 ///         //     &self,
-///         //     &[&[&(&self.0 as &dyn Error) as &dyn AsErrTree,]]
-///         //     self.1.clone()
+///         //     core::iter::once(bare_err_tree::ErrTreeConv::from(&self.0 as &dyn Error))
+///         //     self.1
 ///         // )
 ///         tree!(dyn, func, self, self.1, &self.0)
 ///     }
@@ -363,14 +456,24 @@ macro_rules! tree {
     (dyn, $func:expr, $inner:expr, $pkg:expr, $( $x:expr ),* ) => {
         ($func)(bare_err_tree::ErrTree::with_pkg(
             &$inner,
-            &[&[ $( &( $x as &dyn core::error::Error ) as &dyn bare_err_tree::AsErrTree , )* ]],
+            &mut core::iter::empty()$( .chain(
+                core::iter::once(
+                    bare_err_tree::ErrTreeConv::from(
+                        &$x as &dyn core::error::Error
+                    )
+                )
+            ) )*,
             &$pkg,
         ))
     };
     ($func:expr, $inner:expr, $pkg:expr, $( $x:expr ),* ) => {
         ($func)(bare_err_tree::ErrTree::with_pkg(
             &$inner,
-            &[&[ $( $x as &dyn bare_err_tree::AsErrTree , )* ]],
+            &mut core::iter::empty()$( .chain(
+                core::iter::once(
+                    bare_err_tree::ErrTreeConv::from($x)
+                )
+            ) )*,
             &$pkg,
         ))
     };

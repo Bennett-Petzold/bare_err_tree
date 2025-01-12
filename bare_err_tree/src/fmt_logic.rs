@@ -5,6 +5,7 @@
  */
 
 use core::{
+    cell::RefCell,
     error::Error,
     fmt::{self, Display, Formatter, Write},
     str::{self, Chars},
@@ -13,12 +14,20 @@ use core::{
 use crate::{AsErrTree, ErrTree};
 
 pub(crate) struct ErrTreeFmtWrap<const FRONT_MAX: usize, T> {
-    pub tree: T,
+    pub tree: RefCell<T>,
+}
+
+impl<const FRONT_MAX: usize, T> ErrTreeFmtWrap<FRONT_MAX, T> {
+    pub fn new(tree: T) -> Self {
+        Self {
+            tree: RefCell::new(tree),
+        }
+    }
 }
 
 impl<const FRONT_MAX: usize, T> Display for ErrTreeFmtWrap<FRONT_MAX, T>
 where
-    for<'a> &'a T: ErrTreeFormattable,
+    for<'a> T: ErrTreeFormattable,
 {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         #[cfg(not(feature = "heap_buffer"))]
@@ -37,7 +46,7 @@ where
             .into_boxed_slice();
 
         ErrTreeFmt::<FRONT_MAX, _> {
-            tree: &self.tree,
+            tree: &mut *self.tree.borrow_mut(),
             scratch_fill: 0,
             front_lines: &mut front_lines,
 
@@ -61,16 +70,14 @@ pub(crate) trait ErrTreeFormattable {
     fn apply_msg(&self, f: &mut Formatter<'_>) -> fmt::Result;
 
     type Source<'a>: ErrTreeFormattable<TraceSpanId = Self::TraceSpanId>;
-    fn sources_len(&self) -> usize;
 
-    fn sources_empty(&self) -> bool {
-        self.sources_len() == 0
-    }
+    #[allow(unused)]
+    fn sources_empty(&mut self) -> bool;
 
-    fn apply_to_leading_sources<F>(&self, func: F) -> fmt::Result
+    fn apply_to_leading_sources<F>(&mut self, func: F) -> fmt::Result
     where
         F: FnMut(Self::Source<'_>) -> fmt::Result;
-    fn apply_to_last_source<F>(&self, func: F) -> fmt::Result
+    fn apply_to_last_source<F>(&mut self, func: F) -> fmt::Result
     where
         F: FnMut(Self::Source<'_>) -> fmt::Result;
 
@@ -91,7 +98,7 @@ pub(crate) trait ErrTreeFormattable {
         F: FnMut(TraceSpan<Self::TraceSpanId, Self::TraceSpanIter<'_>>) -> fmt::Result;
 }
 
-impl<T> ErrTreeFormattable for &T
+impl<T> ErrTreeFormattable for &mut T
 where
     T: ErrTreeFormattable,
 {
@@ -100,16 +107,16 @@ where
     }
 
     type Source<'a> = T::Source<'a>;
-    fn sources_len(&self) -> usize {
-        T::sources_len(self)
+    fn sources_empty(&mut self) -> bool {
+        T::sources_empty(self)
     }
-    fn apply_to_leading_sources<F>(&self, func: F) -> fmt::Result
+    fn apply_to_leading_sources<F>(&mut self, func: F) -> fmt::Result
     where
         F: FnMut(Self::Source<'_>) -> fmt::Result,
     {
         T::apply_to_leading_sources(self, func)
     }
-    fn apply_to_last_source<F>(&self, func: F) -> fmt::Result
+    fn apply_to_last_source<F>(&mut self, func: F) -> fmt::Result
     where
         F: FnMut(Self::Source<'_>) -> fmt::Result,
     {
@@ -148,30 +155,32 @@ impl ErrTreeFormattable for ErrTree<'_> {
     }
 
     type Source<'a> = ErrTree<'a>;
-    fn sources_len(&self) -> usize {
-        self.sources.iter().map(|line| line.len()).sum()
+    fn sources_empty(&mut self) -> bool {
+        self.sources.is_empty()
     }
-    fn apply_to_leading_sources<F>(&self, mut func: F) -> fmt::Result
+    fn apply_to_leading_sources<F>(&mut self, mut func: F) -> fmt::Result
     where
         F: FnMut(Self::Source<'_>) -> fmt::Result,
     {
-        for source in self
-            .sources
-            .iter()
-            .flat_map(|line| line.iter())
-            .take(self.sources_len().saturating_sub(1))
-        {
-            let mut res = Ok(());
-            source.as_err_tree(&mut |tree| res = (func)(tree));
-            res?;
+        if let Some(initial_slice) = self.sources.take_stored_and_next() {
+            let mut initial_iter = initial_slice.as_slice().iter().cloned();
+            if let Some(mut source) = initial_iter.next() {
+                for next_source in initial_iter.chain(self.sources.by_ref()) {
+                    let mut res = Ok(());
+                    source.as_err_tree(&mut |tree| res = (func)(tree));
+                    res?;
+                    source = next_source
+                }
+            }
         }
         Ok(())
     }
-    fn apply_to_last_source<F>(&self, mut func: F) -> fmt::Result
+    fn apply_to_last_source<F>(&mut self, mut func: F) -> fmt::Result
     where
         F: FnMut(Self::Source<'_>) -> fmt::Result,
     {
-        if let Some(source) = self.sources.last().and_then(|line| line.last()) {
+        let _ = self.sources.by_ref().last();
+        if let Some(source) = self.sources.take_stored() {
             let mut res = Ok(());
             source.as_err_tree(&mut |tree| res = (func)(tree));
             res?;
@@ -294,7 +303,7 @@ impl<const FRONT_MAX: usize, T: ErrTreeFormattable> ErrTreeFmt<'_, FRONT_MAX, T>
     }
 
     #[cfg(feature = "source_line")]
-    fn source_line(&self, f: &mut Formatter<'_>, tracing_after: bool) -> fmt::Result {
+    fn source_line(&mut self, f: &mut Formatter<'_>, tracing_after: bool) -> fmt::Result {
         if self.tree.has_source_line() {
             Self::write_front_lines(self.front_lines, f, self.scratch_fill)?;
 

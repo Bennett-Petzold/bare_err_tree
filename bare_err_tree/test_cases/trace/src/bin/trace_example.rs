@@ -50,7 +50,7 @@ fn gen_print_inner() -> String {
     ))
     .into();
     let mut formatted = String::new();
-    print_tree::<60, _, _, _>(fatal, &mut formatted).unwrap();
+    print_tree::<60, _, _>(fatal, &mut formatted).unwrap();
     formatted
 }
 
@@ -112,18 +112,18 @@ struct BedComfy;
 #[derive(Debug, Error, Default)]
 #[error("stayed in bed too long")]
 struct Overslept {
+    #[dyn_err]
+    comfy: BedComfy,
     #[tree_err]
     #[source]
     bed_time: BedTime,
-    #[dyn_err]
-    comfy: BedComfy,
 }
 
 impl Overslept {
     #[track_caller]
     #[tracing::instrument]
     fn new(bed_time: BedTime, _garbage: usize) -> Self {
-        Overslept::_tree(bed_time, BedComfy)
+        Overslept::_tree(BedComfy, bed_time)
     }
 }
 

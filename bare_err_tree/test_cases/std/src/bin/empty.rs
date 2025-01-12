@@ -16,11 +16,7 @@ fn main() {
 fn gen_print() -> String {
     let fatal = Empty;
     let mut formatted = String::new();
-    print_tree::<60, &dyn std::error::Error, _, _>(
-        &fatal as &dyn std::error::Error,
-        &mut formatted,
-    )
-    .unwrap();
+    print_tree::<60, _, _>(&fatal as &dyn std::error::Error, &mut formatted).unwrap();
     formatted
 }
 
