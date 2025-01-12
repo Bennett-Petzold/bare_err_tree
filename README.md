@@ -33,6 +33,24 @@ The JSON output heavily repeats keys and does not deduplicate traces: compressio
 The formatting is borrowed from from [error-stack][ErrorStack].
 Please see the [contributors page](https://github.com/hashintel/hash/graphs/contributors) for appropriate credit.
 
+# Policies
+See [CONTRIBUTING.md][Contributing] for development specific guidance/rules.
+
+## No std/alloc Core
+The library, built with default features, never uses `extern crate std` or `extern crate alloc`.
+Any features that enable either note this in the [crate root][clib].
+
+## Version Compatibility
+[Semantic versioning][semver] is accurately followed.
+Libraries are expected to use depend on the major release (e.g. `version = "1"`)
+with at most the default features.
+This allows binaries to unify and control the `bare_err_tree` feature flags for
+all their dependencies.
+New features are a minor release.
+
+## MSRV
+The `rust-version` is specified in the workspace [Cargo.toml][ctoml] and must be accurate. It can be bumped up to the latest standard rust version whenever a feature is useful. Utilize [Cargo dependecy resolution][cdeps] if you use this library
+
 # Example Output (source\_line)
 Generate with `cd bare_err_tree/test_cases/std; cargo run --bin example`.
 ```
@@ -115,6 +133,12 @@ Generate with `cd bare_err_tree/test_cases/json; cargo run --bin example`.
 [Docs]: https://bennett-petzold.github.io/bare_err_tree/docs/bare_err_tree/
 [Coverage]: https://bennett-petzold.github.io/bare_err_tree/coverage/badge.svg
 [CoveragePages]: https://bennett-petzold.github.io/bare_err_tree/coverage/
+
+[Contributing]: CONTRIBUTING.md
+[ctoml]: Cargo.toml
+[cdeps]: https://doc.rust-lang.org/cargo/reference/resolver.html
+[clib]: bare_err_tree/src/lib.rs
+[semver]: https://semver.org/
 
 [ErrorStack]: https://crates.io/crates/error-stack
 [Eyre]: https://crates.io/crates/eyre

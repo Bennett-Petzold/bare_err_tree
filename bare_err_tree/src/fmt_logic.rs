@@ -6,55 +6,58 @@
 
 use core::{
     cell::RefCell,
-    error::Error,
-    fmt::{self, Display, Formatter, Write},
+    fmt::{self, Display, Formatter},
     str::{self, Chars},
 };
 
 use crate::{AsErrTree, ErrTree};
 
-pub(crate) struct ErrTreeFmtWrap<const FRONT_MAX: usize, T> {
-    pub tree: RefCell<T>,
-}
+pub(crate) struct ErrTreeFmtWrap<const FRONT_MAX: usize, T>(RefCell<T>);
 
 impl<const FRONT_MAX: usize, T> ErrTreeFmtWrap<FRONT_MAX, T> {
     pub fn new(tree: T) -> Self {
-        Self {
-            tree: RefCell::new(tree),
-        }
+        Self(RefCell::new(tree))
     }
 }
 
 impl<const FRONT_MAX: usize, T> Display for ErrTreeFmtWrap<FRONT_MAX, T>
 where
-    for<'a> T: ErrTreeFormattable,
+    T: ErrTreeFormattable,
 {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        #[cfg(not(feature = "heap_buffer"))]
-        let mut front_lines = [0; FRONT_MAX];
-
-        #[cfg(feature = "heap_buffer")]
-        let mut front_lines = alloc::vec![0; FRONT_MAX].into_boxed_slice();
-
-        #[cfg(all(not(feature = "heap_buffer"), feature = "tracing"))]
-        let mut found_traces: [_; FRONT_MAX] = core::array::from_fn(|_| None);
-
-        #[cfg(all(feature = "heap_buffer", feature = "tracing"))]
-        let mut found_traces = core::iter::repeat_with(|| None)
-            .take(FRONT_MAX)
-            .collect::<alloc::vec::Vec<_>>()
-            .into_boxed_slice();
-
-        ErrTreeFmt::<FRONT_MAX, _> {
-            tree: &mut *self.tree.borrow_mut(),
-            scratch_fill: 0,
-            front_lines: &mut front_lines,
-
-            #[cfg(feature = "tracing")]
-            found_traces: &mut found_traces,
-        }
-        .fmt(f)
+        fmt_tree::<FRONT_MAX, _, _>(&mut *self.0.borrow_mut(), f)
     }
+}
+
+pub(crate) fn fmt_tree<const FRONT_MAX: usize, T, W>(tree: T, f: &mut W) -> fmt::Result
+where
+    T: ErrTreeFormattable,
+    W: fmt::Write + ?Sized,
+{
+    #[cfg(not(feature = "heap_buffer"))]
+    let mut front_lines = [0; FRONT_MAX];
+
+    #[cfg(feature = "heap_buffer")]
+    let mut front_lines = alloc::vec![0; FRONT_MAX].into_boxed_slice();
+
+    #[cfg(all(not(feature = "heap_buffer"), feature = "tracing"))]
+    let mut found_traces: [_; FRONT_MAX] = core::array::from_fn(|_| None);
+
+    #[cfg(all(feature = "heap_buffer", feature = "tracing"))]
+    let mut found_traces = core::iter::repeat_with(|| None)
+        .take(FRONT_MAX)
+        .collect::<alloc::vec::Vec<_>>()
+        .into_boxed_slice();
+
+    ErrTreeFmt::<FRONT_MAX, _> {
+        tree,
+        scratch_fill: 0,
+        front_lines: &mut front_lines,
+
+        #[cfg(feature = "tracing")]
+        found_traces: &mut found_traces,
+    }
+    .fmt(f)
 }
 
 #[cfg(feature = "tracing")]
@@ -67,7 +70,7 @@ pub(crate) struct TraceSpan<T: Eq, CharIter> {
 }
 
 pub(crate) trait ErrTreeFormattable {
-    fn apply_msg(&self, f: &mut Formatter<'_>) -> fmt::Result;
+    fn apply_msg<W: fmt::Write + ?Sized>(&self, f: &mut W) -> fmt::Result;
 
     type Source<'a>: ErrTreeFormattable<TraceSpanId = Self::TraceSpanId>;
 
@@ -84,7 +87,7 @@ pub(crate) trait ErrTreeFormattable {
     #[cfg(feature = "source_line")]
     fn has_source_line(&self) -> bool;
     #[cfg(feature = "source_line")]
-    fn apply_source_line(&self, f: &mut Formatter<'_>) -> fmt::Result;
+    fn apply_source_line<W: fmt::Write + ?Sized>(&self, f: &mut W) -> fmt::Result;
 
     #[cfg(feature = "tracing")]
     fn trace_empty(&self) -> bool;
@@ -102,7 +105,7 @@ impl<T> ErrTreeFormattable for &mut T
 where
     T: ErrTreeFormattable,
 {
-    fn apply_msg(&self, f: &mut Formatter<'_>) -> fmt::Result {
+    fn apply_msg<W: fmt::Write + ?Sized>(&self, f: &mut W) -> fmt::Result {
         T::apply_msg(self, f)
     }
 
@@ -128,7 +131,7 @@ where
         T::has_source_line(self)
     }
     #[cfg(feature = "source_line")]
-    fn apply_source_line(&self, f: &mut Formatter<'_>) -> fmt::Result {
+    fn apply_source_line<W: fmt::Write + ?Sized>(&self, f: &mut W) -> fmt::Result {
         T::apply_source_line(self, f)
     }
 
@@ -150,8 +153,8 @@ where
 }
 
 impl ErrTreeFormattable for ErrTree<'_> {
-    fn apply_msg(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        <dyn Error as Display>::fmt(self.inner, f)
+    fn apply_msg<W: fmt::Write + ?Sized>(&self, f: &mut W) -> fmt::Result {
+        write!(f, "{}", self.inner)
     }
 
     type Source<'a> = ErrTree<'a>;
@@ -194,7 +197,7 @@ impl ErrTreeFormattable for ErrTree<'_> {
     }
 
     #[cfg(feature = "source_line")]
-    fn apply_source_line(&self, f: &mut Formatter<'_>) -> fmt::Result {
+    fn apply_source_line<W: fmt::Write + ?Sized>(&self, f: &mut W) -> fmt::Result {
         if let Some(loc) = self.location {
             write!(f, "{}", loc)?;
         }
@@ -273,11 +276,10 @@ const MAX_CELL_LEN: usize = max_const(CONTINUING.len(), DANGLING.len());
 impl<const FRONT_MAX: usize, T: ErrTreeFormattable> ErrTreeFmt<'_, FRONT_MAX, T> {
     /// Preamble arrow connections
     #[inline]
-    fn write_front_lines(
-        front_lines: &[u8],
-        f: &mut Formatter<'_>,
-        scratch_fill: usize,
-    ) -> fmt::Result {
+    fn write_front_lines<W>(front_lines: &[u8], f: &mut W, scratch_fill: usize) -> fmt::Result
+    where
+        W: fmt::Write + ?Sized,
+    {
         let front_lines = str::from_utf8(&front_lines[..scratch_fill])
             .expect("All characters are static and guaranteed to be valid UTF-8");
 
@@ -303,7 +305,10 @@ impl<const FRONT_MAX: usize, T: ErrTreeFormattable> ErrTreeFmt<'_, FRONT_MAX, T>
     }
 
     #[cfg(feature = "source_line")]
-    fn source_line(&mut self, f: &mut Formatter<'_>, tracing_after: bool) -> fmt::Result {
+    fn source_line<W>(&mut self, f: &mut W, tracing_after: bool) -> fmt::Result
+    where
+        W: fmt::Write + ?Sized,
+    {
         if self.tree.has_source_line() {
             Self::write_front_lines(self.front_lines, f, self.scratch_fill)?;
 
@@ -327,17 +332,16 @@ impl<const FRONT_MAX: usize, T: ErrTreeFormattable> ErrTreeFmt<'_, FRONT_MAX, T>
 
     /// Simple implementation of pretty formatting
     #[cfg(feature = "tracing")]
-    fn tracing_field_fmt<I>(
-        f: &mut Formatter<'_>,
+    fn tracing_field_fmt<I, W>(
+        f: &mut W,
         front_lines: &[u8],
         fields: I,
         scratch_fill: usize,
     ) -> fmt::Result
     where
         I: IntoIterator<Item = char>,
+        W: fmt::Write + ?Sized,
     {
-        use core::fmt::Write;
-
         let mut depth = 0;
         let mut in_quote = false;
 
@@ -345,11 +349,11 @@ impl<const FRONT_MAX: usize, T: ErrTreeFormattable> ErrTreeFmt<'_, FRONT_MAX, T>
         const END_CHARS: [char; 3] = ['}', ']', ')'];
         const ESC: char = '\\';
 
-        let push_front = |f: &mut _, depth| {
+        let push_front = |f: &mut W, depth| {
             Self::write_front_lines(front_lines, f, scratch_fill)?;
-            write!(f, "│    ")?;
+            f.write_str("│    ")?;
             for _ in 0..depth {
-                write!(f, "  ")?;
+                f.write_str("  ")?;
             }
             Ok(())
         };
@@ -408,9 +412,10 @@ impl<const FRONT_MAX: usize, T: ErrTreeFormattable> ErrTreeFmt<'_, FRONT_MAX, T>
     }
 
     #[cfg(feature = "tracing")]
-    fn tracing(&mut self, f: &mut Formatter<'_>) -> fmt::Result {
-        use core::fmt::Write;
-
+    fn tracing<W>(&mut self, f: &mut W) -> fmt::Result
+    where
+        W: fmt::Write + ?Sized,
+    {
         if !self.tree.trace_empty() {
             Self::write_front_lines(self.front_lines, f, self.scratch_fill)?;
             write!(f, "│")?;
@@ -499,7 +504,10 @@ impl<const FRONT_MAX: usize, T: ErrTreeFormattable> ErrTreeFmt<'_, FRONT_MAX, T>
     }
 
     #[allow(unused_mut)]
-    fn fmt(mut self, f: &mut Formatter<'_>) -> fmt::Result {
+    fn fmt<W>(mut self, f: &mut W) -> fmt::Result
+    where
+        W: fmt::Write + ?Sized,
+    {
         self.tree.apply_msg(f)?;
 
         #[cfg_attr(
