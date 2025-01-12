@@ -41,7 +41,7 @@ The library, built with default features, never uses `extern crate std` or `exte
 Any features that enable either note this in the [crate root][clib].
 
 ## Version Compatibility
-[Semantic versioning][https://semver.org/] is accurately followed.
+[Semantic versioning][semver] is accurately followed.
 Libraries are expected to use depend on the major release (e.g. `version = "1"`)
 with at most the default features.
 This allows binaries to unify and control the `bare_err_tree` feature flags for

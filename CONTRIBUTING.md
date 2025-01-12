@@ -1,6 +1,6 @@
 # bare\_err\_tree Contributing
 Contributions to this library are welcome!
-See the [policies][Readme] for consumer facing rules.
+See the [policies][Policies] for consumer facing rules.
 
 ## How
 Communicate over GitHub issues and pull requests.
