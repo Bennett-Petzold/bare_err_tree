@@ -7,7 +7,7 @@ use core::{
     str::Chars,
 };
 
-use crate::{AsErrTree, ErrTree, ErrTreeFmtWrap, ErrTreeFormattable};
+use crate::{fmt_tree, AsErrTree, ErrTree, ErrTreeFormattable};
 
 /// Produces JSON to store [`ErrTree`] formatted output.
 ///
@@ -154,12 +154,7 @@ where
     S: AsRef<str>,
     F: fmt::Write,
 {
-    write!(
-        formatter,
-        "{}",
-        ErrTreeFmtWrap::<FRONT_MAX, _>::new(JsonReconstruct::new(json.as_ref()))
-    )?;
-    Ok(())
+    fmt_tree::<FRONT_MAX, _>(JsonReconstruct::new(json.as_ref()), formatter)
 }
 
 const EMPTY_STR: &str = "";
@@ -248,7 +243,7 @@ impl<'f> JsonReconstruct<'f> {
 }
 
 impl<'f> ErrTreeFormattable for JsonReconstruct<'f> {
-    fn apply_msg(&self, f: &mut Formatter<'_>) -> fmt::Result {
+    fn apply_msg(&self, f: &mut dyn fmt::Write) -> fmt::Result {
         apply_json_str(self.msg, f)
     }
 
@@ -286,7 +281,7 @@ impl<'f> ErrTreeFormattable for JsonReconstruct<'f> {
         !self.source_line.is_empty()
     }
     #[cfg(feature = "source_line")]
-    fn apply_source_line(&self, f: &mut Formatter<'_>) -> fmt::Result {
+    fn apply_source_line(&self, f: &mut dyn fmt::Write) -> fmt::Result {
         apply_json_str(self.source_line, f)
     }
 
@@ -572,7 +567,7 @@ impl Iterator for JsonStrChars<'_> {
 
 impl FusedIterator for JsonStrChars<'_> {}
 
-fn apply_json_str<F: fmt::Write>(s: &str, formatter: &mut F) -> fmt::Result {
+fn apply_json_str<F: fmt::Write + ?Sized>(s: &str, formatter: &mut F) -> fmt::Result {
     for c in JsonStrChars::new(s) {
         formatter.write_char(c)?;
     }
