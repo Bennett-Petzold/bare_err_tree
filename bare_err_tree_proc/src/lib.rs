@@ -6,6 +6,8 @@
 
 //! Derive macros for `bare_err_tree`.
 
+#![cfg_attr(docsrs, feature(doc_auto_cfg))]
+
 extern crate proc_macro;
 use core::panic;
 

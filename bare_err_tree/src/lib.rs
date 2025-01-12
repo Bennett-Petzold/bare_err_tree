@@ -73,6 +73,7 @@ Contributions are welcome at
 */
 
 #![no_std]
+#![cfg_attr(docsrs, feature(doc_auto_cfg))]
 
 #[cfg(feature = "adapt")]
 extern crate std;
