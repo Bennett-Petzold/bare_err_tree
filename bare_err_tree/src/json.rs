@@ -253,7 +253,6 @@ impl<'f> ErrTreeFormattable for JsonReconstruct<'f> {
     }
 
     type Source<'a> = JsonReconstruct<'f>;
-    #[cfg(feature = "source_line")]
     fn sources_empty(&mut self) -> bool {
         SourcesIter::new(self.sources).next().is_none()
     }

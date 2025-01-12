@@ -71,7 +71,7 @@ pub(crate) trait ErrTreeFormattable {
 
     type Source<'a>: ErrTreeFormattable<TraceSpanId = Self::TraceSpanId>;
 
-    #[cfg(feature = "source_line")]
+    #[allow(unused)]
     fn sources_empty(&mut self) -> bool;
 
     fn apply_to_leading_sources<F>(&mut self, func: F) -> fmt::Result
@@ -107,7 +107,6 @@ where
     }
 
     type Source<'a> = T::Source<'a>;
-    #[cfg(feature = "source_line")]
     fn sources_empty(&mut self) -> bool {
         T::sources_empty(self)
     }
@@ -156,7 +155,6 @@ impl ErrTreeFormattable for ErrTree<'_> {
     }
 
     type Source<'a> = ErrTree<'a>;
-    #[cfg(feature = "source_line")]
     fn sources_empty(&mut self) -> bool {
         self.sources.is_empty()
     }
