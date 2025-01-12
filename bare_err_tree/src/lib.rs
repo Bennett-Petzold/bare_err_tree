@@ -29,6 +29,7 @@ Usage of the [`err_tree`] macro incurs a compliation time cost.
 * `unix_color`: Outputs UNIX console codes for emphasis.
 * `anyhow`: Adds implementation for [`anyhow::Error`].
 * `eyre`: Adds implementation for [`eyre::Report`].
+* `adapt`: Provides a [`std::io::Write`] adapter.
 #### Tracking Feature Flags
 * `source_line`: Tracks the source line of tree errors.
 * `tracing`: Produces a `tracing` backtrace with [`tracing_error`].
@@ -73,6 +74,9 @@ Contributions are welcome at
 
 #![no_std]
 
+#[cfg(feature = "adapt")]
+extern crate std;
+
 #[cfg(any(feature = "heap_buffer", feature = "boxed"))]
 extern crate alloc;
 
@@ -80,7 +84,6 @@ extern crate alloc;
 use core::panic::Location;
 
 use core::{
-    borrow::Borrow,
     error::Error,
     fmt::{self},
 };
@@ -116,16 +119,15 @@ pub use bare_err_tree_proc::*;
 /// multiple sources ([`Error::source`] is designed around a single error
 /// source).
 #[track_caller]
-pub fn tree_unwrap<const FRONT_MAX: usize, T, E, S>(res: Result<T, S>) -> T
+pub fn tree_unwrap<const FRONT_MAX: usize, T, E>(res: Result<T, E>) -> T
 where
-    S: Borrow<E>,
-    E: AsErrTree + ?Sized,
+    E: AsErrTree,
 {
     match res {
         Ok(x) => x,
         Err(tree) => {
             let loc = core::panic::Location::caller();
-            tree.borrow().as_err_tree(&mut |tree| {
+            tree.as_err_tree(&mut |tree| {
                 panic!(
                     "Panic origin at: {:#?}\n{}",
                     loc,
@@ -156,37 +158,100 @@ where
 /// #   panic::Location,
 /// #   error::Error,
 /// #   fmt::{self, Write, Display, Formatter},
-/// #   io::{self, stdout},
-/// #   borrow::Borrow,
+/// #   string::String,
+/// #   io::self,
 /// # };
 /// use bare_err_tree::{AsErrTree, print_tree};
 ///
 /// const PRINT_SIZE: usize = 60;
 ///
-/// fn sized_print<E, S, F>(tree: S, formatter: &mut F) -> fmt::Result
+/// fn sized_print<E, F>(tree: E, formatter: F) -> fmt::Result
 /// where
-///     S: Borrow<E>,
-///     E: AsErrTree + ?Sized,
+///     E: AsErrTree,
 ///     F: fmt::Write,
 /// {
-///     print_tree::<PRINT_SIZE, _, _, _>(tree, formatter)
+///     print_tree::<PRINT_SIZE, _, _>(tree, formatter)
 /// }
 ///
 /// fn io_as_tree() {
+///     let mut out = String::new();
+///     sized_print(&io::Error::last_os_error() as &dyn Error, &mut out).unwrap();
+///     println!("{out}");
 /// }
 /// ```
 #[track_caller]
-pub fn print_tree<const FRONT_MAX: usize, E, S, F>(tree: S, mut formatter: F) -> fmt::Result
+pub fn print_tree<const FRONT_MAX: usize, E, F>(tree: E, mut formatter: F) -> fmt::Result
 where
-    S: Borrow<E>,
-    E: AsErrTree + ?Sized,
+    E: AsErrTree,
     F: fmt::Write,
 {
     let mut res = Ok(());
-    tree.borrow().as_err_tree(&mut |tree| {
+    tree.as_err_tree(&mut |tree| {
         res = write!(formatter, "{}", ErrTreeFmtWrap::<FRONT_MAX, _>::new(tree));
     });
     res
+}
+
+#[cfg(feature = "adapt")]
+/// Converts [`std::io::Write`] to [`core::fmt::Write`].
+///
+/// Provided for using [`print_tree`] without a [`std::string::String`] buffer.
+/// This adapter does not call [`flush`][`std::io::Write::flush`], only
+/// [`write_all`][`std::io::Write::write_all`].
+///
+/// ```rust
+/// # use std::{
+/// #   panic::Location,
+/// #   error::Error,
+/// #   fmt::{self, Write, Display, Formatter},
+/// #   io::{self, stdout},
+/// # };
+/// use bare_err_tree::{AdaptWrite, AsErrTree, print_tree};
+///
+/// const PRINT_SIZE: usize = 60;
+///
+/// fn sized_print<E, F>(tree: E, formatter: F) -> fmt::Result
+/// where
+///     E: AsErrTree,
+///     F: fmt::Write,
+/// {
+///     print_tree::<PRINT_SIZE, _, _>(tree, formatter)
+/// }
+///
+/// fn io_as_tree() {
+///     let mut out = AdaptWrite(stdout());
+///     sized_print(&io::Error::last_os_error() as &dyn Error, &mut out).unwrap();
+///     out.flush().unwrap();
+/// }
+/// ```
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct AdaptWrite<W>(pub W);
+
+#[cfg(feature = "adapt")]
+impl<W> From<W> for AdaptWrite<W> {
+    fn from(value: W) -> Self {
+        Self(value)
+    }
+}
+
+#[cfg(feature = "adapt")]
+impl<W> core::fmt::Write for AdaptWrite<W>
+where
+    W: std::io::Write,
+{
+    fn write_str(&mut self, s: &str) -> fmt::Result {
+        self.0.write_all(s.as_bytes()).map_err(|_| fmt::Error)
+    }
+}
+
+#[cfg(feature = "adapt")]
+impl<W> AdaptWrite<W>
+where
+    W: std::io::Write,
+{
+    pub fn flush(&mut self) -> std::io::Result<()> {
+        self.0.flush()
+    }
 }
 
 /// Intermediate struct for printing created by [`AsErrTree`].

@@ -22,6 +22,7 @@ anyhow = ["dep:anyhow"]
 eyre = ["dep:eyre"]
 unix_color = []
 json = []
+adapt = []
 
 [dependencies]
 bare_err_tree_proc = { version = "0.4", path = "../bare_err_tree_proc", optional = true }

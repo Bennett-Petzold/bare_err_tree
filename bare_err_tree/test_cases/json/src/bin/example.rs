@@ -6,7 +6,7 @@
 
 use std::fmt::{self, Display, Formatter};
 
-use bare_err_tree::{err_tree, reconstruct_output, tree_to_json};
+use bare_err_tree::{err_tree, tree_to_json};
 use thiserror::Error;
 use tracing_error::ErrorLayer;
 use tracing_subscriber::{field::MakeExt, layer::SubscriberExt};

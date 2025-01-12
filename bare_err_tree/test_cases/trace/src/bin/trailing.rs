@@ -36,7 +36,7 @@ fn gen_print_inner() -> String {
     )))
     .into();
     let mut formatted = String::new();
-    print_tree::<60, _, _, _>(fatal, &mut formatted).unwrap();
+    print_tree::<60, _, _>(fatal, &mut formatted).unwrap();
     formatted
 }
 

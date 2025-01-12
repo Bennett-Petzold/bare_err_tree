@@ -256,7 +256,7 @@ use fields::*;
 ///     let result = always_fail();
 ///
 ///     /// Fancy display panic with a maximum tree depth of 10 errors
-///     tree_unwrap::<MAX_CHARS, _, _, _>(result);
+///     tree_unwrap::<MAX_CHARS, _, _>(result);
 ///     # });
 /// }
 /// ```
