@@ -71,8 +71,8 @@ jobs:
     - uses: taiki-e/install-action@cargo-hack
 
     - run: |
-        cargo hack --each-feature build --ignore-private
-        cargo hack --each-feature test --ignore-private --no-run 
+        cargo hack --each-feature build --ignore-private --frozen
+        cargo hack --each-feature test --ignore-private --no-run --frozen 
 
   # From https://doc.rust-lang.org/cargo/guide/continuous-integration.html#verifying-rust-version
   # See https://crates.io/crates/cargo-hack
@@ -98,7 +98,7 @@ jobs:
     - name: Test for MSRV in Cargo.toml
       run: |
         VERSION="$(cargo metadata --format-version 1 | jq '.packages | .[] | select(.name == "bare_err_tree")| .rust_version' | tr -d '"')"
-        cargo hack check --version-range "$VERSION" --all-targets --all-features --ignore-private
+        cargo hack check --version-range "$VERSION" --all-targets --all-features --ignore-private --frozen
 
   test:
     strategy:
@@ -127,7 +127,7 @@ jobs:
 
     - uses: Swatinem/rust-cache@v2
 
-    - run: cargo test --verbose --all-features
+    - run: cargo test --verbose --all-features --frozen
 
   test-feature-powerset:
     runs-on: ubuntu-latest
@@ -142,5 +142,4 @@ jobs:
     - uses: Swatinem/rust-cache@v2
     - uses: taiki-e/install-action@cargo-hack
 
-    - run: cargo hack test --feature-powerset --skip default,boxed,anyhow,eyre,unix_color
-
+    - run: cargo hack test --feature-powerset --skip default,boxed,anyhow,eyre,unix_color --frozen
