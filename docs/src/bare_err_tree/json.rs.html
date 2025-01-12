@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `bare_err_tree/src/json.rs`."><title>json.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-46132b98.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="bare_err_tree" data-themes="" data-resource-suffix="" data-rustdoc-version="1.86.0-nightly (824759493 2025-01-09)" data-channel="nightly" data-search-js="search-75f5ac3e.js" data-settings-js="settings-0f613d39.js" ><script src="../../static.files/storage-59e33391.js"></script><script defer src="../../static.files/src-script-56102188.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-5f194d8c.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">bare_err_tree/</div>json.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `bare_err_tree/src/json.rs`."><title>json.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-46132b98.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="bare_err_tree" data-themes="" data-resource-suffix="" data-rustdoc-version="1.86.0-nightly (eb54a5083 2025-01-11)" data-channel="nightly" data-search-js="search-75f5ac3e.js" data-settings-js="settings-0f613d39.js" ><script src="../../static.files/storage-59e33391.js"></script><script defer src="../../static.files/src-script-56102188.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-5f194d8c.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">bare_err_tree/</div>json.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
 <a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
@@ -634,25 +634,9 @@
 <a href="#633" id="633">633</a>
 <a href="#634" id="634">634</a>
 <a href="#635" id="635">635</a>
-<a href="#636" id="636">636</a>
-<a href="#637" id="637">637</a>
-<a href="#638" id="638">638</a>
-<a href="#639" id="639">639</a>
-<a href="#640" id="640">640</a>
-<a href="#641" id="641">641</a>
-<a href="#642" id="642">642</a>
-<a href="#643" id="643">643</a>
-<a href="#644" id="644">644</a>
-<a href="#645" id="645">645</a>
-<a href="#646" id="646">646</a>
-<a href="#647" id="647">647</a>
-<a href="#648" id="648">648</a>
-<a href="#649" id="649">649</a>
-<a href="#650" id="650">650</a></pre></div><pre class="rust"><code><span class="doccomment">//! Error tree output to/from JSON.
+<a href="#636" id="636">636</a></pre></div><pre class="rust"><code><span class="doccomment">//! Error tree output to/from JSON.
 
-</span><span class="kw">extern crate </span>alloc;
-
-<span class="kw">use </span>core::{
+</span><span class="kw">use </span>core::{
     borrow::Borrow,
     fmt::{<span class="self">self</span>, Formatter, Write},
     iter::FusedIterator,
@@ -680,7 +664,7 @@
 }
 
 <span class="doccomment">/// Custom JSON format outputter
-</span><span class="kw">fn </span>json_fmt&lt;F: fmt::Write&gt;(tree: ErrTree&lt;<span class="lifetime">'_</span>&gt;, formatter: <span class="kw-2">&amp;mut </span>F) -&gt; fmt::Result {
+</span><span class="kw">fn </span>json_fmt&lt;F: fmt::Write&gt;(<span class="kw-2">mut </span>tree: ErrTree&lt;<span class="lifetime">'_</span>&gt;, formatter: <span class="kw-2">&amp;mut </span>F) -&gt; fmt::Result {
     formatter.write_str(<span class="string">"{\"msg\":\""</span>)<span class="question-mark">?</span>;
     <span class="macro">write!</span>(JsonEscapeFormatter { formatter }, <span class="string">"{}"</span>, tree.inner)<span class="question-mark">?</span>;
     formatter.write_char(<span class="string">'"'</span>)<span class="question-mark">?</span>;
@@ -706,20 +690,15 @@
         formatter.write_char(<span class="string">']'</span>)<span class="question-mark">?</span>;
     }
 
-    <span class="kw">if </span>tree.sources_len() &gt; <span class="number">0 </span>{
+    <span class="kw">if let </span><span class="prelude-val">Some</span>(first_source) = tree.sources.next() {
         formatter.write_str(<span class="string">",\"sources\":["</span>)<span class="question-mark">?</span>;
-        <span class="kw">let </span><span class="kw-2">mut </span>sources = tree
-            .sources()
-            .iter()
-            .flat_map(|source_line| source_line.iter());
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(first_source) = sources.next() {
-            <span class="kw">let </span><span class="kw-2">mut </span>res = <span class="prelude-val">Ok</span>(());
-            first_source.as_err_tree(<span class="kw-2">&amp;mut </span>|subtree| {
-                res = json_fmt(subtree, formatter);
-            });
-            res<span class="question-mark">?
-        </span>}
-        <span class="kw">for </span>source <span class="kw">in </span>sources {
+        <span class="kw">let </span><span class="kw-2">mut </span>res = <span class="prelude-val">Ok</span>(());
+        first_source.as_err_tree(<span class="kw-2">&amp;mut </span>|subtree| {
+            res = json_fmt(subtree, formatter);
+        });
+        res<span class="question-mark">?</span>;
+
+        <span class="kw">for </span>source <span class="kw">in </span>tree.sources {
             formatter.write_char(<span class="string">','</span>)<span class="question-mark">?</span>;
             <span class="kw">let </span><span class="kw-2">mut </span>res = <span class="prelude-val">Ok</span>(());
             source.as_err_tree(<span class="kw-2">&amp;mut </span>|subtree| {
@@ -814,9 +793,7 @@
     <span class="macro">write!</span>(
         formatter,
         <span class="string">"{}"</span>,
-        ErrTreeFmtWrap::&lt;FRONT_MAX, <span class="kw">_</span>&gt; {
-            tree: JsonReconstruct::new(json.as_ref())
-        }
+        ErrTreeFmtWrap::&lt;FRONT_MAX, <span class="kw">_</span>&gt;::new(JsonReconstruct::new(json.as_ref()))
     )<span class="question-mark">?</span>;
     <span class="prelude-val">Ok</span>(())
 }
@@ -859,7 +836,7 @@
                         <span class="kw-2">&amp;</span>sources_start_slice[end_idx + BRACKET_LEN..],
                     )
                 } <span class="kw">else </span>{
-                    <span class="macro">todo!</span>()
+                    (EMPTY_STR, EMPTY_STR, EMPTY_STR)
                 }
             } <span class="kw">else </span>{
                 (json_body, EMPTY_STR, EMPTY_STR)
@@ -912,16 +889,11 @@
     }
 
     <span class="kw">type </span>Source&lt;<span class="lifetime">'a</span>&gt; = JsonReconstruct&lt;<span class="lifetime">'f</span>&gt;;
-    <span class="kw">fn </span>sources_len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
-        SourcesIter::new(<span class="self">self</span>.sources).count()
-    }
-
-    <span class="attr">#[cfg(feature = <span class="string">"source_line"</span>)]
-    </span><span class="kw">fn </span>sources_empty(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+    <span class="kw">fn </span>sources_empty(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; bool {
         SourcesIter::new(<span class="self">self</span>.sources).next().is_none()
     }
 
-    <span class="kw">fn </span>apply_to_leading_sources&lt;F&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw-2">mut </span>func: F) -&gt; fmt::Result
+    <span class="kw">fn </span>apply_to_leading_sources&lt;F&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, <span class="kw-2">mut </span>func: F) -&gt; fmt::Result
     <span class="kw">where
         </span>F: FnMut(<span class="self">Self</span>::Source&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result,
     {
@@ -935,7 +907,7 @@
         }
         <span class="prelude-val">Ok</span>(())
     }
-    <span class="kw">fn </span>apply_to_last_source&lt;F&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw-2">mut </span>func: F) -&gt; fmt::Result
+    <span class="kw">fn </span>apply_to_last_source&lt;F&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, <span class="kw-2">mut </span>func: F) -&gt; fmt::Result
     <span class="kw">where
         </span>F: FnMut(<span class="self">Self</span>::Source&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result,
     {
