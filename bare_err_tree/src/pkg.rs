@@ -30,8 +30,10 @@ use alloc::boxed::Box;
 #[derive(Clone)]
 pub struct ErrTreePkg {
     #[cfg(not(feature = "boxed"))]
+    #[allow(dead_code)]
     inner: InnerErrTreePkg,
     #[cfg(feature = "boxed")]
+    #[allow(dead_code)]
     inner: Box<InnerErrTreePkg>,
 }
 

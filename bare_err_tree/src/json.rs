@@ -2,7 +2,7 @@
 
 use core::{
     borrow::Borrow,
-    fmt::{self, Formatter, Write},
+    fmt::{self, Write},
     iter::FusedIterator,
     str::Chars,
 };
@@ -154,7 +154,7 @@ where
     S: AsRef<str>,
     F: fmt::Write,
 {
-    fmt_tree::<FRONT_MAX, _>(JsonReconstruct::new(json.as_ref()), formatter)
+    fmt_tree::<FRONT_MAX, _, _>(JsonReconstruct::new(json.as_ref()), formatter)
 }
 
 const EMPTY_STR: &str = "";
@@ -243,7 +243,7 @@ impl<'f> JsonReconstruct<'f> {
 }
 
 impl<'f> ErrTreeFormattable for JsonReconstruct<'f> {
-    fn apply_msg(&self, f: &mut dyn fmt::Write) -> fmt::Result {
+    fn apply_msg<W: fmt::Write + ?Sized>(&self, f: &mut W) -> fmt::Result {
         apply_json_str(self.msg, f)
     }
 
@@ -281,7 +281,7 @@ impl<'f> ErrTreeFormattable for JsonReconstruct<'f> {
         !self.source_line.is_empty()
     }
     #[cfg(feature = "source_line")]
-    fn apply_source_line(&self, f: &mut dyn fmt::Write) -> fmt::Result {
+    fn apply_source_line<W: fmt::Write + ?Sized>(&self, f: &mut W) -> fmt::Result {
         apply_json_str(self.source_line, f)
     }
 

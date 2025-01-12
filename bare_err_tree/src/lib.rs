@@ -187,7 +187,7 @@ where
 {
     let mut res = Ok(());
     tree.as_err_tree(&mut |tree| {
-        res = fmt_tree::<FRONT_MAX, _>(tree, &mut formatter);
+        res = fmt_tree::<FRONT_MAX, _, _>(tree, &mut formatter);
     });
     res
 }
