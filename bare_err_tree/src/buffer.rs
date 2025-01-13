@@ -35,11 +35,6 @@ where
         self.buffer = Some(self.iter.next()?);
         self.buffer.clone()
     }
-
-    fn nth(&mut self, n: usize) -> Option<Self::Item> {
-        self.buffer = self.iter.nth(n);
-        self.buffer.clone()
-    }
 }
 
 impl<I> FusedIterator for IterBuffer<I> where I: Iterator<Item: Clone> + FusedIterator {}
@@ -49,12 +44,7 @@ where
     I: Iterator<Item: Clone> + ExactSizeIterator,
 {
     fn len(&self) -> usize {
-        let underlying_len = self.iter.len();
-        if underlying_len > 0 && self.buffer.is_some() {
-            underlying_len + 1
-        } else {
-            underlying_len
-        }
+        self.iter.len()
     }
 }
 

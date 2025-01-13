@@ -7,6 +7,7 @@
 //! Derive macros for `bare_err_tree`.
 
 #![cfg_attr(docsrs, feature(doc_auto_cfg))]
+#![cfg_attr(coverage, feature(coverage_attribute))]
 
 extern crate proc_macro;
 use core::panic;
@@ -46,6 +47,7 @@ use fields::*;
 ///
 /// #### Example
 /// ```
+/// # #![cfg_attr(coverage, feature(coverage_attribute))]
 /// # use std::{error::Error, fmt::{self, Debug, Display, Formatter}};
 /// use bare_err_tree::{err_tree, tree_unwrap};
 ///
@@ -56,6 +58,7 @@ use fields::*;
 /// }
 ///
 /// impl Foo {
+/// #   #[cfg_attr(coverage, coverage(off))]
 ///     #[track_caller]
 ///     pub fn new(num: i32) -> Self {
 ///         Foo::_tree(num)
@@ -63,6 +66,7 @@ use fields::*;
 /// }
 ///
 /// impl Error for Foo {
+/// #   #[cfg_attr(coverage, coverage(off))]
 ///     fn source(&self) -> Option<&(dyn Error + 'static)> {
 ///         # /*
 ///         ...
@@ -71,6 +75,7 @@ use fields::*;
 ///     }
 /// }
 /// impl Display for Foo {
+/// #   #[cfg_attr(coverage, coverage(off))]
 ///     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
 ///         # /*
 ///         ...
@@ -99,6 +104,7 @@ use fields::*;
 ///
 /// #### Example
 /// ```
+/// # #![cfg_attr(coverage, feature(coverage_attribute))]
 /// # use std::{any::Any, error::Error, fmt::{self, Debug, Display, Formatter}};
 /// use bare_err_tree::{err_tree, tree_unwrap, AsErrTree, ErrTree};
 ///
@@ -112,6 +118,7 @@ use fields::*;
 /// }
 ///
 /// impl Foo {
+/// #   #[cfg_attr(coverage, coverage(off))]
 ///     #[track_caller]
 ///     pub fn new(io_err: std::io::Error, extra_io_errs: [std::io::Error; 5]) -> Self {
 ///         Foo::_tree(io_err, extra_io_errs)
@@ -119,6 +126,7 @@ use fields::*;
 /// }
 ///
 /// impl Error for Foo {
+/// #   #[cfg_attr(coverage, coverage(off))]
 ///     fn source(&self) -> Option<&(dyn Error + 'static)> {
 ///         # /*
 ///         ...
@@ -127,6 +135,7 @@ use fields::*;
 ///     }
 /// }
 /// impl Display for Foo {
+/// #   #[cfg_attr(coverage, coverage(off))]
 ///     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
 ///         # /*
 ///         ...
@@ -166,6 +175,7 @@ use fields::*;
 ///
 /// #### Enum Example
 /// ```
+/// # #![cfg_attr(coverage, feature(coverage_attribute))]
 /// # use std::{error::Error, fmt::{self, Debug, Display, Formatter}};
 /// use bare_err_tree::{err_tree, tree_unwrap};
 ///
@@ -181,6 +191,7 @@ use fields::*;
 /// }
 ///
 /// impl<T: Debug> Error for Foo<T> {
+/// #   #[cfg_attr(coverage, coverage(off))]
 ///     fn source(&self) -> Option<&(dyn Error + 'static)> {
 ///         # /*
 ///         ...
@@ -189,6 +200,7 @@ use fields::*;
 ///     }
 /// }
 /// impl<T: Debug> Display for Foo<T> {
+/// #   #[cfg_attr(coverage, coverage(off))]
 ///     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
 ///         # /*
 ///         ...

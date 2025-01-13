@@ -18,15 +18,13 @@ use crate::{AsErrTree, ErrTree};
 /// ```rust
 /// use bare_err_tree::{WrapErr, AsErrTree};
 ///
-/// fn as_dyn() {
-///     let err = std::io::Error::last_os_error();
-///     let err_ref = &err;
+/// let err = std::io::Error::last_os_error();
+/// let err_ref = &err;
 ///
-///     let wrapped = WrapErr::wrap(err_ref);
-///     let as_dyn = wrapped as &dyn AsErrTree;
+/// let wrapped = WrapErr::wrap(err_ref);
+/// let as_dyn = wrapped as &dyn AsErrTree;
 ///
-///     let alt_dyn = WrapErr::tree(err_ref);
-/// }
+/// let alt_dyn = WrapErr::tree(err_ref);
 /// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(transparent)]

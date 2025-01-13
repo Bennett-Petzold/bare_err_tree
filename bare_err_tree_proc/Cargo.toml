@@ -11,6 +11,9 @@ categories.workspace = true
 keywords.workspace = true
 readme.workspace = true
 
+[lints]
+workspace = true
+
 [features]
 default = []
 

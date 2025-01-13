@@ -12,3 +12,6 @@ license = "MPL-2.0"
 categories = ["no-std::no-alloc", "development-tools::debugging", "rust-patterns"]
 keywords = ["error", "tree", "printing"]
 readme = "README.md"
+
+[workspace.lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(coverage, coverage_nightly)'] }
