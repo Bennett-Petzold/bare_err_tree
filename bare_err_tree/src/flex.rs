@@ -8,41 +8,56 @@ use core::error::Error;
 
 use crate::{AsErrTree, ErrTree};
 
-/// Unifies both `AsErrTree` and `dyn Error` implementors into one type.
+/// Provides a default [`AsErrTree`] for arbitrary [`Error`]s.
 ///
-/// Solves lifetime problems that blocked a zero-allocation macro.
-#[derive(Clone, Copy)]
-pub enum ErrTreeConv<'a> {
-    Tree(&'a dyn AsErrTree),
-    Err(&'a dyn Error),
-}
+/// The primary purpose of this type is to enable `&E` to have a
+/// `&dyn AsErrTree` cast without an intermediate `&dyn Error` and without
+/// an [`AsErrTree`] blanket impl. This requires an unsafe cast via the
+/// transparent repr guarantees.
+///
+/// ```rust
+/// use bare_err_tree::{WrapErr, AsErrTree};
+///
+/// fn as_dyn() {
+///     let err = std::io::Error::last_os_error();
+///     let err_ref = &err;
+///
+///     let wrapped = WrapErr::wrap(err_ref);
+///     let as_dyn = wrapped as &dyn AsErrTree;
+///
+///     let alt_dyn = WrapErr::tree(err_ref);
+/// }
+/// ```
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[repr(transparent)]
+pub struct WrapErr<E: Error + ?Sized>(pub E);
 
-impl<'a> From<&'a dyn AsErrTree> for ErrTreeConv<'a> {
-    fn from(value: &'a dyn AsErrTree) -> Self {
-        Self::Tree(value)
+impl<E: Error + ?Sized> From<&E> for &WrapErr<E> {
+    fn from(value: &E) -> Self {
+        unsafe { &*(value as *const E as *const WrapErr<E>) }
     }
 }
 
-impl<'a> From<&'a dyn Error> for ErrTreeConv<'a> {
-    fn from(value: &'a dyn Error) -> Self {
-        Self::Err(value)
+impl<E: Error + ?Sized> WrapErr<E> {
+    pub fn wrap(err: &E) -> &Self {
+        err.into()
     }
 }
 
-impl<'a, T: AsErrTree> From<&'a T> for ErrTreeConv<'a> {
-    fn from(value: &'a T) -> Self {
-        Self::Tree(value)
+impl<E: Error> WrapErr<E> {
+    pub fn tree(err: &E) -> &dyn AsErrTree {
+        Self::wrap(err) as &dyn AsErrTree
     }
 }
 
-impl AsErrTree for ErrTreeConv<'_> {
-    fn as_err_tree(&self, func: &mut dyn FnMut(crate::ErrTree<'_>)) {
-        match self {
-            Self::Tree(x) => x.as_err_tree(func),
-            Self::Err(x) => match x.source() {
-                Some(e) => (func)(ErrTree::no_pkg(x, &mut core::iter::once(e.into()))),
-                None => (func)(ErrTree::no_pkg(x, &mut core::iter::empty())),
-            },
-        };
+impl<E: Error> AsErrTree for WrapErr<E> {
+    fn as_err_tree(&self, func: &mut dyn FnMut(ErrTree<'_>)) {
+        match self.0.source() {
+            Some(e) => (func)(ErrTree::no_pkg(
+                &self.0,
+                &mut core::iter::once(&e as &dyn AsErrTree),
+            )),
+            None => (func)(ErrTree::no_pkg(&self.0, &mut core::iter::empty())),
+        }
     }
 }

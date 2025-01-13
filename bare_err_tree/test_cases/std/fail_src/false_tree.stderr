@@ -1,12 +1,13 @@
 error[E0277]: the trait bound `std::io::Error: AsErrTree` is not satisfied
   --> test_cases/std/fail_src/false_tree.rs:20:5
    |
-20 |     #[tree_err]
-   |     ^ the trait `AsErrTree` is not implemented for `std::io::Error`, which is required by `ErrTreeConv<'_>: From<&std::io::Error>`
+20 | /     #[tree_err]
+21 | |     err: std::io::Error,
+   | |_______^ the trait `AsErrTree` is not implemented for `std::io::Error`
    |
    = help: the following other types implement trait `AsErrTree`:
              &T
              (dyn std::error::Error + 'static)
              ErrStruct
-             ErrTreeConv<'_>
-   = note: required for `ErrTreeConv<'_>` to implement `From<&std::io::Error>`
+             WrapErr<E>
+   = note: required for the cast from `&std::io::Error` to `&dyn AsErrTree`
