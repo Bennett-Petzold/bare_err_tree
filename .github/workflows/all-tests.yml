@@ -143,3 +143,23 @@ jobs:
     - uses: taiki-e/install-action@cargo-hack
 
     - run: cargo hack test --feature-powerset --skip default,boxed,anyhow,eyre,unix_color --locked
+
+  test-feature-powerset-miri:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    environment:
+      name: ${{ github.ref_name != 'main' && 'testing' || 'unrestricted' }}
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - uses: Swatinem/rust-cache@v2
+    - name: Install Miri
+      run: |
+          rustup toolchain install nightly --component miri
+          rustup override set nightly
+          cargo miri setup
+    - uses: taiki-e/install-action@cargo-hack
+
+    - run: cargo hack miri test --feature-powerset --skip default,boxed,anyhow,eyre,unix_color,tracing --locked

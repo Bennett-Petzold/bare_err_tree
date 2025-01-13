@@ -56,21 +56,12 @@ mod example {
 
         assert_eq!(gen_print(), expected_json);
 
-        for (expect, real) in reconstruct(&gen_print())
-            .lines()
-            .zip(expected_lines.lines())
-        {
-            assert_eq!(expect, real);
-            println!("{real}");
-        }
-
         assert_eq!(reconstruct(&gen_print()), expected_lines);
     }
 }
 
 mod json_escapes {
     use core::error::Error;
-    use std::println;
 
     use bare_err_tree::{reconstruct_output, tree_to_json};
     use thiserror::Error;
