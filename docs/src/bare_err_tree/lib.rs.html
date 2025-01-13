@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `bare_err_tree/src/lib.rs`."><title>lib.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-46132b98.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="bare_err_tree" data-themes="" data-resource-suffix="" data-rustdoc-version="1.86.0-nightly (eb54a5083 2025-01-11)" data-channel="nightly" data-search-js="search-75f5ac3e.js" data-settings-js="settings-0f613d39.js" ><script src="../../static.files/storage-59e33391.js"></script><script defer src="../../static.files/src-script-56102188.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-5f194d8c.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">bare_err_tree/</div>lib.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `bare_err_tree/src/lib.rs`."><title>lib.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-46132b98.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="bare_err_tree" data-themes="" data-resource-suffix="" data-rustdoc-version="1.86.0-nightly (48a426eca 2025-01-12)" data-channel="nightly" data-search-js="search-75f5ac3e.js" data-settings-js="settings-0f613d39.js" ><script src="../../static.files/storage-59e33391.js"></script><script defer src="../../static.files/src-script-56102188.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-5f194d8c.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">bare_err_tree/</div>lib.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
 <a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
@@ -478,8 +478,7 @@
 <a href="#477" id="477">477</a>
 <a href="#478" id="478">478</a>
 <a href="#479" id="479">479</a>
-<a href="#480" id="480">480</a>
-<a href="#481" id="481">481</a></pre></div><pre class="rust"><code><span class="comment">/*
+<a href="#480" id="480">480</a></pre></div><pre class="rust"><code><span class="comment">/*
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
@@ -753,7 +752,7 @@ Contributions are welcome at
 /// #   error::Error,
 /// #   fmt::{Display, Formatter},
 /// # };
-/// use bare_err_tree::{ErrTree, ErrTreePkg, AsErrTree, ErrTreeConv};
+/// use bare_err_tree::{ErrTree, ErrTreePkg, AsErrTree, WrapErr};
 ///
 /// #[derive(Debug)]
 /// pub struct HighLevelIo {
@@ -774,7 +773,7 @@ Contributions are welcome at
 /// impl AsErrTree for HighLevelIo {
 ///     fn as_err_tree(&amp;self, func: &amp;mut dyn FnMut(ErrTree&lt;'_&gt;)) {
 ///         // Cast to ErrTree adapter via Error
-///         let source = ErrTreeConv::from(&amp;self.source as &amp;dyn Error);
+///         let source = WrapErr::tree(&amp;self.source);
 ///         // Convert to a single item iterator
 ///         let source_iter = &amp;mut core::iter::once(source);
 ///
@@ -799,7 +798,7 @@ Contributions are welcome at
 /// ```
 </span><span class="kw">pub struct </span>ErrTree&lt;<span class="lifetime">'a</span>&gt; {
     inner: <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw">dyn </span>Error,
-    sources: IterBuffer&lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span><span class="kw">dyn </span>Iterator&lt;Item = ErrTreeConv&lt;<span class="lifetime">'a</span>&gt;&gt;&gt;,
+    sources: IterBuffer&lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span><span class="kw">dyn </span>Iterator&lt;Item = <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw">dyn </span>AsErrTree&gt;&gt;,
     <span class="attr">#[cfg(feature = <span class="string">"source_line"</span>)]
     </span>location: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span>Location&lt;<span class="lifetime">'a</span>&gt;&gt;,
     <span class="attr">#[cfg(feature = <span class="string">"tracing"</span>)]
@@ -810,7 +809,7 @@ Contributions are welcome at
     <span class="doccomment">/// Common constructor, with metadata.
     </span><span class="kw">pub fn </span>with_pkg(
         inner: <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw">dyn </span>Error,
-        sources: <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span><span class="kw">dyn </span>Iterator&lt;Item = ErrTreeConv&lt;<span class="lifetime">'a</span>&gt;&gt;,
+        sources: <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span><span class="kw">dyn </span>Iterator&lt;Item = <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw">dyn </span>AsErrTree&gt;,
         <span class="attr">#[allow(unused)] </span>pkg: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>ErrTreePkg,
     ) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
@@ -826,7 +825,7 @@ Contributions are welcome at
     <span class="doccomment">/// Constructor for when metadata needs to be hidden.
     </span><span class="kw">pub fn </span>no_pkg(
         inner: <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw">dyn </span>Error,
-        sources: <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span><span class="kw">dyn </span>Iterator&lt;Item = ErrTreeConv&lt;<span class="lifetime">'a</span>&gt;&gt;,
+        sources: <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span><span class="kw">dyn </span>Iterator&lt;Item = <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw">dyn </span>AsErrTree&gt;,
     ) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             inner,
@@ -839,7 +838,7 @@ Contributions are welcome at
     }
 
     <span class="doccomment">/// Consumes this tree to return its sources
-    </span><span class="kw">pub fn </span>sources(<span class="self">self</span>) -&gt; <span class="kw">impl </span>Iterator&lt;Item = ErrTreeConv&lt;<span class="lifetime">'a</span>&gt;&gt; {
+    </span><span class="kw">pub fn </span>sources(<span class="self">self</span>) -&gt; <span class="kw">impl </span>Iterator&lt;Item = <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw">dyn </span>AsErrTree&gt; {
         <span class="self">self</span>.sources
     }
 }
@@ -863,7 +862,10 @@ Contributions are welcome at
 </span><span class="kw">impl </span>AsErrTree <span class="kw">for dyn </span>Error {
     <span class="kw">fn </span>as_err_tree(<span class="kw-2">&amp;</span><span class="self">self</span>, func: <span class="kw-2">&amp;mut </span><span class="kw">dyn </span>FnMut(ErrTree&lt;<span class="lifetime">'_</span>&gt;)) {
         <span class="kw">match </span><span class="self">self</span>.source() {
-            <span class="prelude-val">Some</span>(e) =&gt; (func)(ErrTree::no_pkg(<span class="self">self</span>, <span class="kw-2">&amp;mut </span>core::iter::once(e.into()))),
+            <span class="prelude-val">Some</span>(e) =&gt; (func)(ErrTree::no_pkg(
+                <span class="self">self</span>,
+                <span class="kw-2">&amp;mut </span>core::iter::once(<span class="kw-2">&amp;</span>e <span class="kw">as </span><span class="kw-2">&amp;</span><span class="kw">dyn </span>AsErrTree),
+            )),
             <span class="prelude-val">None </span>=&gt; (func)(ErrTree::no_pkg(<span class="self">self</span>, <span class="kw-2">&amp;mut </span>core::iter::empty())),
         }
     }
@@ -940,9 +942,7 @@ Contributions are welcome at
             <span class="kw-2">&amp;</span><span class="macro-nonterminal">$inner</span>,
             <span class="kw-2">&amp;mut </span>core::iter::empty()$( .chain(
                 core::iter::once(
-                    bare_err_tree::ErrTreeConv::from(
-                        <span class="kw-2">&amp;</span><span class="macro-nonterminal">$x </span><span class="kw">as </span><span class="kw-2">&amp;</span><span class="kw">dyn </span>core::error::Error
-                    )
+                    bare_err_tree::WrapErr::tree(<span class="kw-2">&amp;</span><span class="macro-nonterminal">$x</span>)
                 )
             ) )<span class="kw-2">*</span>,
             <span class="kw-2">&amp;</span><span class="macro-nonterminal">$pkg</span>,
@@ -952,9 +952,7 @@ Contributions are welcome at
         (<span class="macro-nonterminal">$func</span>)(bare_err_tree::ErrTree::with_pkg(
             <span class="kw-2">&amp;</span><span class="macro-nonterminal">$inner</span>,
             <span class="kw-2">&amp;mut </span>core::iter::empty()$( .chain(
-                core::iter::once(
-                    bare_err_tree::ErrTreeConv::from(<span class="macro-nonterminal">$x</span>)
-                )
+                core::iter::once(<span class="macro-nonterminal">$x</span>)
             ) )<span class="kw-2">*</span>,
             <span class="kw-2">&amp;</span><span class="macro-nonterminal">$pkg</span>,
         ))

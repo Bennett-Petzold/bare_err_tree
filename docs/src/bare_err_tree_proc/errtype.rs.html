@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `bare_err_tree_proc/src/errtype.rs`."><title>errtype.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-46132b98.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="bare_err_tree_proc" data-themes="" data-resource-suffix="" data-rustdoc-version="1.86.0-nightly (eb54a5083 2025-01-11)" data-channel="nightly" data-search-js="search-75f5ac3e.js" data-settings-js="settings-0f613d39.js" ><script src="../../static.files/storage-59e33391.js"></script><script defer src="../../static.files/src-script-56102188.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-5f194d8c.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">bare_err_tree_proc/</div>errtype.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `bare_err_tree_proc/src/errtype.rs`."><title>errtype.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-46132b98.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="bare_err_tree_proc" data-themes="" data-resource-suffix="" data-rustdoc-version="1.86.0-nightly (48a426eca 2025-01-12)" data-channel="nightly" data-search-js="search-75f5ac3e.js" data-settings-js="settings-0f613d39.js" ><script src="../../static.files/storage-59e33391.js"></script><script defer src="../../static.files/src-script-56102188.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-5f194d8c.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">bare_err_tree_proc/</div>errtype.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
 <a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
@@ -245,7 +245,33 @@
 <a href="#244" id="244">244</a>
 <a href="#245" id="245">245</a>
 <a href="#246" id="246">246</a>
-<a href="#247" id="247">247</a></pre></div><pre class="rust"><code><span class="comment">/*
+<a href="#247" id="247">247</a>
+<a href="#248" id="248">248</a>
+<a href="#249" id="249">249</a>
+<a href="#250" id="250">250</a>
+<a href="#251" id="251">251</a>
+<a href="#252" id="252">252</a>
+<a href="#253" id="253">253</a>
+<a href="#254" id="254">254</a>
+<a href="#255" id="255">255</a>
+<a href="#256" id="256">256</a>
+<a href="#257" id="257">257</a>
+<a href="#258" id="258">258</a>
+<a href="#259" id="259">259</a>
+<a href="#260" id="260">260</a>
+<a href="#261" id="261">261</a>
+<a href="#262" id="262">262</a>
+<a href="#263" id="263">263</a>
+<a href="#264" id="264">264</a>
+<a href="#265" id="265">265</a>
+<a href="#266" id="266">266</a>
+<a href="#267" id="267">267</a>
+<a href="#268" id="268">268</a>
+<a href="#269" id="269">269</a>
+<a href="#270" id="270">270</a>
+<a href="#271" id="271">271</a>
+<a href="#272" id="272">272</a>
+<a href="#273" id="273">273</a></pre></div><pre class="rust"><code><span class="comment">/*
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
@@ -288,9 +314,16 @@
         <span class="macro">quote!</span> { <span class="self">self </span>}
     };
 
-    <span class="kw">let </span>conv = |x, span, y| {
+    <span class="kw">let </span>conv = |x, span| {
         <span class="macro">quote_spanned!</span> {
-            span=&gt; <span class="kw">let </span>#x = bare_err_tree::ErrTreeConv::from(&amp; <span class="self">self</span>.#x #y);
+            span=&gt; <span class="kw">let </span>#x = &amp; <span class="self">self</span>.#x <span class="kw">as </span><span class="kw-2">&amp;</span><span class="kw">dyn </span>bare_err_tree::AsErrTree;
+                <span class="kw">let </span>#x = core::iter::once(#x);
+        }
+    };
+
+    <span class="kw">let </span>conv_dyn = |x, span| {
+        <span class="macro">quote_spanned!</span> {
+            span=&gt; <span class="kw">let </span>#x = bare_err_tree::WrapErr::tree(&amp; <span class="self">self</span>.#x);
                 <span class="kw">let </span>#x = core::iter::once(#x);
         }
     };
@@ -298,19 +331,19 @@
     <span class="kw">let </span>conv_dyn_iter = |x, span| {
         <span class="macro">quote_spanned!</span> {
             span=&gt; <span class="kw">let </span>#x = #parent.#x.iter()
-                .map(|x| bare_err_tree::ErrTreeConv::from(x <span class="kw">as </span><span class="kw-2">&amp;</span><span class="kw">dyn </span>core::error::Error));
+                .map(bare_err_tree::WrapErr::tree);
         }
     };
 
     <span class="kw">let </span>conv_iter = |x, span| {
         <span class="macro">quote_spanned!</span> {
-            span=&gt; <span class="kw">let </span>#x = #parent.#x.iter().map(|x| bare_err_tree::ErrTreeConv::from(x));
+            span=&gt; <span class="kw">let </span>#x = #parent.#x.iter().map(|x| x <span class="kw">as </span><span class="kw-2">&amp;</span><span class="kw">dyn </span>bare_err_tree::AsErrTree);
         }
     };
 
     <span class="kw">let </span>gen_vars = errs.iter().map(|err| <span class="kw">match </span>err.var {
-        ErrType::Dyn =&gt; conv(<span class="kw-2">&amp;</span>err.ident, err.span, <span class="macro">quote!</span> {<span class="kw">as </span><span class="kw-2">&amp;</span><span class="kw">dyn </span>core::error::Error}),
-        ErrType::Tree =&gt; conv(<span class="kw-2">&amp;</span>err.ident, err.span, <span class="macro">quote!</span> {}),
+        ErrType::Dyn =&gt; conv_dyn(<span class="kw-2">&amp;</span>err.ident, err.span),
+        ErrType::Tree =&gt; conv(<span class="kw-2">&amp;</span>err.ident, err.span),
         ErrType::DynIter =&gt; conv_dyn_iter(<span class="kw-2">&amp;</span>err.ident, err.span),
         ErrType::TreeIter =&gt; conv_iter(<span class="kw-2">&amp;</span>err.ident, err.span),
     });
@@ -326,30 +359,49 @@
 
 <span class="doccomment">/// Generate the `with_pkg` call on all notated sources in a enum.
 </span><span class="kw">pub fn </span>gen_sources_enum(errs: <span class="kw-2">&amp;</span>[TreeErr], ident: <span class="kw-2">&amp;</span>Ident) -&gt; proc_macro2::TokenStream {
-    <span class="kw">let </span>conv = |x, span, y| {
+    <span class="kw">let </span>conv = |x, span| {
         <span class="macro">quote_spanned!</span> {
             span=&gt; #ident :: #x (x) =&gt; {
-                <span class="kw">let </span>x = bare_err_tree::ErrTreeConv::from(x #y);
+                <span class="kw">let </span>x = x <span class="kw">as </span><span class="kw-2">&amp;</span><span class="kw">dyn </span>bare_err_tree::AsErrTree;
                 <span class="kw">let </span>x = <span class="kw-2">&amp;mut </span>core::iter::once(x);
                 (func)(bare_err_tree::ErrTree::with_pkg(<span class="self">self</span>, x, _err_tree_pkg))
             },
         }
     };
 
-    <span class="kw">let </span>conv_iter = |x, span, y| {
+    <span class="kw">let </span>conv_dyn = |x, span| {
         <span class="macro">quote_spanned!</span> {
             span=&gt; #ident :: #x (x) =&gt; {
-                <span class="kw">let </span>x = <span class="kw-2">&amp;mut </span>x.iter().map(|z| bare_err_tree::ErrTreeConv::from(z #y));
+                <span class="kw">let </span>x = bare_err_tree::WrapErr::tree(x);
+                <span class="kw">let </span>x = <span class="kw-2">&amp;mut </span>core::iter::once(x);
+                (func)(bare_err_tree::ErrTree::with_pkg(<span class="self">self</span>, x, _err_tree_pkg))
+            },
+        }
+    };
+
+    <span class="kw">let </span>conv_iter = |x, span| {
+        <span class="macro">quote_spanned!</span> {
+            span=&gt; #ident :: #x (x) =&gt; {
+                <span class="kw">let </span>x = <span class="kw-2">&amp;mut </span>x.iter().map(|z| z <span class="kw">as </span><span class="kw-2">&amp;</span><span class="kw">dyn </span>AsErrTree);
+                (func)(bare_err_tree::ErrTree::with_pkg(<span class="self">self</span>, x, _err_tree_pkg))
+            }
+        }
+    };
+
+    <span class="kw">let </span>conv_iter_dyn = |x, span| {
+        <span class="macro">quote_spanned!</span> {
+            span=&gt; #ident :: #x (x) =&gt; {
+                <span class="kw">let </span>x = <span class="kw-2">&amp;mut </span>x.iter().map(bare_err_tree::WrapErr::tree);
                 (func)(bare_err_tree::ErrTree::with_pkg(<span class="self">self</span>, x, _err_tree_pkg))
             }
         }
     };
 
     <span class="kw">let </span>gen_arms = errs.iter().map(|err| <span class="kw">match </span>err.var {
-        ErrType::Dyn =&gt; conv(<span class="kw-2">&amp;</span>err.ident, err.span, <span class="macro">quote!</span> {<span class="kw">as </span><span class="kw-2">&amp;</span><span class="kw">dyn </span>core::error::Error}),
-        ErrType::Tree =&gt; conv(<span class="kw-2">&amp;</span>err.ident, err.span, <span class="macro">quote!</span> {}),
-        ErrType::DynIter =&gt; conv_iter(<span class="kw-2">&amp;</span>err.ident, err.span, <span class="macro">quote!</span> {<span class="kw">as </span><span class="kw-2">&amp;</span><span class="kw">dyn </span>core::error::Error}),
-        ErrType::TreeIter =&gt; conv_iter(<span class="kw-2">&amp;</span>err.ident, err.span, <span class="macro">quote!</span> {}),
+        ErrType::Dyn =&gt; conv_dyn(<span class="kw-2">&amp;</span>err.ident, err.span),
+        ErrType::Tree =&gt; conv(<span class="kw-2">&amp;</span>err.ident, err.span),
+        ErrType::DynIter =&gt; conv_iter_dyn(<span class="kw-2">&amp;</span>err.ident, err.span),
+        ErrType::TreeIter =&gt; conv_iter(<span class="kw-2">&amp;</span>err.ident, err.span),
     });
 
     <span class="macro">quote!</span> {

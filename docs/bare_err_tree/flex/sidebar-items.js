@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["ErrTreeConv"]};
+window.SIDEBAR_ITEMS = {"struct":["WrapErr"]};
