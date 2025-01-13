@@ -589,7 +589,8 @@
 <a href="#588" id="588">588</a>
 <a href="#589" id="589">589</a>
 <a href="#590" id="590">590</a>
-<a href="#591" id="591">591</a></pre></div><pre class="rust"><code><span class="comment">/*
+<a href="#591" id="591">591</a>
+<a href="#592" id="592">592</a></pre></div><pre class="rust"><code><span class="comment">/*
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
@@ -852,6 +853,7 @@
 }
 
 <span class="doccomment">/// Workaround for lack of `const` in [`core::cmp::max`].
+</span><span class="attr">#[cfg_attr(coverage, coverage(off))]
 </span><span class="kw">const fn </span>max_const(lhs: usize, rhs: usize) -&gt; usize {
     <span class="kw">if </span>lhs &gt;= rhs {
         lhs

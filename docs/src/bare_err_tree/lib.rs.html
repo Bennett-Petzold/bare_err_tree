@@ -478,7 +478,15 @@
 <a href="#477" id="477">477</a>
 <a href="#478" id="478">478</a>
 <a href="#479" id="479">479</a>
-<a href="#480" id="480">480</a></pre></div><pre class="rust"><code><span class="comment">/*
+<a href="#480" id="480">480</a>
+<a href="#481" id="481">481</a>
+<a href="#482" id="482">482</a>
+<a href="#483" id="483">483</a>
+<a href="#484" id="484">484</a>
+<a href="#485" id="485">485</a>
+<a href="#486" id="486">486</a>
+<a href="#487" id="487">487</a>
+<a href="#488" id="488">488</a></pre></div><pre class="rust"><code><span class="comment">/*
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
@@ -554,6 +562,7 @@ Contributions are welcome at
 
 </span><span class="attr">#![no_std]
 #![cfg_attr(docsrs, feature(doc_auto_cfg))]
+#![cfg_attr(coverage, feature(coverage_attribute))]
 
 #[cfg(feature = <span class="string">"adapt"</span>)]
 </span><span class="kw">extern crate </span>std;
@@ -654,11 +663,9 @@ Contributions are welcome at
 ///     print_tree::&lt;PRINT_SIZE, _, _&gt;(tree, formatter)
 /// }
 ///
-/// fn io_as_tree() {
-///     let mut out = String::new();
-///     sized_print(&amp;io::Error::last_os_error() as &amp;dyn Error, &amp;mut out).unwrap();
-///     println!("{out}");
-/// }
+/// let mut out = String::new();
+/// sized_print(&amp;io::Error::last_os_error() as &amp;dyn Error, &amp;mut out).unwrap();
+/// println!("{out}");
 /// ```
 </span><span class="attr">#[track_caller]
 </span><span class="kw">pub fn </span>print_tree&lt;<span class="kw">const </span>FRONT_MAX: usize, E, F&gt;(tree: E, <span class="kw-2">mut </span>formatter: F) -&gt; fmt::Result
@@ -747,6 +754,7 @@ Contributions are welcome at
 ///
 /// # Manual Implementation Example
 /// ```
+/// # #![cfg_attr(coverage, feature(coverage_attribute))]
 /// # use std::{
 /// #   panic::Location,
 /// #   error::Error,
@@ -761,6 +769,7 @@ Contributions are welcome at
 /// }
 ///
 /// impl HighLevelIo {
+/// #   #[cfg_attr(coverage, coverage(off))]
 ///     #[track_caller]
 ///     pub fn new(source: std::io::Error) -&gt; Self {
 ///         Self {
@@ -771,6 +780,7 @@ Contributions are welcome at
 /// }
 ///
 /// impl AsErrTree for HighLevelIo {
+/// #   #[cfg_attr(coverage, coverage(off))]
 ///     fn as_err_tree(&amp;self, func: &amp;mut dyn FnMut(ErrTree&lt;'_&gt;)) {
 ///         // Cast to ErrTree adapter via Error
 ///         let source = WrapErr::tree(&amp;self.source);
@@ -783,6 +793,7 @@ Contributions are welcome at
 /// }
 ///
 /// impl Error for HighLevelIo {
+/// #   #[cfg_attr(coverage, coverage(off))]
 ///     fn source(&amp;self) -&gt; Option&lt;&amp;(dyn Error + 'static)&gt; {
 ///         Some(&amp;self.source)
 ///     }
@@ -791,6 +802,7 @@ Contributions are welcome at
 ///     # /*
 ///     ...
 ///     # */
+/// #   #[cfg_attr(coverage, coverage(off))]
 ///     # fn fmt(&amp;self, f: &amp;mut Formatter&lt;'_&gt;) -&gt; Result&lt;(), std::fmt::Error&gt; {
 ///         # write!(f, "High level IO error!")
 ///     # }
@@ -899,6 +911,7 @@ Contributions are welcome at
 /// Preface with `dyn` to use the generic `dyn` [`Error`] rendering.
 ///
 /// ```
+/// # #![cfg_attr(coverage, feature(coverage_attribute))]
 /// # use std::{
 /// #   panic::Location,
 /// #   error::Error,
@@ -910,6 +923,7 @@ Contributions are welcome at
 /// struct Foo(std::io::Error, ErrTreePkg);
 ///
 /// impl AsErrTree for Foo {
+/// #   #[cfg_attr(coverage, coverage(off))]
 ///     fn as_err_tree(&amp;self, func: &amp;mut dyn FnMut(ErrTree&lt;'_&gt;)) {
 ///         // Equivalent to:
 ///         // (func)(bare_err_tree::ErrTree::with_pkg(
@@ -922,6 +936,7 @@ Contributions are welcome at
 /// }
 ///
 /// impl Error for Foo {
+/// #   #[cfg_attr(coverage, coverage(off))]
 ///     fn source(&amp;self) -&gt; Option&lt;&amp;(dyn Error + 'static)&gt; {
 ///         Some(&amp;self.0)
 ///     }
@@ -930,6 +945,7 @@ Contributions are welcome at
 ///     # /*
 ///     ...
 ///     # */
+/// #   #[cfg_attr(coverage, coverage(off))]
 ///     # fn fmt(&amp;self, f: &amp;mut Formatter&lt;'_&gt;) -&gt; Result&lt;(), std::fmt::Error&gt; {
 ///         # write!(f, "")
 ///     # }

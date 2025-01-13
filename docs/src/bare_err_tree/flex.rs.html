@@ -59,9 +59,7 @@
 <a href="#58" id="58">58</a>
 <a href="#59" id="59">59</a>
 <a href="#60" id="60">60</a>
-<a href="#61" id="61">61</a>
-<a href="#62" id="62">62</a>
-<a href="#63" id="63">63</a></pre></div><pre class="rust"><code><span class="comment">/*
+<a href="#61" id="61">61</a></pre></div><pre class="rust"><code><span class="comment">/*
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
@@ -81,15 +79,13 @@
 /// ```rust
 /// use bare_err_tree::{WrapErr, AsErrTree};
 ///
-/// fn as_dyn() {
-///     let err = std::io::Error::last_os_error();
-///     let err_ref = &amp;err;
+/// let err = std::io::Error::last_os_error();
+/// let err_ref = &amp;err;
 ///
-///     let wrapped = WrapErr::wrap(err_ref);
-///     let as_dyn = wrapped as &amp;dyn AsErrTree;
+/// let wrapped = WrapErr::wrap(err_ref);
+/// let as_dyn = wrapped as &amp;dyn AsErrTree;
 ///
-///     let alt_dyn = WrapErr::tree(err_ref);
-/// }
+/// let alt_dyn = WrapErr::tree(err_ref);
 /// ```
 </span><span class="attr">#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(transparent)]

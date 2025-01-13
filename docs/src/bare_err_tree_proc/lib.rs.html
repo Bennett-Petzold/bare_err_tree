@@ -571,7 +571,19 @@
 <a href="#570" id="570">570</a>
 <a href="#571" id="571">571</a>
 <a href="#572" id="572">572</a>
-<a href="#573" id="573">573</a></pre></div><pre class="rust"><code><span class="comment">/*
+<a href="#573" id="573">573</a>
+<a href="#574" id="574">574</a>
+<a href="#575" id="575">575</a>
+<a href="#576" id="576">576</a>
+<a href="#577" id="577">577</a>
+<a href="#578" id="578">578</a>
+<a href="#579" id="579">579</a>
+<a href="#580" id="580">580</a>
+<a href="#581" id="581">581</a>
+<a href="#582" id="582">582</a>
+<a href="#583" id="583">583</a>
+<a href="#584" id="584">584</a>
+<a href="#585" id="585">585</a></pre></div><pre class="rust"><code><span class="comment">/*
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
@@ -580,6 +592,7 @@
 </span><span class="doccomment">//! Derive macros for `bare_err_tree`.
 
 </span><span class="attr">#![cfg_attr(docsrs, feature(doc_auto_cfg))]
+#![cfg_attr(coverage, feature(coverage_attribute))]
 
 </span><span class="kw">extern crate </span>proc_macro;
 <span class="kw">use </span>core::panic;
@@ -619,6 +632,7 @@
 ///
 /// #### Example
 /// ```
+/// # #![cfg_attr(coverage, feature(coverage_attribute))]
 /// # use std::{error::Error, fmt::{self, Debug, Display, Formatter}};
 /// use bare_err_tree::{err_tree, tree_unwrap};
 ///
@@ -629,6 +643,7 @@
 /// }
 ///
 /// impl Foo {
+/// #   #[cfg_attr(coverage, coverage(off))]
 ///     #[track_caller]
 ///     pub fn new(num: i32) -&gt; Self {
 ///         Foo::_tree(num)
@@ -636,6 +651,7 @@
 /// }
 ///
 /// impl Error for Foo {
+/// #   #[cfg_attr(coverage, coverage(off))]
 ///     fn source(&amp;self) -&gt; Option&lt;&amp;(dyn Error + 'static)&gt; {
 ///         # /*
 ///         ...
@@ -644,6 +660,7 @@
 ///     }
 /// }
 /// impl Display for Foo {
+/// #   #[cfg_attr(coverage, coverage(off))]
 ///     fn fmt(&amp;self, f: &amp;mut Formatter&lt;'_&gt;) -&gt; fmt::Result {
 ///         # /*
 ///         ...
@@ -672,6 +689,7 @@
 ///
 /// #### Example
 /// ```
+/// # #![cfg_attr(coverage, feature(coverage_attribute))]
 /// # use std::{any::Any, error::Error, fmt::{self, Debug, Display, Formatter}};
 /// use bare_err_tree::{err_tree, tree_unwrap, AsErrTree, ErrTree};
 ///
@@ -685,6 +703,7 @@
 /// }
 ///
 /// impl Foo {
+/// #   #[cfg_attr(coverage, coverage(off))]
 ///     #[track_caller]
 ///     pub fn new(io_err: std::io::Error, extra_io_errs: [std::io::Error; 5]) -&gt; Self {
 ///         Foo::_tree(io_err, extra_io_errs)
@@ -692,6 +711,7 @@
 /// }
 ///
 /// impl Error for Foo {
+/// #   #[cfg_attr(coverage, coverage(off))]
 ///     fn source(&amp;self) -&gt; Option&lt;&amp;(dyn Error + 'static)&gt; {
 ///         # /*
 ///         ...
@@ -700,6 +720,7 @@
 ///     }
 /// }
 /// impl Display for Foo {
+/// #   #[cfg_attr(coverage, coverage(off))]
 ///     fn fmt(&amp;self, f: &amp;mut Formatter&lt;'_&gt;) -&gt; fmt::Result {
 ///         # /*
 ///         ...
@@ -739,6 +760,7 @@
 ///
 /// #### Enum Example
 /// ```
+/// # #![cfg_attr(coverage, feature(coverage_attribute))]
 /// # use std::{error::Error, fmt::{self, Debug, Display, Formatter}};
 /// use bare_err_tree::{err_tree, tree_unwrap};
 ///
@@ -754,6 +776,7 @@
 /// }
 ///
 /// impl&lt;T: Debug&gt; Error for Foo&lt;T&gt; {
+/// #   #[cfg_attr(coverage, coverage(off))]
 ///     fn source(&amp;self) -&gt; Option&lt;&amp;(dyn Error + 'static)&gt; {
 ///         # /*
 ///         ...
@@ -762,6 +785,7 @@
 ///     }
 /// }
 /// impl&lt;T: Debug&gt; Display for Foo&lt;T&gt; {
+/// #   #[cfg_attr(coverage, coverage(off))]
 ///     fn fmt(&amp;self, f: &amp;mut Formatter&lt;'_&gt;) -&gt; fmt::Result {
 ///         # /*
 ///         ...
