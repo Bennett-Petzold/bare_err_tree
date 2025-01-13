@@ -76,14 +76,14 @@ jobs:
         TRYBUILD=overwrite cargo hack llvm-cov test \
           --feature-powerset \
           --skip default,boxed,anyhow,eyre,unix_color,tracing \
-          --locked --no-report --tests
+          --locked --no-report --tests --branch
 
     - name: Doc Tests
       run: |
         TRYBUILD=overwrite cargo hack llvm-cov test \
           --feature-powerset \
           --skip default,boxed,anyhow,eyre,unix_color,tracing \
-          --locked --no-report --doc
+          --locked --no-report --doc --branch
 
     - name: Coverage Shield
       run: |

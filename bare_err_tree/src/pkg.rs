@@ -73,6 +73,7 @@ impl ErrTreePkg {
 }
 
 impl Default for ErrTreePkg {
+    #[cfg_attr(coverage, coverage(off))]
     #[track_caller]
     fn default() -> Self {
         Self::new()
@@ -80,18 +81,21 @@ impl Default for ErrTreePkg {
 }
 
 impl Debug for ErrTreePkg {
+    #[cfg_attr(coverage, coverage(off))]
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         write!(f, "...")
     }
 }
 
 impl PartialEq for ErrTreePkg {
+    #[cfg_attr(coverage, coverage(off))]
     fn eq(&self, _other: &Self) -> bool {
         true
     }
 }
 
 impl Ord for ErrTreePkg {
+    #[cfg_attr(coverage, coverage(off))]
     fn cmp(&self, _other: &Self) -> core::cmp::Ordering {
         Ordering::Equal
     }
@@ -100,11 +104,13 @@ impl Ord for ErrTreePkg {
 impl Eq for ErrTreePkg {}
 
 impl PartialOrd for ErrTreePkg {
+    #[cfg_attr(coverage, coverage(off))]
     fn partial_cmp(&self, other: &Self) -> Option<core::cmp::Ordering> {
         Some(self.cmp(other))
     }
 }
 
 impl Hash for ErrTreePkg {
+    #[cfg_attr(coverage, coverage(off))]
     fn hash<H: core::hash::Hasher>(&self, _state: &mut H) {}
 }

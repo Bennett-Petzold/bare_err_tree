@@ -261,6 +261,7 @@ pub(crate) struct ErrTreeFmt<'a, const FRONT_MAX: usize, T: ErrTreeFormattable> 
 }
 
 /// Workaround for lack of `const` in [`core::cmp::max`].
+#[cfg_attr(coverage, coverage(off))]
 const fn max_const(lhs: usize, rhs: usize) -> usize {
     if lhs >= rhs {
         lhs

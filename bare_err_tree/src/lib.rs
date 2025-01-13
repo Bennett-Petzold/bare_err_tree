@@ -74,6 +74,7 @@ Contributions are welcome at
 
 #![no_std]
 #![cfg_attr(docsrs, feature(doc_auto_cfg))]
+#![cfg_attr(coverage, feature(coverage_attribute))]
 
 #[cfg(feature = "adapt")]
 extern crate std;
@@ -174,11 +175,9 @@ where
 ///     print_tree::<PRINT_SIZE, _, _>(tree, formatter)
 /// }
 ///
-/// fn io_as_tree() {
-///     let mut out = String::new();
-///     sized_print(&io::Error::last_os_error() as &dyn Error, &mut out).unwrap();
-///     println!("{out}");
-/// }
+/// let mut out = String::new();
+/// sized_print(&io::Error::last_os_error() as &dyn Error, &mut out).unwrap();
+/// println!("{out}");
 /// ```
 #[track_caller]
 pub fn print_tree<const FRONT_MAX: usize, E, F>(tree: E, mut formatter: F) -> fmt::Result
@@ -267,6 +266,7 @@ where
 ///
 /// # Manual Implementation Example
 /// ```
+/// # #![cfg_attr(coverage, feature(coverage_attribute))]
 /// # use std::{
 /// #   panic::Location,
 /// #   error::Error,
@@ -281,6 +281,7 @@ where
 /// }
 ///
 /// impl HighLevelIo {
+/// #   #[cfg_attr(coverage, coverage(off))]
 ///     #[track_caller]
 ///     pub fn new(source: std::io::Error) -> Self {
 ///         Self {
@@ -291,6 +292,7 @@ where
 /// }
 ///
 /// impl AsErrTree for HighLevelIo {
+/// #   #[cfg_attr(coverage, coverage(off))]
 ///     fn as_err_tree(&self, func: &mut dyn FnMut(ErrTree<'_>)) {
 ///         // Cast to ErrTree adapter via Error
 ///         let source = WrapErr::tree(&self.source);
@@ -303,6 +305,7 @@ where
 /// }
 ///
 /// impl Error for HighLevelIo {
+/// #   #[cfg_attr(coverage, coverage(off))]
 ///     fn source(&self) -> Option<&(dyn Error + 'static)> {
 ///         Some(&self.source)
 ///     }
@@ -311,6 +314,7 @@ where
 ///     # /*
 ///     ...
 ///     # */
+/// #   #[cfg_attr(coverage, coverage(off))]
 ///     # fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), std::fmt::Error> {
 ///         # write!(f, "High level IO error!")
 ///     # }
@@ -419,6 +423,7 @@ impl<T: ?Sized + AsErrTree> AsErrTree for &T {
 /// Preface with `dyn` to use the generic `dyn` [`Error`] rendering.
 ///
 /// ```
+/// # #![cfg_attr(coverage, feature(coverage_attribute))]
 /// # use std::{
 /// #   panic::Location,
 /// #   error::Error,
@@ -430,6 +435,7 @@ impl<T: ?Sized + AsErrTree> AsErrTree for &T {
 /// struct Foo(std::io::Error, ErrTreePkg);
 ///
 /// impl AsErrTree for Foo {
+/// #   #[cfg_attr(coverage, coverage(off))]
 ///     fn as_err_tree(&self, func: &mut dyn FnMut(ErrTree<'_>)) {
 ///         // Equivalent to:
 ///         // (func)(bare_err_tree::ErrTree::with_pkg(
@@ -442,6 +448,7 @@ impl<T: ?Sized + AsErrTree> AsErrTree for &T {
 /// }
 ///
 /// impl Error for Foo {
+/// #   #[cfg_attr(coverage, coverage(off))]
 ///     fn source(&self) -> Option<&(dyn Error + 'static)> {
 ///         Some(&self.0)
 ///     }
@@ -450,6 +457,7 @@ impl<T: ?Sized + AsErrTree> AsErrTree for &T {
 ///     # /*
 ///     ...
 ///     # */
+/// #   #[cfg_attr(coverage, coverage(off))]
 ///     # fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), std::fmt::Error> {
 ///         # write!(f, "")
 ///     # }

@@ -1,6 +1,7 @@
 [![Crate][CrateStatus]][Crate]
 [![Tests][TestsStatus]][Tests]
 [![Docs][PagesStatus]][Docs]
+[![Coverage][Coverage]][CoveragePages]
 
 # bare\_err\_tree
 `bare_err_tree` is a `no_std` + no `alloc` library to print a standard `Error` with a tree of sources.
