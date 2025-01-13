@@ -272,7 +272,7 @@ where
 /// #   error::Error,
 /// #   fmt::{Display, Formatter},
 /// # };
-/// use bare_err_tree::{ErrTree, ErrTreePkg, AsErrTree, ErrTreeConv};
+/// use bare_err_tree::{ErrTree, ErrTreePkg, AsErrTree, WrapErr};
 ///
 /// #[derive(Debug)]
 /// pub struct HighLevelIo {
@@ -293,7 +293,7 @@ where
 /// impl AsErrTree for HighLevelIo {
 ///     fn as_err_tree(&self, func: &mut dyn FnMut(ErrTree<'_>)) {
 ///         // Cast to ErrTree adapter via Error
-///         let source = ErrTreeConv::from(&self.source as &dyn Error);
+///         let source = WrapErr::tree(&self.source);
 ///         // Convert to a single item iterator
 ///         let source_iter = &mut core::iter::once(source);
 ///
@@ -318,7 +318,7 @@ where
 /// ```
 pub struct ErrTree<'a> {
     inner: &'a dyn Error,
-    sources: IterBuffer<&'a mut dyn Iterator<Item = ErrTreeConv<'a>>>,
+    sources: IterBuffer<&'a mut dyn Iterator<Item = &'a dyn AsErrTree>>,
     #[cfg(feature = "source_line")]
     location: Option<&'a Location<'a>>,
     #[cfg(feature = "tracing")]
@@ -329,7 +329,7 @@ impl<'a> ErrTree<'a> {
     /// Common constructor, with metadata.
     pub fn with_pkg(
         inner: &'a dyn Error,
-        sources: &'a mut dyn Iterator<Item = ErrTreeConv<'a>>,
+        sources: &'a mut dyn Iterator<Item = &'a dyn AsErrTree>,
         #[allow(unused)] pkg: &'a ErrTreePkg,
     ) -> Self {
         Self {
@@ -345,7 +345,7 @@ impl<'a> ErrTree<'a> {
     /// Constructor for when metadata needs to be hidden.
     pub fn no_pkg(
         inner: &'a dyn Error,
-        sources: &'a mut dyn Iterator<Item = ErrTreeConv<'a>>,
+        sources: &'a mut dyn Iterator<Item = &'a dyn AsErrTree>,
     ) -> Self {
         Self {
             inner,
@@ -358,7 +358,7 @@ impl<'a> ErrTree<'a> {
     }
 
     /// Consumes this tree to return its sources
-    pub fn sources(self) -> impl Iterator<Item = ErrTreeConv<'a>> {
+    pub fn sources(self) -> impl Iterator<Item = &'a dyn AsErrTree> {
         self.sources
     }
 }
@@ -382,7 +382,10 @@ pub trait AsErrTree {
 impl AsErrTree for dyn Error {
     fn as_err_tree(&self, func: &mut dyn FnMut(ErrTree<'_>)) {
         match self.source() {
-            Some(e) => (func)(ErrTree::no_pkg(self, &mut core::iter::once(e.into()))),
+            Some(e) => (func)(ErrTree::no_pkg(
+                self,
+                &mut core::iter::once(&e as &dyn AsErrTree),
+            )),
             None => (func)(ErrTree::no_pkg(self, &mut core::iter::empty())),
         }
     }
@@ -459,9 +462,7 @@ macro_rules! tree {
             &$inner,
             &mut core::iter::empty()$( .chain(
                 core::iter::once(
-                    bare_err_tree::ErrTreeConv::from(
-                        &$x as &dyn core::error::Error
-                    )
+                    bare_err_tree::WrapErr::tree(&$x)
                 )
             ) )*,
             &$pkg,
@@ -471,9 +472,7 @@ macro_rules! tree {
         ($func)(bare_err_tree::ErrTree::with_pkg(
             &$inner,
             &mut core::iter::empty()$( .chain(
-                core::iter::once(
-                    bare_err_tree::ErrTreeConv::from($x)
-                )
+                core::iter::once($x)
             ) )*,
             &$pkg,
         ))

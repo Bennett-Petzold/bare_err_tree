@@ -69,12 +69,21 @@ jobs:
         components: llvm-tools-preview
     - uses: Swatinem/rust-cache@v2
     - uses: taiki-e/install-action@cargo-llvm-cov
+    - uses: taiki-e/install-action@cargo-hack
 
     - name: Regular Tests
-      run: TRYBUILD=overwrite cargo llvm-cov test --no-report --tests --all-features
+      run: |
+        TRYBUILD=overwrite cargo hack llvm-cov test \
+          --feature-powerset \
+          --skip default,boxed,anyhow,eyre,unix_color,tracing \
+          --locked --no-report --tests
 
     - name: Doc Tests
-      run: TRYBUILD=overwrite cargo llvm-cov test --no-report --doc --all-features
+      run: |
+        TRYBUILD=overwrite cargo hack llvm-cov test \
+          --feature-powerset \
+          --skip default,boxed,anyhow,eyre,unix_color,tracing \
+          --locked --no-report --doc
 
     - name: Coverage Shield
       run: |

@@ -1,4 +1,4 @@
-#![cfg(feature = "derive")]
+#![cfg(all(feature = "derive", not(miri)))]
 
 use trybuild::TestCases;
 

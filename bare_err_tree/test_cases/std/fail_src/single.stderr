@@ -1,8 +1,17 @@
 error[E0277]: the trait bound `[std::io::Error; 1]: std::error::Error` is not satisfied
   --> test_cases/std/fail_src/single.rs:20:5
    |
-20 | /     #[dyn_err]
+20 |       #[dyn_err]
+   |       ^ required by a bound introduced by this call
+   |  _____|
+   | |
 21 | |     err: [std::io::Error; 1],
    | |_______^ the trait `std::error::Error` is not implemented for `[std::io::Error; 1]`
    |
-   = note: required for the cast from `&[std::io::Error; 1]` to `&dyn std::error::Error`
+note: required by a bound in `WrapErr::<E>::tree`
+  --> src/flex.rs
+   |
+   | impl<E: Error> WrapErr<E> {
+   |         ^^^^^ required by this bound in `WrapErr::<E>::tree`
+   |     pub fn tree(err: &E) -> &dyn AsErrTree {
+   |            ---- required by a bound in this associated function

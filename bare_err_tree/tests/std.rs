@@ -5,8 +5,6 @@
     not(feature = "unix_color")
 ))]
 
-use std::println;
-
 mod example {
     include!("../test_cases/std/src/bin/example.rs");
 

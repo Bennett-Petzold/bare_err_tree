@@ -10,7 +10,7 @@ use core::{
     str::{self, Chars},
 };
 
-use crate::{AsErrTree, ErrTree};
+use crate::ErrTree;
 
 pub(crate) struct ErrTreeFmtWrap<const FRONT_MAX: usize, T>(RefCell<T>);
 
