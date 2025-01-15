@@ -79,7 +79,7 @@ bar"
         tree_to_json::<&dyn Error, _, _>((&WeirdError) as &dyn Error, &mut out).unwrap();
 
         let expected_json = r#"{"msg":"foo\n \\ \\n \t/\nbar"}"#;
-        let expected_reconstruct = "foo\n \\ \\n \t/\nbar";
+        let expected_reconstruct = "foo\n│  \\ \\n \t/\n│ bar";
 
         assert_eq!(out, expected_json);
 

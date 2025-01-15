@@ -7,6 +7,8 @@ edition = "2021"
 bare_err_tree = { path = "../../", features = ["derive", "source_line"] }
 thiserror = "2"
 
+[workspace]
+
 [[bin]]
 name = "derive_testing"
 
@@ -18,3 +20,6 @@ name = "empty"
 
 [[bin]]
 name = "near-empty"
+
+[[bin]]
+name = "alt-example"
