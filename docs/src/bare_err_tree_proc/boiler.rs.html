@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `bare_err_tree_proc/src/boiler.rs`."><title>boiler.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-46132b98.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="bare_err_tree_proc" data-themes="" data-resource-suffix="" data-rustdoc-version="1.86.0-nightly (48a426eca 2025-01-12)" data-channel="nightly" data-search-js="search-75f5ac3e.js" data-settings-js="settings-0f613d39.js" ><script src="../../static.files/storage-59e33391.js"></script><script defer src="../../static.files/src-script-56102188.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-5f194d8c.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">bare_err_tree_proc/</div>boiler.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `bare_err_tree_proc/src/boiler.rs`."><title>boiler.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-46132b98.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="bare_err_tree_proc" data-themes="" data-resource-suffix="" data-rustdoc-version="1.86.0-nightly (8361aef0d 2025-01-14)" data-channel="nightly" data-search-js="search-75f5ac3e.js" data-settings-js="settings-0f613d39.js" ><script src="../../static.files/storage-59e33391.js"></script><script defer src="../../static.files/src-script-56102188.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-5f194d8c.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">bare_err_tree_proc/</div>boiler.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
 <a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
@@ -197,28 +197,28 @@
     <span class="comment">// Core set
     </span><span class="kw">let </span>universal: TokenStream = <span class="macro">quote!</span> {
         <span class="attr">#[automatically_derived]
-        </span><span class="kw">impl </span>#impl_generics core::error::Error <span class="kw">for </span>#name_attribute #ty_generics #where_clause {
-            <span class="kw">fn </span>source(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>(<span class="kw">dyn </span>core::error::Error + <span class="lifetime">'static</span>)&gt; {
-                core::error::Error::source(<span class="kw-2">&amp;</span><span class="self">self</span>.inner)
+        </span><span class="kw">impl </span>#impl_generics ::core::error::Error <span class="kw">for </span>#name_attribute #ty_generics #where_clause {
+            <span class="kw">fn </span>source(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>(<span class="kw">dyn </span>::core::error::Error + <span class="lifetime">'static</span>)&gt; {
+                ::core::error::Error::source(<span class="kw-2">&amp;</span><span class="self">self</span>.inner)
             }
         }
 
         <span class="attr">#[automatically_derived]
-        </span><span class="kw">impl </span>#impl_generics core::fmt::Debug <span class="kw">for </span>#name_attribute #ty_generics #where_clause {
-            <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>core::fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;(), core::fmt::Error&gt; {
-                core::fmt::Debug::fmt(<span class="kw-2">&amp;</span><span class="self">self</span>.inner, f)
+        </span><span class="kw">impl </span>#impl_generics ::core::fmt::Debug <span class="kw">for </span>#name_attribute #ty_generics #where_clause {
+            <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>core::fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;(), ::core::fmt::Error&gt; {
+                ::core::fmt::Debug::fmt(<span class="kw-2">&amp;</span><span class="self">self</span>.inner, f)
             }
         }
 
         <span class="attr">#[automatically_derived]
-        </span><span class="kw">impl </span>#impl_generics core::fmt::Display <span class="kw">for </span>#name_attribute #ty_generics #where_clause {
-            <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>core::fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;(), core::fmt::Error&gt; {
-                core::fmt::Display::fmt(<span class="kw-2">&amp;</span><span class="self">self</span>.inner, f)
+        </span><span class="kw">impl </span>#impl_generics ::core::fmt::Display <span class="kw">for </span>#name_attribute #ty_generics #where_clause {
+            <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>::core::fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;(), ::core::fmt::Error&gt; {
+                ::core::fmt::Display::fmt(<span class="kw-2">&amp;</span><span class="self">self</span>.inner, f)
             }
         }
 
         <span class="attr">#[automatically_derived]
-        </span><span class="kw">impl </span>#impl_generics core::convert::From&lt;#ident #ty_generics&gt; <span class="kw">for </span>#name_attribute #ty_generics #where_clause {
+        </span><span class="kw">impl </span>#impl_generics ::core::convert::From&lt;#ident #ty_generics&gt; <span class="kw">for </span>#name_attribute #ty_generics #where_clause {
             <span class="attr">#[track_caller]
             </span><span class="kw">fn </span>from(inner: #ident #ty_generics) -&gt; <span class="self">Self </span>{
                 <span class="self">Self</span>::_tree(inner)
@@ -226,14 +226,14 @@
         }
 
         <span class="attr">#[automatically_derived]
-        </span><span class="kw">impl </span>#impl_generics core::convert::From&lt;#name_attribute #ty_generics&gt; <span class="kw">for </span>#ident #ty_generics #where_clause {
+        </span><span class="kw">impl </span>#impl_generics ::core::convert::From&lt;#name_attribute #ty_generics&gt; <span class="kw">for </span>#ident #ty_generics #where_clause {
             <span class="kw">fn </span>from(value: #name_attribute #ty_generics) -&gt; <span class="self">Self </span>{
                 value.inner
             }
         }
 
         <span class="attr">#[automatically_derived]
-        </span><span class="kw">impl </span>#impl_generics core::ops::Deref <span class="kw">for </span>#name_attribute #ty_generics #where_clause {
+        </span><span class="kw">impl </span>#impl_generics ::core::ops::Deref <span class="kw">for </span>#name_attribute #ty_generics #where_clause {
             <span class="kw">type </span>Target = #ident #ty_generics;
             <span class="kw">fn </span>deref(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="self">Self</span>::Target {
                 <span class="kw-2">&amp;</span><span class="self">self</span>.inner
@@ -241,7 +241,7 @@
         }
 
         <span class="attr">#[automatically_derived]
-        </span><span class="kw">impl </span>#impl_generics core::ops::DerefMut <span class="kw">for </span>#name_attribute #ty_generics #where_clause {
+        </span><span class="kw">impl </span>#impl_generics ::core::ops::DerefMut <span class="kw">for </span>#name_attribute #ty_generics #where_clause {
             <span class="kw">fn </span>deref_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;mut </span><span class="self">Self</span>::Target {
                 <span class="kw-2">&amp;mut </span><span class="self">self</span>.inner
             }
@@ -271,12 +271,12 @@
             .map(|extra| <span class="kw">match </span>extra.to_string().to_lowercase().as_str() {
                 <span class="string">"eq" </span>=&gt; <span class="macro">quote!</span> {
                     <span class="attr">#[automatically_derived]
-                    </span><span class="kw">impl </span>#impl_generics core::cmp::Eq <span class="kw">for </span>#name_attribute #ty_generics #where_clause {}
+                    </span><span class="kw">impl </span>#impl_generics ::core::cmp::Eq <span class="kw">for </span>#name_attribute #ty_generics #where_clause {}
                 }
                 .into(),
                 <span class="string">"partialeq" </span>=&gt; <span class="macro">quote!</span> {
                     <span class="attr">#[automatically_derived]
-                    </span><span class="kw">impl </span>#impl_generics core::cmp::PartialEq&lt;#name_attribute #ty_generics&gt; <span class="kw">for </span>#name_attribute #ty_generics #where_clause {
+                    </span><span class="kw">impl </span>#impl_generics ::core::cmp::PartialEq&lt;#name_attribute #ty_generics&gt; <span class="kw">for </span>#name_attribute #ty_generics #where_clause {
                         <span class="kw">fn </span>eq(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span>#name_attribute #ty_generics) -&gt; bool {
                             <span class="self">self</span>.inner == other.inner
                         }
@@ -285,25 +285,25 @@
                 .into(),
                 <span class="string">"ord" </span>=&gt; <span class="macro">quote!</span> {
                     <span class="attr">#[automatically_derived]
-                    </span><span class="kw">impl </span>#impl_generics core::cmp::Ord <span class="kw">for </span>#name_attribute #ty_generics #where_clause {
+                    </span><span class="kw">impl </span>#impl_generics ::core::cmp::Ord <span class="kw">for </span>#name_attribute #ty_generics #where_clause {
                         <span class="kw">fn </span>ord(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; bool {
-                            &lt;#ident #ty_generics #where_clause <span class="kw">as </span>core::cmp::Ord&gt;::ord(<span class="self">self</span>.inner, other.inner)
+                            &lt;#ident #ty_generics #where_clause <span class="kw">as </span>::core::cmp::Ord&gt;::ord(<span class="self">self</span>.inner, other.inner)
                         }
                     }
                 }
                 .into(),
                 <span class="string">"partialord" </span>=&gt; <span class="macro">quote!</span> {
                     <span class="attr">#[automatically_derived]
-                    </span><span class="kw">impl </span>#impl_generics core::cmp::PartialOrd <span class="kw">for </span>#name_attribute #ty_generics #where_clause {
-                        <span class="kw">fn </span>partial_cmp(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;core::cmp::Ordering&gt; {
-                            &lt;#ident #ty_generics #where_clause <span class="kw">as </span>core::cmp::ParitalOrd&gt;::partial_cmp(<span class="self">self</span>.inner, other.inner)
+                    </span><span class="kw">impl </span>#impl_generics ::core::cmp::PartialOrd <span class="kw">for </span>#name_attribute #ty_generics #where_clause {
+                        <span class="kw">fn </span>partial_cmp(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;::core::cmp::Ordering&gt; {
+                            &lt;#ident #ty_generics #where_clause <span class="kw">as </span>::core::cmp::ParitalOrd&gt;::partial_cmp(<span class="self">self</span>.inner, other.inner)
                         }
                     }
                 }
                 .into(),
                 <span class="string">"clone" </span>=&gt; <span class="macro">quote!</span> {
                     <span class="attr">#[automatically_derived]
-                    </span><span class="kw">impl </span>#impl_generics core::clone::Clone <span class="kw">for </span>#name_attribute #ty_generics #where_clause {
+                    </span><span class="kw">impl </span>#impl_generics ::core::clone::Clone <span class="kw">for </span>#name_attribute #ty_generics #where_clause {
                         <span class="kw">fn </span>clone(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="self">Self </span>{
                             <span class="self">Self </span>{
                                 inner: <span class="self">self</span>.inner.clone(),
@@ -315,9 +315,9 @@
                 .into(),
                 <span class="string">"hash" </span>=&gt; <span class="macro">quote!</span> {
                     <span class="attr">#[automatically_derived]
-                    </span><span class="kw">impl </span>#impl_generics core::hash::Hash <span class="kw">for </span>#name_attribute #ty_generics #where_clause {
+                    </span><span class="kw">impl </span>#impl_generics ::core::hash::Hash <span class="kw">for </span>#name_attribute #ty_generics #where_clause {
                         <span class="kw">fn </span>hash&lt;H&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, state: <span class="kw-2">&amp;mut </span>H)
-                            <span class="kw">where </span>H: core::hash::Hasher
+                            <span class="kw">where </span>H: ::core::hash::Hasher
                         {
                             <span class="self">self</span>.inner.hash(state)
                         }
@@ -326,12 +326,12 @@
                 .into(),
                 <span class="string">"default" </span>=&gt; <span class="macro">quote!</span> {
                     <span class="attr">#[automatically_derived]
-                    </span><span class="kw">impl </span>#impl_generics core::default::Default <span class="kw">for </span>#name_attribute #ty_generics #where_clause {
+                    </span><span class="kw">impl </span>#impl_generics ::core::default::Default <span class="kw">for </span>#name_attribute #ty_generics #where_clause {
                         <span class="attr">#[track_caller]
                         </span><span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
                             <span class="self">Self </span>{
                                 inner: #ident ::default(),
-                                _err_tree_pkg: bare_err_tree::ErrTreePkg::default(),
+                                _err_tree_pkg: ::bare_err_tree::ErrTreePkg::default(),
                             }
                         }
                     }

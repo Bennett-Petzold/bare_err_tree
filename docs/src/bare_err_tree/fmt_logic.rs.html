@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `bare_err_tree/src/fmt_logic.rs`."><title>fmt_logic.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-46132b98.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="bare_err_tree" data-themes="" data-resource-suffix="" data-rustdoc-version="1.86.0-nightly (48a426eca 2025-01-12)" data-channel="nightly" data-search-js="search-75f5ac3e.js" data-settings-js="settings-0f613d39.js" ><script src="../../static.files/storage-59e33391.js"></script><script defer src="../../static.files/src-script-56102188.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-5f194d8c.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">bare_err_tree/</div>fmt_logic.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `bare_err_tree/src/fmt_logic.rs`."><title>fmt_logic.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-46132b98.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="bare_err_tree" data-themes="" data-resource-suffix="" data-rustdoc-version="1.86.0-nightly (8361aef0d 2025-01-14)" data-channel="nightly" data-search-js="search-75f5ac3e.js" data-settings-js="settings-0f613d39.js" ><script src="../../static.files/storage-59e33391.js"></script><script defer src="../../static.files/src-script-56102188.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-5f194d8c.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">bare_err_tree/</div>fmt_logic.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
 <a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
@@ -590,7 +590,50 @@
 <a href="#589" id="589">589</a>
 <a href="#590" id="590">590</a>
 <a href="#591" id="591">591</a>
-<a href="#592" id="592">592</a></pre></div><pre class="rust"><code><span class="comment">/*
+<a href="#592" id="592">592</a>
+<a href="#593" id="593">593</a>
+<a href="#594" id="594">594</a>
+<a href="#595" id="595">595</a>
+<a href="#596" id="596">596</a>
+<a href="#597" id="597">597</a>
+<a href="#598" id="598">598</a>
+<a href="#599" id="599">599</a>
+<a href="#600" id="600">600</a>
+<a href="#601" id="601">601</a>
+<a href="#602" id="602">602</a>
+<a href="#603" id="603">603</a>
+<a href="#604" id="604">604</a>
+<a href="#605" id="605">605</a>
+<a href="#606" id="606">606</a>
+<a href="#607" id="607">607</a>
+<a href="#608" id="608">608</a>
+<a href="#609" id="609">609</a>
+<a href="#610" id="610">610</a>
+<a href="#611" id="611">611</a>
+<a href="#612" id="612">612</a>
+<a href="#613" id="613">613</a>
+<a href="#614" id="614">614</a>
+<a href="#615" id="615">615</a>
+<a href="#616" id="616">616</a>
+<a href="#617" id="617">617</a>
+<a href="#618" id="618">618</a>
+<a href="#619" id="619">619</a>
+<a href="#620" id="620">620</a>
+<a href="#621" id="621">621</a>
+<a href="#622" id="622">622</a>
+<a href="#623" id="623">623</a>
+<a href="#624" id="624">624</a>
+<a href="#625" id="625">625</a>
+<a href="#626" id="626">626</a>
+<a href="#627" id="627">627</a>
+<a href="#628" id="628">628</a>
+<a href="#629" id="629">629</a>
+<a href="#630" id="630">630</a>
+<a href="#631" id="631">631</a>
+<a href="#632" id="632">632</a>
+<a href="#633" id="633">633</a>
+<a href="#634" id="634">634</a>
+<a href="#635" id="635">635</a></pre></div><pre class="rust"><code><span class="comment">/*
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
@@ -598,7 +641,7 @@
 
 </span><span class="kw">use </span>core::{
     cell::RefCell,
-    fmt::{<span class="self">self</span>, Display, Formatter},
+    fmt::{<span class="self">self</span>, Display, Formatter, Write},
     str::{<span class="self">self</span>, Chars},
 };
 
@@ -662,7 +705,7 @@
 }
 
 <span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">trait </span>ErrTreeFormattable {
-    <span class="kw">fn </span>apply_msg&lt;W: fmt::Write + <span class="question-mark">?</span>Sized&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>W) -&gt; fmt::Result;
+    <span class="kw">fn </span>apply_msg&lt;W: fmt::Write&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, f: W) -&gt; fmt::Result;
 
     <span class="kw">type </span>Source&lt;<span class="lifetime">'a</span>&gt;: ErrTreeFormattable&lt;TraceSpanId = <span class="self">Self</span>::TraceSpanId&gt;;
 
@@ -675,11 +718,10 @@
     <span class="kw">fn </span>apply_to_last_source&lt;F&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, func: F) -&gt; fmt::Result
     <span class="kw">where
         </span>F: FnMut(<span class="self">Self</span>::Source&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result;
-
     <span class="attr">#[cfg(feature = <span class="string">"source_line"</span>)]
     </span><span class="kw">fn </span>has_source_line(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool;
     <span class="attr">#[cfg(feature = <span class="string">"source_line"</span>)]
-    </span><span class="kw">fn </span>apply_source_line&lt;W: fmt::Write + <span class="question-mark">?</span>Sized&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>W) -&gt; fmt::Result;
+    </span><span class="kw">fn </span>apply_source_line&lt;W: fmt::Write&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, f: W) -&gt; fmt::Result;
 
     <span class="attr">#[cfg(feature = <span class="string">"tracing"</span>)]
     </span><span class="kw">fn </span>trace_empty(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool;
@@ -697,7 +739,7 @@
 <span class="kw">where
     </span>T: ErrTreeFormattable,
 {
-    <span class="kw">fn </span>apply_msg&lt;W: fmt::Write + <span class="question-mark">?</span>Sized&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>W) -&gt; fmt::Result {
+    <span class="kw">fn </span>apply_msg&lt;W: fmt::Write&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, f: W) -&gt; fmt::Result {
         T::apply_msg(<span class="self">self</span>, f)
     }
 
@@ -723,7 +765,7 @@
         T::has_source_line(<span class="self">self</span>)
     }
     <span class="attr">#[cfg(feature = <span class="string">"source_line"</span>)]
-    </span><span class="kw">fn </span>apply_source_line&lt;W: fmt::Write + <span class="question-mark">?</span>Sized&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>W) -&gt; fmt::Result {
+    </span><span class="kw">fn </span>apply_source_line&lt;W: fmt::Write&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, f: W) -&gt; fmt::Result {
         T::apply_source_line(<span class="self">self</span>, f)
     }
 
@@ -745,7 +787,7 @@
 }
 
 <span class="kw">impl </span>ErrTreeFormattable <span class="kw">for </span>ErrTree&lt;<span class="lifetime">'_</span>&gt; {
-    <span class="kw">fn </span>apply_msg&lt;W: fmt::Write + <span class="question-mark">?</span>Sized&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>W) -&gt; fmt::Result {
+    <span class="kw">fn </span>apply_msg&lt;W: fmt::Write&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw-2">mut </span>f: W) -&gt; fmt::Result {
         <span class="macro">write!</span>(f, <span class="string">"{}"</span>, <span class="self">self</span>.inner)
     }
 
@@ -789,7 +831,7 @@
     }
 
     <span class="attr">#[cfg(feature = <span class="string">"source_line"</span>)]
-    </span><span class="kw">fn </span>apply_source_line&lt;W: fmt::Write + <span class="question-mark">?</span>Sized&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>W) -&gt; fmt::Result {
+    </span><span class="kw">fn </span>apply_source_line&lt;W: fmt::Write&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw-2">mut </span>f: W) -&gt; fmt::Result {
         <span class="kw">if let </span><span class="prelude-val">Some</span>(loc) = <span class="self">self</span>.location {
             <span class="macro">write!</span>(f, <span class="string">"{}"</span>, loc)<span class="question-mark">?</span>;
         }
@@ -867,16 +909,21 @@
 <span class="kw">const </span>MAX_CELL_LEN: usize = max_const(CONTINUING.len(), DANGLING.len());
 
 <span class="kw">impl</span>&lt;<span class="kw">const </span>FRONT_MAX: usize, T: ErrTreeFormattable&gt; ErrTreeFmt&lt;<span class="lifetime">'_</span>, FRONT_MAX, T&gt; {
+    <span class="doccomment">/// The front lines
+    </span><span class="attr">#[inline]
+    </span><span class="kw">fn </span>front_lines_str(front_lines: <span class="kw-2">&amp;</span>[u8], scratch_fill: usize) -&gt; <span class="kw-2">&amp;</span>str {
+        str::from_utf8(<span class="kw-2">&amp;</span>front_lines[..scratch_fill])
+            .expect(<span class="string">"All characters are static and guaranteed to be valid UTF-8"</span>)
+    }
+
     <span class="doccomment">/// Preamble arrow connections
     </span><span class="attr">#[inline]
     </span><span class="kw">fn </span>write_front_lines&lt;W&gt;(front_lines: <span class="kw-2">&amp;</span>[u8], f: <span class="kw-2">&amp;mut </span>W, scratch_fill: usize) -&gt; fmt::Result
     <span class="kw">where
         </span>W: fmt::Write + <span class="question-mark">?</span>Sized,
     {
-        <span class="kw">let </span>front_lines = str::from_utf8(<span class="kw-2">&amp;</span>front_lines[..scratch_fill])
-            .expect(<span class="string">"All characters are static and guaranteed to be valid UTF-8"</span>);
-
-        <span class="macro">write!</span>(f, <span class="string">"\n{0}"</span>, front_lines)
+        f.write_char(<span class="string">'\n'</span>)<span class="question-mark">?</span>;
+        f.write_str(<span class="self">Self</span>::front_lines_str(front_lines, scratch_fill))
     }
 
     <span class="doccomment">/// Push in the correct fill characters
@@ -911,11 +958,11 @@
                 f.write_str(<span class="string">"├─ "</span>)<span class="question-mark">?</span>;
             }
             <span class="kw">if </span><span class="macro">cfg!</span>(feature = <span class="string">"unix_color"</span>) {
-                <span class="macro">write!</span>(f, <span class="string">"at \x1b[3m"</span>)<span class="question-mark">?</span>;
-                <span class="self">self</span>.tree.apply_source_line(f)<span class="question-mark">?</span>;
-                <span class="macro">write!</span>(f, <span class="string">"\x1b[0m"</span>)<span class="question-mark">?</span>;
+                f.write_str(<span class="string">"at \x1b[3m"</span>)<span class="question-mark">?</span>;
+                <span class="self">self</span>.tree.apply_source_line(<span class="kw-2">&amp;mut *</span>f)<span class="question-mark">?</span>;
+                f.write_str(<span class="string">"\x1b[0m"</span>)<span class="question-mark">?</span>;
             } <span class="kw">else </span>{
-                <span class="macro">write!</span>(f, <span class="string">"at "</span>)<span class="question-mark">?</span>;
+                f.write_str(<span class="string">"at "</span>)<span class="question-mark">?</span>;
                 <span class="self">self</span>.tree.apply_source_line(f)<span class="question-mark">?</span>;
             }
         }
@@ -1101,7 +1148,10 @@
     <span class="kw">where
         </span>W: fmt::Write + <span class="question-mark">?</span>Sized,
     {
-        <span class="self">self</span>.tree.apply_msg(f)<span class="question-mark">?</span>;
+        <span class="self">self</span>.tree.apply_msg(LeadingLineFormatter::new(
+            <span class="kw-2">&amp;mut *</span>f,
+            <span class="self">Self</span>::front_lines_str(<span class="self">self</span>.front_lines, <span class="self">self</span>.scratch_fill),
+        ))<span class="question-mark">?</span>;
 
         <span class="attr">#[cfg_attr(
             not(any(feature = <span class="string">"source_line"</span>, feature = <span class="string">"tracing"</span>)),
@@ -1178,6 +1228,42 @@
                 )
             })<span class="question-mark">?</span>;
         };
+
+        <span class="prelude-val">Ok</span>(())
+    }
+}
+
+<span class="doccomment">/// Injects the newline leader
+</span><span class="kw">struct </span>LeadingLineFormatter&lt;<span class="lifetime">'a</span>, F&gt; {
+    formatter: F,
+    leading: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>str,
+}
+
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, F&gt; LeadingLineFormatter&lt;<span class="lifetime">'a</span>, F&gt; {
+    <span class="kw">pub fn </span>new(formatter: F, leading: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>str) -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{ formatter, leading }
+    }
+}
+
+<span class="kw">impl</span>&lt;F: Write&gt; Write <span class="kw">for </span>LeadingLineFormatter&lt;<span class="lifetime">'_</span>, F&gt; {
+    <span class="kw">fn </span>write_str(<span class="kw-2">&amp;mut </span><span class="self">self</span>, s: <span class="kw-2">&amp;</span>str) -&gt; fmt::Result {
+        <span class="kw">if </span>s.chars().all(|c| c != <span class="string">'\n'</span>) {
+            <span class="self">self</span>.formatter.write_str(s)<span class="question-mark">?
+        </span>} <span class="kw">else </span>{
+            <span class="kw">for </span>c <span class="kw">in </span>s.chars() {
+                <span class="self">self</span>.write_char(c)<span class="question-mark">?</span>;
+            }
+        }
+        <span class="prelude-val">Ok</span>(())
+    }
+
+    <span class="kw">fn </span>write_char(<span class="kw-2">&amp;mut </span><span class="self">self</span>, c: char) -&gt; fmt::Result {
+        <span class="self">self</span>.formatter.write_char(c)<span class="question-mark">?</span>;
+
+        <span class="kw">if </span>c == <span class="string">'\n' </span>{
+            <span class="self">self</span>.formatter.write_str(<span class="self">self</span>.leading)<span class="question-mark">?</span>;
+            <span class="self">self</span>.formatter.write_str(<span class="string">"│ "</span>)<span class="question-mark">?</span>;
+        }
 
         <span class="prelude-val">Ok</span>(())
     }
