@@ -460,16 +460,16 @@ fn err_tree_struct(
             let field_ident = proc_macro2::Ident::new("_err_tree_pkg", Span::call_site().into());
             fields.named.push(
                 Field::parse_named
-                    .parse2(quote! { #field_ident: bare_err_tree::ErrTreePkg })
+                    .parse2(quote! { #field_ident: ::bare_err_tree::ErrTreePkg })
                     .unwrap(),
             );
             let field_ident = field_ident.into_token_stream();
 
             quote! {
                 #[automatically_derived]
-                impl #impl_generics bare_err_tree::AsErrTree for #ident #ty_generics #where_clause {
+                impl #impl_generics ::bare_err_tree::AsErrTree for #ident #ty_generics #where_clause {
                     #[track_caller]
-                    fn as_err_tree(&self, func: &mut dyn FnMut(bare_err_tree::ErrTree<'_>)) {
+                    fn as_err_tree(&self, func: &mut dyn FnMut(::bare_err_tree::ErrTree<'_>)) {
                         let _err_tree_pkg = &self.#field_ident;
                         #sources
                     }
@@ -480,7 +480,7 @@ fn err_tree_struct(
                     #[track_caller]
                     #[allow(clippy::too_many_arguments)]
                     fn _tree(#field_bounds) -> Self {
-                        let #field_ident = bare_err_tree::ErrTreePkg::new();
+                        let #field_ident = ::bare_err_tree::ErrTreePkg::new();
                         Self {
                             #(#field_names,)*
                             #field_ident
@@ -496,15 +496,15 @@ fn err_tree_struct(
             let prev_len = syn::Index::from(fields.unnamed.len());
             fields.unnamed.push(
                 Field::parse_unnamed
-                    .parse2(quote! { bare_err_tree::ErrTreePkg })
+                    .parse2(quote! { ::bare_err_tree::ErrTreePkg })
                     .unwrap(),
             );
 
             quote! {
                 #[automatically_derived]
-                impl #impl_generics bare_err_tree::AsErrTree for #ident #ty_generics #where_clause {
+                impl #impl_generics ::bare_err_tree::AsErrTree for #ident #ty_generics #where_clause {
                     #[track_caller]
-                    fn as_err_tree(&self, func: &mut dyn FnMut(bare_err_tree::ErrTree<'_>)) {
+                    fn as_err_tree(&self, func: &mut dyn FnMut(::bare_err_tree::ErrTree<'_>)) {
                         let _err_tree_pkg = &self.#prev_len;
                         #sources
                     }
@@ -515,7 +515,7 @@ fn err_tree_struct(
                     #[track_caller]
                     #[allow(clippy::too_many_arguments)]
                     fn _tree(#field_bounds) -> Self {
-                        let _err_tree_pkg = bare_err_tree::ErrTreePkg::new();
+                        let _err_tree_pkg = ::bare_err_tree::ErrTreePkg::new();
                         Self (
                             #(#field_names,)*
                             _err_tree_pkg
@@ -533,7 +533,7 @@ fn err_tree_struct(
             let mut named = Punctuated::default();
             named.push(
                 Field::parse_named
-                    .parse2(quote! { #field_ident: bare_err_tree::ErrTreePkg })
+                    .parse2(quote! { #field_ident: ::bare_err_tree::ErrTreePkg })
                     .unwrap(),
             );
             let field_ident = field_ident.into_token_stream();
@@ -544,9 +544,9 @@ fn err_tree_struct(
 
             quote! {
                 #[automatically_derived]
-                impl #impl_generics bare_err_tree::AsErrTree for #ident #ty_generics #where_clause {
+                impl #impl_generics ::bare_err_tree::AsErrTree for #ident #ty_generics #where_clause {
                     #[track_caller]
-                    fn as_err_tree(&self, func: &mut dyn FnMut(bare_err_tree::ErrTree<'_>)) {
+                    fn as_err_tree(&self, func: &mut dyn FnMut(::bare_err_tree::ErrTree<'_>)) {
                         let _err_tree_pkg = &self.#field_ident;
                         #sources
                     }
@@ -556,7 +556,7 @@ fn err_tree_struct(
                 impl #impl_generics #ident #ty_generics #where_clause {
                     #[track_caller]
                     fn _tree() -> Self {
-                        let #field_ident = bare_err_tree::ErrTreePkg::new();
+                        let #field_ident = ::bare_err_tree::ErrTreePkg::new();
                         Self {
                             #field_ident
                         }
@@ -564,7 +564,7 @@ fn err_tree_struct(
                 }
 
                 #[automatically_derived]
-                impl #impl_generics core::default::Default for #ident #ty_generics #where_clause {
+                impl #impl_generics ::core::default::Default for #ident #ty_generics #where_clause {
                     #[track_caller]
                     fn default() -> Self {
                         Self::_tree()
