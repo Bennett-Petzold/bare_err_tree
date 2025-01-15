@@ -43,14 +43,14 @@ pub fn gen_sources_struct(errs: &[TreeErr], foreign: bool) -> proc_macro2::Token
 
     let conv = |x, span| {
         quote_spanned! {
-            span=> let #x = & self.#x as &dyn bare_err_tree::AsErrTree;
+            span=> let #x = & self.#x as &dyn ::bare_err_tree::AsErrTree;
                 let #x = core::iter::once(#x);
         }
     };
 
     let conv_dyn = |x, span| {
         quote_spanned! {
-            span=> let #x = bare_err_tree::WrapErr::tree(& self.#x);
+            span=> let #x = ::bare_err_tree::WrapErr::tree(& self.#x);
                 let #x = core::iter::once(#x);
         }
     };
@@ -58,13 +58,13 @@ pub fn gen_sources_struct(errs: &[TreeErr], foreign: bool) -> proc_macro2::Token
     let conv_dyn_iter = |x, span| {
         quote_spanned! {
             span=> let #x = #parent.#x.iter()
-                .map(bare_err_tree::WrapErr::tree);
+                .map(::bare_err_tree::WrapErr::tree);
         }
     };
 
     let conv_iter = |x, span| {
         quote_spanned! {
-            span=> let #x = #parent.#x.iter().map(|x| x as &dyn bare_err_tree::AsErrTree);
+            span=> let #x = #parent.#x.iter().map(|x| x as &dyn ::bare_err_tree::AsErrTree);
         }
     };
 
@@ -80,7 +80,7 @@ pub fn gen_sources_struct(errs: &[TreeErr], foreign: bool) -> proc_macro2::Token
         #(#gen_vars)*
         let mut sources = &mut core::iter::empty()#(.chain(#ids))*;
 
-        (func)(bare_err_tree::ErrTree::with_pkg(self, sources, _err_tree_pkg))
+        (func)(::bare_err_tree::ErrTree::with_pkg(self, sources, _err_tree_pkg))
     }
 }
 
@@ -89,9 +89,9 @@ pub fn gen_sources_enum(errs: &[TreeErr], ident: &Ident) -> proc_macro2::TokenSt
     let conv = |x, span| {
         quote_spanned! {
             span=> #ident :: #x (x) => {
-                let x = x as &dyn bare_err_tree::AsErrTree;
+                let x = x as &dyn ::bare_err_tree::AsErrTree;
                 let x = &mut core::iter::once(x);
-                (func)(bare_err_tree::ErrTree::with_pkg(self, x, _err_tree_pkg))
+                (func)(::bare_err_tree::ErrTree::with_pkg(self, x, _err_tree_pkg))
             },
         }
     };
@@ -99,9 +99,9 @@ pub fn gen_sources_enum(errs: &[TreeErr], ident: &Ident) -> proc_macro2::TokenSt
     let conv_dyn = |x, span| {
         quote_spanned! {
             span=> #ident :: #x (x) => {
-                let x = bare_err_tree::WrapErr::tree(x);
+                let x = ::bare_err_tree::WrapErr::tree(x);
                 let x = &mut core::iter::once(x);
-                (func)(bare_err_tree::ErrTree::with_pkg(self, x, _err_tree_pkg))
+                (func)(::bare_err_tree::ErrTree::with_pkg(self, x, _err_tree_pkg))
             },
         }
     };
@@ -110,7 +110,7 @@ pub fn gen_sources_enum(errs: &[TreeErr], ident: &Ident) -> proc_macro2::TokenSt
         quote_spanned! {
             span=> #ident :: #x (x) => {
                 let x = &mut x.iter().map(|z| z as &dyn AsErrTree);
-                (func)(bare_err_tree::ErrTree::with_pkg(self, x, _err_tree_pkg))
+                (func)(::bare_err_tree::ErrTree::with_pkg(self, x, _err_tree_pkg))
             }
         }
     };
@@ -118,8 +118,8 @@ pub fn gen_sources_enum(errs: &[TreeErr], ident: &Ident) -> proc_macro2::TokenSt
     let conv_iter_dyn = |x, span| {
         quote_spanned! {
             span=> #ident :: #x (x) => {
-                let x = &mut x.iter().map(bare_err_tree::WrapErr::tree);
-                (func)(bare_err_tree::ErrTree::with_pkg(self, x, _err_tree_pkg))
+                let x = &mut x.iter().map(::bare_err_tree::WrapErr::tree);
+                (func)(::bare_err_tree::ErrTree::with_pkg(self, x, _err_tree_pkg))
             }
         }
     };
@@ -135,7 +135,7 @@ pub fn gen_sources_enum(errs: &[TreeErr], ident: &Ident) -> proc_macro2::TokenSt
         let sources = match &self.inner {
             #(#gen_arms)*
             _ => {
-                (func)(bare_err_tree::ErrTree::with_pkg(self, &mut core::iter::empty(), _err_tree_pkg))
+                (func)(::bare_err_tree::ErrTree::with_pkg(self, &mut core::iter::empty(), _err_tree_pkg))
             }
         };
     }

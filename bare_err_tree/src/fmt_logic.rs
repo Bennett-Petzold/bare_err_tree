@@ -6,7 +6,7 @@
 
 use core::{
     cell::RefCell,
-    fmt::{self, Display, Formatter},
+    fmt::{self, Display, Formatter, Write},
     str::{self, Chars},
 };
 
@@ -70,7 +70,7 @@ pub(crate) struct TraceSpan<T: Eq, CharIter> {
 }
 
 pub(crate) trait ErrTreeFormattable {
-    fn apply_msg<W: fmt::Write + ?Sized>(&self, f: &mut W) -> fmt::Result;
+    fn apply_msg<W: fmt::Write>(&self, f: W) -> fmt::Result;
 
     type Source<'a>: ErrTreeFormattable<TraceSpanId = Self::TraceSpanId>;
 
@@ -83,11 +83,10 @@ pub(crate) trait ErrTreeFormattable {
     fn apply_to_last_source<F>(&mut self, func: F) -> fmt::Result
     where
         F: FnMut(Self::Source<'_>) -> fmt::Result;
-
     #[cfg(feature = "source_line")]
     fn has_source_line(&self) -> bool;
     #[cfg(feature = "source_line")]
-    fn apply_source_line<W: fmt::Write + ?Sized>(&self, f: &mut W) -> fmt::Result;
+    fn apply_source_line<W: fmt::Write>(&self, f: W) -> fmt::Result;
 
     #[cfg(feature = "tracing")]
     fn trace_empty(&self) -> bool;
@@ -105,7 +104,7 @@ impl<T> ErrTreeFormattable for &mut T
 where
     T: ErrTreeFormattable,
 {
-    fn apply_msg<W: fmt::Write + ?Sized>(&self, f: &mut W) -> fmt::Result {
+    fn apply_msg<W: fmt::Write>(&self, f: W) -> fmt::Result {
         T::apply_msg(self, f)
     }
 
@@ -131,7 +130,7 @@ where
         T::has_source_line(self)
     }
     #[cfg(feature = "source_line")]
-    fn apply_source_line<W: fmt::Write + ?Sized>(&self, f: &mut W) -> fmt::Result {
+    fn apply_source_line<W: fmt::Write>(&self, f: W) -> fmt::Result {
         T::apply_source_line(self, f)
     }
 
@@ -153,7 +152,7 @@ where
 }
 
 impl ErrTreeFormattable for ErrTree<'_> {
-    fn apply_msg<W: fmt::Write + ?Sized>(&self, f: &mut W) -> fmt::Result {
+    fn apply_msg<W: fmt::Write>(&self, mut f: W) -> fmt::Result {
         write!(f, "{}", self.inner)
     }
 
@@ -197,7 +196,7 @@ impl ErrTreeFormattable for ErrTree<'_> {
     }
 
     #[cfg(feature = "source_line")]
-    fn apply_source_line<W: fmt::Write + ?Sized>(&self, f: &mut W) -> fmt::Result {
+    fn apply_source_line<W: fmt::Write>(&self, mut f: W) -> fmt::Result {
         if let Some(loc) = self.location {
             write!(f, "{}", loc)?;
         }
@@ -275,16 +274,21 @@ const DANGLING: &str = "    ";
 const MAX_CELL_LEN: usize = max_const(CONTINUING.len(), DANGLING.len());
 
 impl<const FRONT_MAX: usize, T: ErrTreeFormattable> ErrTreeFmt<'_, FRONT_MAX, T> {
+    /// The front lines
+    #[inline]
+    fn front_lines_str(front_lines: &[u8], scratch_fill: usize) -> &str {
+        str::from_utf8(&front_lines[..scratch_fill])
+            .expect("All characters are static and guaranteed to be valid UTF-8")
+    }
+
     /// Preamble arrow connections
     #[inline]
     fn write_front_lines<W>(front_lines: &[u8], f: &mut W, scratch_fill: usize) -> fmt::Result
     where
         W: fmt::Write + ?Sized,
     {
-        let front_lines = str::from_utf8(&front_lines[..scratch_fill])
-            .expect("All characters are static and guaranteed to be valid UTF-8");
-
-        write!(f, "\n{0}", front_lines)
+        f.write_char('\n')?;
+        f.write_str(Self::front_lines_str(front_lines, scratch_fill))
     }
 
     /// Push in the correct fill characters
@@ -319,11 +323,11 @@ impl<const FRONT_MAX: usize, T: ErrTreeFormattable> ErrTreeFmt<'_, FRONT_MAX, T>
                 f.write_str("├─ ")?;
             }
             if cfg!(feature = "unix_color") {
-                write!(f, "at \x1b[3m")?;
-                self.tree.apply_source_line(f)?;
-                write!(f, "\x1b[0m")?;
+                f.write_str("at \x1b[3m")?;
+                self.tree.apply_source_line(&mut *f)?;
+                f.write_str("\x1b[0m")?;
             } else {
-                write!(f, "at ")?;
+                f.write_str("at ")?;
                 self.tree.apply_source_line(f)?;
             }
         }
@@ -509,7 +513,10 @@ impl<const FRONT_MAX: usize, T: ErrTreeFormattable> ErrTreeFmt<'_, FRONT_MAX, T>
     where
         W: fmt::Write + ?Sized,
     {
-        self.tree.apply_msg(f)?;
+        self.tree.apply_msg(LeadingLineFormatter::new(
+            &mut *f,
+            Self::front_lines_str(self.front_lines, self.scratch_fill),
+        ))?;
 
         #[cfg_attr(
             not(any(feature = "source_line", feature = "tracing")),
@@ -586,6 +593,42 @@ impl<const FRONT_MAX: usize, T: ErrTreeFormattable> ErrTreeFmt<'_, FRONT_MAX, T>
                 )
             })?;
         };
+
+        Ok(())
+    }
+}
+
+/// Injects the newline leader
+struct LeadingLineFormatter<'a, F> {
+    formatter: F,
+    leading: &'a str,
+}
+
+impl<'a, F> LeadingLineFormatter<'a, F> {
+    pub fn new(formatter: F, leading: &'a str) -> Self {
+        Self { formatter, leading }
+    }
+}
+
+impl<F: Write> Write for LeadingLineFormatter<'_, F> {
+    fn write_str(&mut self, s: &str) -> fmt::Result {
+        if s.chars().all(|c| c != '\n') {
+            self.formatter.write_str(s)?
+        } else {
+            for c in s.chars() {
+                self.write_char(c)?;
+            }
+        }
+        Ok(())
+    }
+
+    fn write_char(&mut self, c: char) -> fmt::Result {
+        self.formatter.write_char(c)?;
+
+        if c == '\n' {
+            self.formatter.write_str(self.leading)?;
+            self.formatter.write_str("│ ")?;
+        }
 
         Ok(())
     }
