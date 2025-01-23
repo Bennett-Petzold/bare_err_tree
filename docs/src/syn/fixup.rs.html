@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/syn-2.0.95/src/fixup.rs`."><title>fixup.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-46132b98.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="syn" data-themes="" data-resource-suffix="" data-rustdoc-version="1.86.0-nightly (8361aef0d 2025-01-14)" data-channel="nightly" data-search-js="search-75f5ac3e.js" data-settings-js="settings-0f613d39.js" ><script src="../../static.files/storage-59e33391.js"></script><script defer src="../../static.files/src-script-56102188.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-5f194d8c.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">syn/</div>fixup.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `/home/runner/.cargo/registry/src/index.crates.io-1949cf8c6b5b557f/syn-2.0.96/src/fixup.rs`."><title>fixup.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../../static.files/rustdoc-5d1d17d0.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="syn" data-themes="" data-resource-suffix="" data-rustdoc-version="1.86.0-nightly (649b995a9 2025-01-22)" data-channel="nightly" data-search-js="search-ccb196c1.js" data-settings-js="settings-0f613d39.js" ><script src="../../static.files/storage-59e33391.js"></script><script defer src="../../static.files/src-script-56102188.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-5f194d8c.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-893ab5e7.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-044be391.svg"></head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">syn/</div>fixup.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers">
 <a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
@@ -723,7 +723,52 @@
 <a href="#722" id="722">722</a>
 <a href="#723" id="723">723</a>
 <a href="#724" id="724">724</a>
-<a href="#725" id="725">725</a></pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::classify;
+<a href="#725" id="725">725</a>
+<a href="#726" id="726">726</a>
+<a href="#727" id="727">727</a>
+<a href="#728" id="728">728</a>
+<a href="#729" id="729">729</a>
+<a href="#730" id="730">730</a>
+<a href="#731" id="731">731</a>
+<a href="#732" id="732">732</a>
+<a href="#733" id="733">733</a>
+<a href="#734" id="734">734</a>
+<a href="#735" id="735">735</a>
+<a href="#736" id="736">736</a>
+<a href="#737" id="737">737</a>
+<a href="#738" id="738">738</a>
+<a href="#739" id="739">739</a>
+<a href="#740" id="740">740</a>
+<a href="#741" id="741">741</a>
+<a href="#742" id="742">742</a>
+<a href="#743" id="743">743</a>
+<a href="#744" id="744">744</a>
+<a href="#745" id="745">745</a>
+<a href="#746" id="746">746</a>
+<a href="#747" id="747">747</a>
+<a href="#748" id="748">748</a>
+<a href="#749" id="749">749</a>
+<a href="#750" id="750">750</a>
+<a href="#751" id="751">751</a>
+<a href="#752" id="752">752</a>
+<a href="#753" id="753">753</a>
+<a href="#754" id="754">754</a>
+<a href="#755" id="755">755</a>
+<a href="#756" id="756">756</a>
+<a href="#757" id="757">757</a>
+<a href="#758" id="758">758</a>
+<a href="#759" id="759">759</a>
+<a href="#760" id="760">760</a>
+<a href="#761" id="761">761</a>
+<a href="#762" id="762">762</a>
+<a href="#763" id="763">763</a>
+<a href="#764" id="764">764</a>
+<a href="#765" id="765">765</a>
+<a href="#766" id="766">766</a>
+<a href="#767" id="767">767</a>
+<a href="#768" id="768">768</a>
+<a href="#769" id="769">769</a>
+<a href="#770" id="770">770</a></pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::classify;
 <span class="kw">use </span><span class="kw">crate</span>::expr::Expr;
 <span class="attr">#[cfg(feature = <span class="string">"full"</span>)]
 </span><span class="kw">use </span><span class="kw">crate</span>::expr::{
@@ -1010,7 +1055,7 @@
     <span class="kw">fn </span>leftmost_subexpression_precedence(<span class="self">self</span>, expr: <span class="kw-2">&amp;</span>Expr) -&gt; Precedence {
         <span class="attr">#[cfg(feature = <span class="string">"full"</span>)]
         </span><span class="kw">if </span>!<span class="self">self</span>.next_operator_can_begin_expr || <span class="self">self</span>.next_operator == Precedence::Range {
-            <span class="kw">if let </span>Scan::Bailout = scan_right(expr, <span class="self">self</span>, <span class="bool-val">false</span>, <span class="number">0</span>, <span class="number">0</span>) {
+            <span class="kw">if let </span>Scan::Bailout = scan_right(expr, <span class="self">self</span>, Precedence::MIN, <span class="number">0</span>, <span class="number">0</span>) {
                 <span class="kw">if </span>scan_left(expr, <span class="self">self</span>) {
                     <span class="kw">return </span>Precedence::Unambiguous;
                 }
@@ -1076,16 +1121,17 @@
         <span class="kw">let </span>default_prec = <span class="self">self</span>.precedence(expr);
 
         <span class="attr">#[cfg(feature = <span class="string">"full"</span>)]
-        </span><span class="kw">if </span>default_prec &lt; Precedence::Prefix
-            &amp;&amp; (!<span class="self">self</span>.next_operator_can_begin_expr || <span class="self">self</span>.next_operator == Precedence::Range)
-        {
-            <span class="kw">if let </span>Scan::Bailout | Scan::Fail = scan_right(
-                expr,
-                <span class="self">self</span>,
-                <span class="self">self</span>.previous_operator == Precedence::Range,
-                <span class="number">1</span>,
-                <span class="number">0</span>,
-            ) {
+        </span><span class="kw">if match </span><span class="self">self</span>.previous_operator {
+            Precedence::Assign | Precedence::Let | Precedence::Prefix =&gt; {
+                default_prec &lt; <span class="self">self</span>.previous_operator
+            }
+            <span class="kw">_ </span>=&gt; default_prec &lt;= <span class="self">self</span>.previous_operator,
+        } &amp;&amp; <span class="kw">match </span><span class="self">self</span>.next_operator {
+            Precedence::Range | Precedence::Or | Precedence::And =&gt; <span class="bool-val">true</span>,
+            <span class="kw">_ </span>=&gt; !<span class="self">self</span>.next_operator_can_begin_expr,
+        } {
+            <span class="kw">if let </span>Scan::Bailout | Scan::Fail = scan_right(expr, <span class="self">self</span>, <span class="self">self</span>.previous_operator, <span class="number">1</span>, <span class="number">0</span>)
+            {
                 <span class="kw">if </span>scan_left(expr, <span class="self">self</span>) {
                     <span class="kw">return </span>Precedence::Prefix;
                 }
@@ -1193,6 +1239,13 @@
 }
 
 <span class="attr">#[cfg(feature = <span class="string">"full"</span>)]
+</span><span class="kw">impl </span>PartialEq <span class="kw">for </span>Scan {
+    <span class="kw">fn </span>eq(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; bool {
+        <span class="kw-2">*</span><span class="self">self </span><span class="kw">as </span>u8 == <span class="kw-2">*</span>other <span class="kw">as </span>u8
+    }
+}
+
+<span class="attr">#[cfg(feature = <span class="string">"full"</span>)]
 </span><span class="kw">fn </span>scan_left(expr: <span class="kw-2">&amp;</span>Expr, fixup: FixupContext) -&gt; bool {
     <span class="kw">match </span>expr {
         Expr::Assign(<span class="kw">_</span>) =&gt; fixup.previous_operator &lt;= Precedence::Assign,
@@ -1200,6 +1253,7 @@
             Precedence::Assign =&gt; fixup.previous_operator &lt;= Precedence::Assign,
             binop_prec =&gt; fixup.previous_operator &lt; binop_prec,
         },
+        Expr::Cast(<span class="kw">_</span>) =&gt; fixup.previous_operator &lt; Precedence::Cast,
         Expr::Range(e) =&gt; e.start.is_none() || fixup.previous_operator &lt; Precedence::Assign,
         <span class="kw">_ </span>=&gt; <span class="bool-val">true</span>,
     }
@@ -1209,12 +1263,21 @@
 </span><span class="kw">fn </span>scan_right(
     expr: <span class="kw-2">&amp;</span>Expr,
     fixup: FixupContext,
-    range: bool,
+    precedence: Precedence,
     fail_offset: u8,
     bailout_offset: u8,
 ) -&gt; Scan {
+    <span class="kw">let </span>consume_by_precedence = <span class="kw">if match </span>precedence {
+        Precedence::Assign | Precedence::Compare =&gt; precedence &lt;= fixup.next_operator,
+        <span class="kw">_ </span>=&gt; precedence &lt; fixup.next_operator,
+    } || fixup.next_operator == Precedence::MIN
+    {
+        Scan::Consume
+    } <span class="kw">else </span>{
+        Scan::Bailout
+    };
     <span class="kw">if </span>fixup.parenthesize(expr) {
-        <span class="kw">return </span>Scan::Consume;
+        <span class="kw">return </span>consume_by_precedence;
     }
     <span class="kw">match </span>expr {
         Expr::Assign(e) =&gt; {
@@ -1228,7 +1291,7 @@
             <span class="kw">let </span>scan = scan_right(
                 <span class="kw-2">&amp;</span>e.right,
                 right_fixup,
-                <span class="bool-val">false</span>,
+                Precedence::Assign,
                 <span class="kw">match </span>fixup.next_operator {
                     Precedence::Unambiguous =&gt; fail_offset,
                     <span class="kw">_ </span>=&gt; <span class="number">1</span>,
@@ -1236,9 +1299,6 @@
                 <span class="number">1</span>,
             );
             <span class="kw">if let </span>Scan::Bailout | Scan::Consume = scan {
-                <span class="kw">return </span>Scan::Consume;
-            }
-            <span class="kw">if </span>right_fixup.rightmost_subexpression_precedence(<span class="kw-2">&amp;</span>e.right) &lt; Precedence::Assign {
                 Scan::Consume
             } <span class="kw">else if let </span>Precedence::Unambiguous = fixup.next_operator {
                 Scan::Fail
@@ -1248,42 +1308,38 @@
         }
         Expr::Binary(e) =&gt; {
             <span class="kw">if match </span>fixup.next_operator {
-                Precedence::Unambiguous =&gt; fail_offset &gt;= <span class="number">2</span>,
+                Precedence::Unambiguous =&gt; {
+                    fail_offset &gt;= <span class="number">2
+                        </span>&amp;&amp; (consume_by_precedence == Scan::Consume || bailout_offset &gt;= <span class="number">1</span>)
+                }
                 <span class="kw">_ </span>=&gt; bailout_offset &gt;= <span class="number">1</span>,
             } {
                 <span class="kw">return </span>Scan::Consume;
             }
             <span class="kw">let </span>binop_prec = Precedence::of_binop(<span class="kw-2">&amp;</span>e.op);
+            <span class="kw">if </span>binop_prec == Precedence::Compare &amp;&amp; fixup.next_operator == Precedence::Compare {
+                <span class="kw">return </span>Scan::Consume;
+            }
             <span class="kw">let </span>right_fixup = fixup.rightmost_subexpression_fixup(<span class="bool-val">false</span>, <span class="bool-val">false</span>, binop_prec);
             <span class="kw">let </span>scan = scan_right(
                 <span class="kw-2">&amp;</span>e.right,
                 right_fixup,
-                range &amp;&amp; binop_prec != Precedence::Assign,
+                binop_prec,
                 <span class="kw">match </span>fixup.next_operator {
                     Precedence::Unambiguous =&gt; fail_offset,
                     <span class="kw">_ </span>=&gt; <span class="number">1</span>,
                 },
-                <span class="kw">match </span>(binop_prec, fixup.next_operator) {
-                    (Precedence::Assign, <span class="kw">_</span>) =&gt; <span class="number">1</span>,
-                    (<span class="kw">_</span>, Precedence::Assign | Precedence::Range) <span class="kw">if </span>range =&gt; <span class="number">0</span>,
-                    <span class="kw">_ </span>=&gt; <span class="number">1</span>,
-                },
+                consume_by_precedence <span class="kw">as </span>u8 - Scan::Bailout <span class="kw">as </span>u8,
             );
-            <span class="kw">if match </span>(scan, fixup.next_operator) {
-                (Scan::Fail, <span class="kw">_</span>) =&gt; <span class="bool-val">false</span>,
-                (Scan::Bailout, <span class="kw">_</span>) <span class="kw">if </span>binop_prec == Precedence::Assign =&gt; <span class="bool-val">true</span>,
-                (Scan::Bailout, Precedence::Assign | Precedence::Range) =&gt; !range,
-                (Scan::Bailout | Scan::Consume, <span class="kw">_</span>) =&gt; <span class="bool-val">true</span>,
-            } {
-                <span class="kw">return </span>Scan::Consume;
+            <span class="kw">match </span>scan {
+                Scan::Fail =&gt; {}
+                Scan::Bailout =&gt; <span class="kw">return </span>consume_by_precedence,
+                Scan::Consume =&gt; <span class="kw">return </span>Scan::Consume,
             }
-            <span class="kw">let </span>right_prec = right_fixup.rightmost_subexpression_precedence(<span class="kw-2">&amp;</span>e.right);
-            <span class="kw">let </span>right_needs_group = <span class="kw">match </span>binop_prec {
-                Precedence::Assign =&gt; right_prec &lt; binop_prec,
-                <span class="kw">_ </span>=&gt; right_prec &lt;= binop_prec,
-            };
+            <span class="kw">let </span>right_needs_group = binop_prec != Precedence::Assign
+                &amp;&amp; right_fixup.rightmost_subexpression_precedence(<span class="kw-2">&amp;</span>e.right) &lt;= binop_prec;
             <span class="kw">if </span>right_needs_group {
-                Scan::Consume
+                consume_by_precedence
             } <span class="kw">else if let </span>(Scan::Fail, Precedence::Unambiguous) = (scan, fixup.next_operator) {
                 Scan::Fail
             } <span class="kw">else </span>{
@@ -1294,7 +1350,10 @@
         | Expr::Reference(ExprReference { expr, .. })
         | Expr::Unary(ExprUnary { expr, .. }) =&gt; {
             <span class="kw">if match </span>fixup.next_operator {
-                Precedence::Unambiguous =&gt; fail_offset &gt;= <span class="number">2</span>,
+                Precedence::Unambiguous =&gt; {
+                    fail_offset &gt;= <span class="number">2
+                        </span>&amp;&amp; (consume_by_precedence == Scan::Consume || bailout_offset &gt;= <span class="number">1</span>)
+                }
                 <span class="kw">_ </span>=&gt; bailout_offset &gt;= <span class="number">1</span>,
             } {
                 <span class="kw">return </span>Scan::Consume;
@@ -1303,25 +1362,20 @@
             <span class="kw">let </span>scan = scan_right(
                 expr,
                 right_fixup,
-                range,
+                precedence,
                 <span class="kw">match </span>fixup.next_operator {
                     Precedence::Unambiguous =&gt; fail_offset,
                     <span class="kw">_ </span>=&gt; <span class="number">1</span>,
                 },
-                <span class="kw">match </span>fixup.next_operator {
-                    Precedence::Assign | Precedence::Range <span class="kw">if </span>range =&gt; <span class="number">0</span>,
-                    <span class="kw">_ </span>=&gt; <span class="number">1</span>,
-                },
+                consume_by_precedence <span class="kw">as </span>u8 - Scan::Bailout <span class="kw">as </span>u8,
             );
-            <span class="kw">if match </span>(scan, fixup.next_operator) {
-                (Scan::Fail, <span class="kw">_</span>) =&gt; <span class="bool-val">false</span>,
-                (Scan::Bailout, Precedence::Assign | Precedence::Range) =&gt; !range,
-                (Scan::Bailout | Scan::Consume, <span class="kw">_</span>) =&gt; <span class="bool-val">true</span>,
-            } {
-                <span class="kw">return </span>Scan::Consume;
+            <span class="kw">match </span>scan {
+                Scan::Fail =&gt; {}
+                Scan::Bailout =&gt; <span class="kw">return </span>consume_by_precedence,
+                Scan::Consume =&gt; <span class="kw">return </span>Scan::Consume,
             }
             <span class="kw">if </span>right_fixup.rightmost_subexpression_precedence(expr) &lt; Precedence::Prefix {
-                Scan::Consume
+                consume_by_precedence
             } <span class="kw">else if let </span>(Scan::Fail, Precedence::Unambiguous) = (scan, fixup.next_operator) {
                 Scan::Fail
             } <span class="kw">else </span>{
@@ -1338,7 +1392,7 @@
                 <span class="kw">let </span>scan = scan_right(
                     end,
                     right_fixup,
-                    <span class="bool-val">true</span>,
+                    Precedence::Range,
                     fail_offset,
                     <span class="kw">match </span>fixup.next_operator {
                         Precedence::Assign | Precedence::Range =&gt; <span class="number">0</span>,
@@ -1358,10 +1412,13 @@
                     Scan::Fail
                 }
             }
-            <span class="prelude-val">None </span>=&gt; <span class="kw">match </span>fixup.next_operator {
-                Precedence::Range =&gt; Scan::Consume,
-                <span class="kw">_ </span>=&gt; Scan::Fail,
-            },
+            <span class="prelude-val">None </span>=&gt; {
+                <span class="kw">if </span>fixup.next_operator_can_begin_expr {
+                    Scan::Consume
+                } <span class="kw">else </span>{
+                    Scan::Fail
+                }
+            }
         },
         Expr::Break(e) =&gt; <span class="kw">match </span><span class="kw-2">&amp;</span>e.expr {
             <span class="prelude-val">Some</span>(value) =&gt; {
@@ -1369,13 +1426,13 @@
                     <span class="kw">return </span>Scan::Consume;
                 }
                 <span class="kw">let </span>right_fixup = fixup.rightmost_subexpression_fixup(<span class="bool-val">true</span>, <span class="bool-val">true</span>, Precedence::Jump);
-                <span class="kw">match </span>scan_right(value, right_fixup, <span class="bool-val">false</span>, <span class="number">1</span>, <span class="number">1</span>) {
+                <span class="kw">match </span>scan_right(value, right_fixup, Precedence::Jump, <span class="number">1</span>, <span class="number">1</span>) {
                     Scan::Fail =&gt; Scan::Bailout,
                     Scan::Bailout | Scan::Consume =&gt; Scan::Consume,
                 }
             }
             <span class="prelude-val">None </span>=&gt; <span class="kw">match </span>fixup.next_operator {
-                Precedence::Assign <span class="kw">if </span>range =&gt; Scan::Fail,
+                Precedence::Assign <span class="kw">if </span>precedence &gt; Precedence::Assign =&gt; Scan::Fail,
                 <span class="kw">_ </span>=&gt; Scan::Consume,
             },
         },
@@ -1386,13 +1443,13 @@
                 }
                 <span class="kw">let </span>right_fixup =
                     fixup.rightmost_subexpression_fixup(<span class="bool-val">true</span>, <span class="bool-val">false</span>, Precedence::Jump);
-                <span class="kw">match </span>scan_right(e, right_fixup, <span class="bool-val">false</span>, <span class="number">1</span>, <span class="number">1</span>) {
+                <span class="kw">match </span>scan_right(e, right_fixup, Precedence::Jump, <span class="number">1</span>, <span class="number">1</span>) {
                     Scan::Fail =&gt; Scan::Bailout,
                     Scan::Bailout | Scan::Consume =&gt; Scan::Consume,
                 }
             }
             <span class="prelude-val">None </span>=&gt; <span class="kw">match </span>fixup.next_operator {
-                Precedence::Assign <span class="kw">if </span>range =&gt; Scan::Fail,
+                Precedence::Assign <span class="kw">if </span>precedence &gt; Precedence::Assign =&gt; Scan::Fail,
                 <span class="kw">_ </span>=&gt; Scan::Consume,
             },
         },
@@ -1405,10 +1462,41 @@
                 }
                 <span class="kw">let </span>right_fixup =
                     fixup.rightmost_subexpression_fixup(<span class="bool-val">false</span>, <span class="bool-val">false</span>, Precedence::Jump);
-                <span class="kw">match </span>scan_right(<span class="kw-2">&amp;</span>e.body, right_fixup, <span class="bool-val">false</span>, <span class="number">1</span>, <span class="number">1</span>) {
+                <span class="kw">match </span>scan_right(<span class="kw-2">&amp;</span>e.body, right_fixup, Precedence::Jump, <span class="number">1</span>, <span class="number">1</span>) {
                     Scan::Fail =&gt; Scan::Bailout,
                     Scan::Bailout | Scan::Consume =&gt; Scan::Consume,
                 }
+            } <span class="kw">else </span>{
+                Scan::Consume
+            }
+        }
+        Expr::Let(e) =&gt; {
+            <span class="kw">if </span>bailout_offset &gt;= <span class="number">1 </span>{
+                <span class="kw">return </span>Scan::Consume;
+            }
+            <span class="kw">let </span>right_fixup = fixup.rightmost_subexpression_fixup(<span class="bool-val">false</span>, <span class="bool-val">false</span>, Precedence::Let);
+            <span class="kw">let </span>scan = scan_right(
+                <span class="kw-2">&amp;</span>e.expr,
+                right_fixup,
+                Precedence::Let,
+                <span class="number">1</span>,
+                <span class="kw">if </span>fixup.next_operator &lt; Precedence::Let {
+                    <span class="number">0
+                </span>} <span class="kw">else </span>{
+                    <span class="number">1
+                </span>},
+            );
+            <span class="kw">match </span>scan {
+                Scan::Fail | Scan::Bailout <span class="kw">if </span>fixup.next_operator &lt; Precedence::Let =&gt; {
+                    <span class="kw">return </span>Scan::Bailout;
+                }
+                Scan::Consume =&gt; <span class="kw">return </span>Scan::Consume,
+                <span class="kw">_ </span>=&gt; {}
+            }
+            <span class="kw">if </span>right_fixup.rightmost_subexpression_precedence(<span class="kw-2">&amp;</span>e.expr) &lt; Precedence::Let {
+                Scan::Consume
+            } <span class="kw">else if let </span>Scan::Fail = scan {
+                Scan::Bailout
             } <span class="kw">else </span>{
                 Scan::Consume
             }
@@ -1427,7 +1515,6 @@
         | Expr::If(<span class="kw">_</span>)
         | Expr::Index(<span class="kw">_</span>)
         | Expr::Infer(<span class="kw">_</span>)
-        | Expr::Let(<span class="kw">_</span>)
         | Expr::Lit(<span class="kw">_</span>)
         | Expr::Loop(<span class="kw">_</span>)
         | Expr::Macro(<span class="kw">_</span>)
@@ -1443,8 +1530,11 @@
         | Expr::Unsafe(<span class="kw">_</span>)
         | Expr::Verbatim(<span class="kw">_</span>)
         | Expr::While(<span class="kw">_</span>) =&gt; <span class="kw">match </span>fixup.next_operator {
-            Precedence::Assign | Precedence::Range <span class="kw">if </span>range =&gt; Scan::Fail,
-            <span class="kw">_ </span>=&gt; Scan::Consume,
+            Precedence::Assign | Precedence::Range <span class="kw">if </span>precedence == Precedence::Range =&gt; Scan::Fail,
+            <span class="kw">_ if </span>precedence == Precedence::Let &amp;&amp; fixup.next_operator &lt; Precedence::Let =&gt; {
+                Scan::Fail
+            }
+            <span class="kw">_ </span>=&gt; consume_by_precedence,
         },
     }
 }
