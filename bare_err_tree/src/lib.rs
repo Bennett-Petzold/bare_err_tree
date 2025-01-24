@@ -128,15 +128,11 @@ where
     match res {
         Ok(x) => x,
         Err(tree) => {
-            let loc = core::panic::Location::caller();
-            tree.as_err_tree(&mut |tree| {
-                panic!(
-                    "Panic origin at: {:#?}\n{}",
-                    loc,
-                    ErrTreeFmtWrap::<FRONT_MAX, _>::new(tree)
-                )
-            });
-            unreachable!()
+            panic!(
+                "Panic origin at: {:#?}\n{}",
+                core::panic::Location::caller(),
+                ErrTreeDisplay::<FRONT_MAX, _>::new(tree)
+            );
         }
     }
 }
