@@ -81,18 +81,14 @@ extern crate alloc;
 #[cfg(feature = "source_line")]
 use core::panic::Location;
 
-use core::{
-    error::Error,
-    fmt::{self},
-};
+use core::error::Error;
 
 mod pkg;
 pub use pkg::*;
 pub mod flex;
 pub use flex::*;
-mod fmt_logic;
-use fmt_logic::*;
 mod buffer;
+mod fmt_logic;
 use buffer::*;
 
 #[cfg(feature = "json")]
