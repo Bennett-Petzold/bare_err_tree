@@ -39,7 +39,7 @@ mod near_empty {
     #[test]
     fn near_empty() {
         let expected_lines = "EMPTY
-╰─ at bare_err_tree/tests/../test_cases/std/src/bin/near-empty.rs:17:17";
+╰─ at bare_err_tree/tests/../test_cases/std/src/bin/near-empty.rs:18:17";
 
         assert_eq!(gen_print(), expected_lines);
     }

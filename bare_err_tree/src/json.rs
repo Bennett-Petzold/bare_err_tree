@@ -13,7 +13,10 @@ use core::{
     str::Chars,
 };
 
-use crate::{fmt_tree, AsErrTree, ErrTree, ErrTreeFormattable};
+use crate::{
+    fmt_logic::{fmt_tree, ErrTreeFormattable},
+    AsErrTree, ErrTree,
+};
 
 /// Produces JSON to store [`ErrTree`] formatted output.
 ///
@@ -302,9 +305,11 @@ impl<'f> ErrTreeFormattable for JsonReconstruct<'f> {
     #[cfg(feature = "tracing")]
     fn apply_trace<F>(&self, mut func: F) -> fmt::Result
     where
-        F: FnMut(crate::TraceSpan<Self::TraceSpanId, Self::TraceSpanIter<'_>>) -> fmt::Result,
+        F: FnMut(
+            crate::fmt_logic::TraceSpan<Self::TraceSpanId, Self::TraceSpanIter<'_>>,
+        ) -> fmt::Result,
     {
-        use crate::TraceSpan;
+        use crate::fmt_logic::TraceSpan;
 
         const TARGET: &str = "\"target\"";
         const NAME: &str = "\"name\"";

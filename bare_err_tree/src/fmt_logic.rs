@@ -5,27 +5,25 @@
  */
 
 use core::{
-    cell::RefCell,
     fmt::{self, Display, Formatter, Write},
     str::{self, Chars},
 };
 
-use crate::ErrTree;
+use crate::{AsErrTree, ErrTree, ErrTreeDisplay};
 
-pub(crate) struct ErrTreeFmtWrap<const FRONT_MAX: usize, T>(RefCell<T>);
-
-impl<const FRONT_MAX: usize, T> ErrTreeFmtWrap<FRONT_MAX, T> {
-    pub fn new(tree: T) -> Self {
-        Self(RefCell::new(tree))
+impl<E: AsErrTree, const FRONT_MAX: usize> ErrTreeDisplay<E, FRONT_MAX> {
+    pub fn new(tree: E) -> Self {
+        Self(tree)
     }
 }
 
-impl<const FRONT_MAX: usize, T> Display for ErrTreeFmtWrap<FRONT_MAX, T>
-where
-    T: ErrTreeFormattable,
-{
+impl<E: AsErrTree, const FRONT_MAX: usize> Display for ErrTreeDisplay<E, FRONT_MAX> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        fmt_tree::<FRONT_MAX, _, _>(&mut *self.0.borrow_mut(), f)
+        let mut res = Ok(());
+        self.0.as_err_tree(&mut |tree| {
+            res = fmt_tree::<FRONT_MAX, _, _>(tree, f);
+        });
+        res
     }
 }
 

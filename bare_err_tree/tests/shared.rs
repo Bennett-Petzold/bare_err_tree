@@ -18,16 +18,16 @@ mod near_empty {
     #[test]
     fn near_empty() {
         let expected_lines = "EMPTY
-╰─ at bare_err_tree/tests/../test_cases/std/src/bin/near-empty.rs:17:17";
+╰─ at bare_err_tree/tests/../test_cases/std/src/bin/near-empty.rs:18:17";
 
         assert_eq!(gen_print(), expected_lines);
     }
 }
 
 mod multiline {
-    use core::error::Error;
+    use core::{error::Error, fmt::Write};
 
-    use bare_err_tree::print_tree;
+    use bare_err_tree::ErrTreeDisplay;
     use thiserror::Error;
 
     #[derive(Debug, Error)]
@@ -49,7 +49,7 @@ mod multiline {
 
         let err = MultilineErr(InnerMultiline);
         let mut out = String::new();
-        print_tree::<60, _, _>(&err as &dyn Error, &mut out).unwrap();
+        write!(out, "{}", ErrTreeDisplay::<_, 60>(&err as &dyn Error)).unwrap();
 
         assert_eq!(out, expected_lines);
     }

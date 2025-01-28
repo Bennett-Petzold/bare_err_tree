@@ -8,3 +8,6 @@ updates:
       all-dependencies:
         patterns:
           - '*'
+        update-types:
+          - "major"
+          - "minor"

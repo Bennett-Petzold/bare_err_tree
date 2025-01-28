@@ -63,7 +63,7 @@ mod near_empty {
     #[test]
     fn near_empty() {
         let expected_lines = "EMPTY
-╰─ at bare_err_tree/tests/../test_cases/trace/src/bin/near-empty.rs:34:17";
+╰─ at bare_err_tree/tests/../test_cases/trace/src/bin/near-empty.rs:35:17";
 
         assert_eq!(gen_print(), expected_lines);
     }
@@ -75,18 +75,18 @@ mod trailing {
     #[test]
     fn near_empty() {
         let expected_lines = "missed class
-├─ at bare_err_tree/tests/../test_cases/trace/src/bin/trailing.rs:37:6
+├─ at bare_err_tree/tests/../test_cases/trace/src/bin/trailing.rs:38:6
 │
 ├─ tracing frame 0 => tracing::trailing::gen_print_inner
-│        at bare_err_tree/tests/../test_cases/trace/src/bin/trailing.rs:32
+│        at bare_err_tree/tests/../test_cases/trace/src/bin/trailing.rs:33
 │
 ╰─▶ stayed in bed too long
-    ├─ at bare_err_tree/tests/../test_cases/trace/src/bin/trailing.rs:34:57
+    ├─ at bare_err_tree/tests/../test_cases/trace/src/bin/trailing.rs:35:57
     │
     ├─ 1 duplicate tracing frame(s): [0]
     │
     ╰─▶ proving 1 == 2
-        ├─ at bare_err_tree/tests/../test_cases/trace/src/bin/trailing.rs:34:72
+        ├─ at bare_err_tree/tests/../test_cases/trace/src/bin/trailing.rs:35:72
         │
         ╰─ 1 duplicate tracing frame(s): [0]";
 
