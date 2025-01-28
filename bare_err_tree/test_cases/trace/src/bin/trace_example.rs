@@ -4,9 +4,9 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-use std::fmt::{self, Display, Formatter};
+use std::fmt::{self, Display, Formatter, Write};
 
-use bare_err_tree::{err_tree, print_tree};
+use bare_err_tree::{err_tree, ErrTreeDisplay};
 use thiserror::Error;
 use tracing_error::ErrorLayer;
 use tracing_subscriber::{field::MakeExt, layer::SubscriberExt};
@@ -50,7 +50,7 @@ fn gen_print_inner() -> String {
     ))
     .into();
     let mut formatted = String::new();
-    print_tree::<60, _, _>(fatal, &mut formatted).unwrap();
+    write!(formatted, "{}", ErrTreeDisplay::<_, 60>(fatal)).unwrap();
     formatted
 }
 

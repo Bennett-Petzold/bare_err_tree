@@ -4,7 +4,8 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-use bare_err_tree::print_tree;
+use bare_err_tree::ErrTreeDisplay;
+use std::fmt::Write;
 use thiserror::Error;
 
 #[allow(dead_code)]
@@ -16,7 +17,12 @@ fn main() {
 fn gen_print() -> String {
     let fatal = Empty;
     let mut formatted = String::new();
-    print_tree::<60, _, _>(&fatal as &dyn std::error::Error, &mut formatted).unwrap();
+    write!(
+        formatted,
+        "{}",
+        ErrTreeDisplay::<_, 60>(&fatal as &dyn std::error::Error)
+    )
+    .unwrap();
     formatted
 }
 

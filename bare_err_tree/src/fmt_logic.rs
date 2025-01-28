@@ -9,20 +9,15 @@ use core::{
     str::{self, Chars},
 };
 
-use crate::{AsErrTree, ErrTree};
+use crate::{AsErrTree, ErrTree, ErrTreeDisplay};
 
-pub struct ErrTreeDisplay<const FRONT_MAX: usize, E>(E);
-
-impl<const FRONT_MAX: usize, E> ErrTreeDisplay<FRONT_MAX, E> {
+impl<E: AsErrTree, const FRONT_MAX: usize> ErrTreeDisplay<E, FRONT_MAX> {
     pub fn new(tree: E) -> Self {
         Self(tree)
     }
 }
 
-impl<const FRONT_MAX: usize, E> Display for ErrTreeDisplay<FRONT_MAX, E>
-where
-    E: AsErrTree,
-{
+impl<E: AsErrTree, const FRONT_MAX: usize> Display for ErrTreeDisplay<E, FRONT_MAX> {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         let mut res = Ok(());
         self.0.as_err_tree(&mut |tree| {

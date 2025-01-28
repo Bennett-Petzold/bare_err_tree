@@ -9,7 +9,7 @@
 Support for the extra information prints does not change the type or public API (besides a hidden field or deref).
 It is added via macro or manual implementation of the `AsErrTree` trait (see
 the [docs][Docs] for details).
-End users can then use `tree_unwrap` or `print_tree` to get better error output,
+End users can then use `ErrTreeDisplay` or `tree_unwrap` to get better error output,
 or store as [JSON][JSON] for later reconstruction.
 
 Unlike [anyhow][Anyhow], [eyre][Eyre], or [error-stack][ErrorStack], the extra
