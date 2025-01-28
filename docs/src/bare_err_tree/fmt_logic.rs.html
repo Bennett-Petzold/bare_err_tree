@@ -631,36 +631,32 @@
 <a href="#630" id="630">630</a>
 <a href="#631" id="631">631</a>
 <a href="#632" id="632">632</a>
-<a href="#633" id="633">633</a>
-<a href="#634" id="634">634</a>
-<a href="#635" id="635">635</a></pre></div><pre class="rust"><code><span class="comment">/*
+<a href="#633" id="633">633</a></pre></div><pre class="rust"><code><span class="comment">/*
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
 </span><span class="kw">use </span>core::{
-    cell::RefCell,
     fmt::{<span class="self">self</span>, Display, Formatter, Write},
     str::{<span class="self">self</span>, Chars},
 };
 
-<span class="kw">use </span><span class="kw">crate</span>::ErrTree;
+<span class="kw">use crate</span>::{AsErrTree, ErrTree, ErrTreeDisplay};
 
-<span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">struct </span>ErrTreeFmtWrap&lt;<span class="kw">const </span>FRONT_MAX: usize, T&gt;(RefCell&lt;T&gt;);
-
-<span class="kw">impl</span>&lt;<span class="kw">const </span>FRONT_MAX: usize, T&gt; ErrTreeFmtWrap&lt;FRONT_MAX, T&gt; {
-    <span class="kw">pub fn </span>new(tree: T) -&gt; <span class="self">Self </span>{
-        <span class="self">Self</span>(RefCell::new(tree))
+<span class="kw">impl</span>&lt;E: AsErrTree, <span class="kw">const </span>FRONT_MAX: usize&gt; ErrTreeDisplay&lt;E, FRONT_MAX&gt; {
+    <span class="kw">pub fn </span>new(tree: E) -&gt; <span class="self">Self </span>{
+        <span class="self">Self</span>(tree)
     }
 }
 
-<span class="kw">impl</span>&lt;<span class="kw">const </span>FRONT_MAX: usize, T&gt; Display <span class="kw">for </span>ErrTreeFmtWrap&lt;FRONT_MAX, T&gt;
-<span class="kw">where
-    </span>T: ErrTreeFormattable,
-{
+<span class="kw">impl</span>&lt;E: AsErrTree, <span class="kw">const </span>FRONT_MAX: usize&gt; Display <span class="kw">for </span>ErrTreeDisplay&lt;E, FRONT_MAX&gt; {
     <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
-        fmt_tree::&lt;FRONT_MAX, <span class="kw">_</span>, <span class="kw">_</span>&gt;(<span class="kw-2">&amp;mut *</span><span class="self">self</span>.<span class="number">0</span>.borrow_mut(), f)
+        <span class="kw">let </span><span class="kw-2">mut </span>res = <span class="prelude-val">Ok</span>(());
+        <span class="self">self</span>.<span class="number">0</span>.as_err_tree(<span class="kw-2">&amp;mut </span>|tree| {
+            res = fmt_tree::&lt;FRONT_MAX, <span class="kw">_</span>, <span class="kw">_</span>&gt;(tree, f);
+        });
+        res
     }
 }
 

@@ -635,7 +635,12 @@
 <a href="#634" id="634">634</a>
 <a href="#635" id="635">635</a>
 <a href="#636" id="636">636</a>
-<a href="#637" id="637">637</a></pre></div><pre class="rust"><code><span class="comment">/*
+<a href="#637" id="637">637</a>
+<a href="#638" id="638">638</a>
+<a href="#639" id="639">639</a>
+<a href="#640" id="640">640</a>
+<a href="#641" id="641">641</a>
+<a href="#642" id="642">642</a></pre></div><pre class="rust"><code><span class="comment">/*
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
@@ -650,7 +655,10 @@
     str::Chars,
 };
 
-<span class="kw">use crate</span>::{fmt_tree, AsErrTree, ErrTree, ErrTreeFormattable};
+<span class="kw">use crate</span>::{
+    fmt_logic::{fmt_tree, ErrTreeFormattable},
+    AsErrTree, ErrTree,
+};
 
 <span class="doccomment">/// Produces JSON to store [`ErrTree`] formatted output.
 ///
@@ -939,9 +947,11 @@
     <span class="attr">#[cfg(feature = <span class="string">"tracing"</span>)]
     </span><span class="kw">fn </span>apply_trace&lt;F&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw-2">mut </span>func: F) -&gt; fmt::Result
     <span class="kw">where
-        </span>F: FnMut(<span class="kw">crate</span>::TraceSpan&lt;<span class="self">Self</span>::TraceSpanId, <span class="self">Self</span>::TraceSpanIter&lt;<span class="lifetime">'_</span>&gt;&gt;) -&gt; fmt::Result,
+        </span>F: FnMut(
+            <span class="kw">crate</span>::fmt_logic::TraceSpan&lt;<span class="self">Self</span>::TraceSpanId, <span class="self">Self</span>::TraceSpanIter&lt;<span class="lifetime">'_</span>&gt;&gt;,
+        ) -&gt; fmt::Result,
     {
-        <span class="kw">use </span><span class="kw">crate</span>::TraceSpan;
+        <span class="kw">use </span><span class="kw">crate</span>::fmt_logic::TraceSpan;
 
         <span class="kw">const </span>TARGET: <span class="kw-2">&amp;</span>str = <span class="string">"\"target\""</span>;
         <span class="kw">const </span>NAME: <span class="kw-2">&amp;</span>str = <span class="string">"\"name\""</span>;
