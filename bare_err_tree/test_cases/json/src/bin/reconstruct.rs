@@ -4,9 +4,9 @@
  * file, You can obtain one at https://mozilla.org/MPL/2.0/.
  */
 
-use std::fmt::{self, Display, Formatter};
+use std::fmt::{self, Display, Formatter, Write};
 
-use bare_err_tree::{err_tree, reconstruct_output, tree_to_json};
+use bare_err_tree::{err_tree, reconstruct_output, ErrTreeJson};
 use thiserror::Error;
 use tracing_error::ErrorLayer;
 use tracing_subscriber::{field::MakeExt, layer::SubscriberExt};
@@ -50,7 +50,7 @@ fn gen_print_inner() -> String {
     ))
     .into();
     let mut out = String::new();
-    tree_to_json(fatal, &mut out).unwrap();
+    write!(out, "{}", ErrTreeJson(fatal)).unwrap();
     out
 }
 

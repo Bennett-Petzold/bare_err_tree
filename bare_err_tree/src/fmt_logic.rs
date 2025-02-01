@@ -18,6 +18,7 @@ impl<E: AsErrTree, const FRONT_MAX: usize> ErrTreeDisplay<E, FRONT_MAX> {
 }
 
 impl<E: AsErrTree, const FRONT_MAX: usize> Display for ErrTreeDisplay<E, FRONT_MAX> {
+    #[track_caller]
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         let mut res = Ok(());
         self.0.as_err_tree(&mut |tree| {
