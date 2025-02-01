@@ -61,9 +61,9 @@ mod example {
 }
 
 mod json_escapes {
-    use core::error::Error;
+    use core::{error::Error, fmt::Write};
 
-    use bare_err_tree::{reconstruct_output, tree_to_json};
+    use bare_err_tree::{reconstruct_output, ErrTreeJson};
     use thiserror::Error;
 
     #[derive(Debug, Error)]
@@ -76,7 +76,7 @@ bar"
     #[test]
     fn handles_escapes() {
         let mut out = String::new();
-        tree_to_json::<&dyn Error, _, _>((&WeirdError) as &dyn Error, &mut out).unwrap();
+        write!(out, "{}", ErrTreeJson((&WeirdError) as &dyn Error)).unwrap();
 
         let expected_json = r#"{"msg":"foo\n \\ \\n \t/\nbar"}"#;
         let expected_reconstruct = "foo\n│  \\ \\n \t/\n│ bar";

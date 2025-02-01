@@ -7,8 +7,7 @@
 //! Error tree output to/from JSON.
 
 use core::{
-    borrow::Borrow,
-    fmt::{self, Write},
+    fmt::{self, Display, Formatter, Write},
     iter::FusedIterator,
     str::Chars,
 };
@@ -22,21 +21,28 @@ use crate::{
 ///
 /// JSON output can be used to display with [`ErrTree`] format with
 /// [`reconstruct_output`], but the [`ErrTree`] itself cannot be reconstructed.
-#[track_caller]
-pub fn tree_to_json<E, S, F>(tree: S, formatter: &mut F) -> fmt::Result
-where
-    S: Borrow<E>,
-    E: AsErrTree + ?Sized,
-    F: fmt::Write,
-{
-    let mut res = Ok(());
-    tree.borrow().as_err_tree(&mut |tree| {
-        res = json_fmt(tree, formatter);
-    });
-    res
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct ErrTreeJson<E: AsErrTree>(pub E);
+
+impl<E: AsErrTree> ErrTreeJson<E> {
+    pub fn new(tree: E) -> Self {
+        Self(tree)
+    }
+}
+
+impl<E: AsErrTree> Display for ErrTreeJson<E> {
+    #[track_caller]
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        let mut res = Ok(());
+        self.0.as_err_tree(&mut |tree| {
+            res = json_fmt(tree, f);
+        });
+        res
+    }
 }
 
 /// Custom JSON format outputter
+#[track_caller]
 fn json_fmt<F: fmt::Write>(mut tree: ErrTree<'_>, formatter: &mut F) -> fmt::Result {
     formatter.write_str("{\"msg\":\"")?;
     write!(JsonEscapeFormatter { formatter }, "{}", tree.inner)?;
