@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"attr":["err_tree"],"fn":["reconstruct_output","tree_to_json","tree_unwrap"],"macro":["tree"],"mod":["flex"],"struct":["ErrTree","ErrTreeDisplay","ErrTreePkg","InnerErrTreePkg"],"trait":["AsErrTree"]};
+window.SIDEBAR_ITEMS = {"attr":["err_tree"],"fn":["reconstruct_output","tree_unwrap"],"macro":["tree"],"mod":["flex"],"struct":["ErrTree","ErrTreeDisplay","ErrTreeJson","ErrTreePkg","InnerErrTreePkg"],"trait":["AsErrTree"]};
