@@ -1,6 +1,6 @@
 [package]
 name = "bare_err_tree"
-version = "0.9.0"
+version = "1.0.0"
 authors.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -27,7 +27,7 @@ unix_color = []
 json = []
 
 [dependencies]
-bare_err_tree_proc = { version = "0.5", path = "../bare_err_tree_proc", optional = true }
+bare_err_tree_proc = { version = "1", path = "../bare_err_tree_proc", optional = true }
 tracing-error = { version = "0.2", optional = true, default-features = false }
 tracing-core = { version = "0.1", optional = true, default-features = false }
 anyhow = { version = "1", optional = true, default-features = false }

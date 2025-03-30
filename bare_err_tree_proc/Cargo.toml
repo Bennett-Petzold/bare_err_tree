@@ -1,6 +1,6 @@
 [package]
 name = "bare_err_tree_proc"
-version = "0.5.1"
+version = "1.0.0"
 authors.workspace = true
 edition.workspace = true
 rust-version.workspace = true
