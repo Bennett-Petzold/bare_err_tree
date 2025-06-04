@@ -3,5 +3,3 @@ error[E0063]: missing field `_err_tree_pkg` in initializer of `ErrStruct`
    |
 17 | #[derive(Clone)]
    |          ^ missing `_err_tree_pkg`
-   |
-   = note: this error originates in the derive macro `Clone` (in Nightly builds, run with -Z macro-backtrace for more info)
