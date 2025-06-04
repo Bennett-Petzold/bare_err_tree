@@ -23,9 +23,9 @@ Usage of the [`err_tree`] macro incurs a compliation time cost.
 * `derive`: Enabled by default, provides [`err_tree`] via proc macro.
 * `json`: Allows for storage to/reconstruction from JSON.
 * `heap_buffer`: Uses heap to store so state that `FRONT_MAX` (x3 if tracing
-    is enabled) bytes of the stack aren't statically allocated for this purpose.
+  is enabled) bytes of the stack aren't statically allocated for this purpose.
 * `boxed`: Boxes the error package. Addresses ballooning from large tracking
-    features. Boxing the error itself is likely more efficient, when available.
+  features. Boxing the error itself is likely more efficient, when available.
 * `unix_color`: Outputs UNIX console codes for emphasis.
 * `anyhow`: Adds implementation for [`anyhow::Error`].
 * `eyre`: Adds implementation for [`eyre::Report`].

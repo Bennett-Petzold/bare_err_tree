@@ -6,7 +6,7 @@
 
 use std::fmt::{self, Display, Formatter};
 
-use bare_err_tree::{err_tree, tree_to_json};
+use bare_err_tree::{err_tree, ErrTreeJson};
 use thiserror::Error;
 use tracing_error::ErrorLayer;
 use tracing_subscriber::{field::MakeExt, layer::SubscriberExt};
@@ -49,9 +49,7 @@ fn gen_print_inner() -> String {
         5,
     ))
     .into();
-    let mut out = String::new();
-    tree_to_json(fatal, &mut out).unwrap();
-    out
+    format!("{}", ErrTreeJson::new(fatal))
 }
 
 #[derive(Debug, Error)]

@@ -146,9 +146,9 @@ fn json_trace_fmt<F: fmt::Write>(
         .file()
         .and_then(|file| metadata.line().map(|line| (file, line)))
     {
-        formatter.write_str(",\"source_loc\":[\"file\":\"")?;
+        formatter.write_str(",\"source_loc\":{\"file\":\"")?;
         write!(JsonEscapeFormatter { formatter }, "{}", file)?;
-        write!(formatter, "\",\"line\":{line}]")?;
+        write!(formatter, "\",\"line\":{line}}}")?;
     }
     formatter.write_char('}')?;
     Ok(())
@@ -156,7 +156,7 @@ fn json_trace_fmt<F: fmt::Write>(
 
 /// Reconstructs [`ErrTree`] formatted output from JSON.
 ///
-/// Only the output produced by [`tree_to_json`] is valid for this function.
+/// Only the output produced by [`ErrTreeJson`] is valid for this function.
 ///
 /// `FRONT_MAX` limits the number of leading bytes. Each deeper error requires 6
 /// bytes to fit "│   ". So for a max depth of 3 errors, `FRONT_MAX` == 18.
@@ -334,7 +334,7 @@ impl<'f> ErrTreeFormattable for JsonReconstruct<'f> {
             let location = find_json_key(LOCATION, trace_line).and_then(|location_start| {
                 let slice_start = &trace_line[location_start..];
 
-                let loc_start_idx = json_meta_char_idx('[', slice_start)? + BRACKET_LEN;
+                let loc_start_idx = json_meta_char_idx('{', slice_start)? + BRACE_LEN;
                 let slice_inner = &slice_start[loc_start_idx..];
 
                 let file = find_json_str(FILE, slice_inner);
@@ -342,7 +342,7 @@ impl<'f> ErrTreeFormattable for JsonReconstruct<'f> {
                     None
                 } else {
                     let line_start = find_json_key(LINE, slice_inner).unwrap_or(slice_inner.len());
-                    let line_end = json_char_idx(']', slice_start.char_indices())? - loc_start_idx;
+                    let line_end = json_char_idx('}', slice_start.char_indices())? - loc_start_idx;
 
                     let line = str::parse(&slice_inner[line_start..line_end]).ok()?;
 
@@ -568,7 +568,7 @@ impl Iterator for JsonStrChars<'_> {
                 // Invalid backslash, quit processing
                 _ => {
                     // Drain the inner iterator to fuse
-                    let _ = self.iter.by_ref().last();
+                    self.iter.by_ref().for_each(|_| {});
                     None
                 }
             }
