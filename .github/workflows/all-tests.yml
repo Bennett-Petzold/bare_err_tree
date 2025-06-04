@@ -14,9 +14,6 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
-    environment:
-      name: ${{ github.ref_name != 'main' && 'testing' || 'unrestricted' }}
-
     steps:
     - uses: actions/checkout@v4
 
@@ -69,9 +66,6 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
-    environment:
-      name: ${{ github.ref_name != 'main' && 'testing' || 'unrestricted' }}
-
     steps:
     - uses: actions/checkout@v4
 
@@ -88,9 +82,6 @@ jobs:
   msrv:
     runs-on: ubuntu-latest
     timeout-minutes: 30
-
-    environment:
-      name: ${{ github.ref_name != 'main' && 'testing' || 'unrestricted' }}
 
     steps:
     - uses: actions/checkout@v4
@@ -121,9 +112,6 @@ jobs:
     runs-on: ${{ format('{0}-latest', matrix.os) }}
     timeout-minutes: 30
 
-    environment:
-      name: ${{ github.ref_name != 'main' && 'testing' || 'unrestricted' }}
-
     steps:
     - uses: actions/checkout@v4
 
@@ -142,9 +130,6 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
 
-    environment:
-      name: ${{ github.ref_name != 'main' && 'testing' || 'unrestricted' }}
-
     steps:
     - uses: actions/checkout@v4
 
@@ -156,9 +141,6 @@ jobs:
   test-feature-powerset-miri:
     runs-on: ubuntu-latest
     timeout-minutes: 30
-
-    environment:
-      name: ${{ github.ref_name != 'main' && 'testing' || 'unrestricted' }}
 
     steps:
     - uses: actions/checkout@v4
